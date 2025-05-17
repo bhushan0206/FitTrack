@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { CalendarIcon, Plus } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
 import {
   Popover,
   PopoverContent,
@@ -21,7 +22,7 @@ import SummaryCards from "./SummaryCards";
 import { TrackingCategory, DailyLog } from "@/types/fitness";
 
 import {
-  initializeStorage,
+  initializeUserProfile,
   getUserProfile,
   addCategory,
   updateCategory,
@@ -30,13 +31,16 @@ import {
   updateLogEntry,
   deleteLogEntry,
   getLogsByDate,
-} from "@/lib/storage";
+  generateId,
+} from "@/lib/supabaseStorage";
 
 const StatisticsPanel = () => {
   const [categories, setCategories] = useState<TrackingCategory[]>([]);
   const [logs, setLogs] = useState<DailyLog[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [activeTab, setActiveTab] = useState("dashboard");
+  const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
 
   // Dialog states
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
@@ -49,12 +53,29 @@ const StatisticsPanel = () => {
   // Date picker state
   const [datePickerOpen, setDatePickerOpen] = useState(false);
 
-  // Initialize data from storage
+  // Initialize data from Supabase
   useEffect(() => {
-    const profile = initializeStorage();
-    setCategories(profile.categories);
-    setLogs(profile.logs);
-  }, []);
+    const loadUserData = async () => {
+      try {
+        setIsLoading(true);
+        const profile = await initializeUserProfile();
+        if (profile) {
+          setCategories(profile.categories);
+          setLogs(profile.logs);
+        }
+      } catch (error: any) {
+        toast({
+          title: "Error",
+          description: "Failed to load user data: " + error.message,
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadUserData();
+  }, [toast]);
 
   // Format selected date as string
   const selectedDateString = format(selectedDate, "yyyy-MM-dd");
@@ -75,19 +96,49 @@ const StatisticsPanel = () => {
     setCategoryDialogOpen(true);
   };
 
-  const handleDeleteCategory = (categoryId: string) => {
-    const updatedProfile = deleteCategory(categoryId);
-    setCategories(updatedProfile.categories);
-    setLogs(updatedProfile.logs);
+  const handleDeleteCategory = async (categoryId: string) => {
+    try {
+      const updatedProfile = await deleteCategory(categoryId);
+      if (updatedProfile) {
+        setCategories(updatedProfile.categories);
+        setLogs(updatedProfile.logs);
+        toast({
+          title: "Success",
+          description: "Category deleted successfully",
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: "Failed to delete category: " + error.message,
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleSaveCategory = (category: TrackingCategory) => {
-    const updatedProfile = editingCategory
-      ? updateCategory(category)
-      : addCategory(category);
+  const handleSaveCategory = async (category: TrackingCategory) => {
+    try {
+      const updatedProfile = editingCategory
+        ? await updateCategory(category)
+        : await addCategory(category);
 
-    setCategories(updatedProfile.categories);
-    setCategoryDialogOpen(false);
+      if (updatedProfile) {
+        setCategories(updatedProfile.categories);
+        setCategoryDialogOpen(false);
+        toast({
+          title: "Success",
+          description: `Category ${editingCategory ? "updated" : "added"} successfully`,
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description:
+          `Failed to ${editingCategory ? "update" : "add"} category: ` +
+          error.message,
+        variant: "destructive",
+      });
+    }
   };
 
   // Log entry handlers
@@ -101,17 +152,57 @@ const StatisticsPanel = () => {
     setLogDialogOpen(true);
   };
 
-  const handleDeleteLog = (logId: string) => {
-    const updatedProfile = deleteLogEntry(logId);
-    setLogs(updatedProfile.logs);
+  const handleDeleteLog = async (logId: string) => {
+    try {
+      const updatedProfile = await deleteLogEntry(logId);
+      if (updatedProfile) {
+        setLogs(updatedProfile.logs);
+        toast({
+          title: "Success",
+          description: "Log entry deleted successfully",
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: "Failed to delete log entry: " + error.message,
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleSaveLog = (log: DailyLog) => {
-    const updatedProfile = editingLog ? updateLogEntry(log) : addLogEntry(log);
+  const handleSaveLog = async (log: DailyLog) => {
+    try {
+      const updatedProfile = editingLog
+        ? await updateLogEntry(log)
+        : await addLogEntry(log);
 
-    setLogs(updatedProfile.logs);
-    setLogDialogOpen(false);
+      if (updatedProfile) {
+        setLogs(updatedProfile.logs);
+        setLogDialogOpen(false);
+        toast({
+          title: "Success",
+          description: `Log entry ${editingLog ? "updated" : "added"} successfully`,
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description:
+          `Failed to ${editingLog ? "update" : "add"} log entry: ` +
+          error.message,
+        variant: "destructive",
+      });
+    }
   };
+
+  if (isLoading) {
+    return (
+      <div className="w-full h-full flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full h-full bg-gray-50 p-4 overflow-auto">

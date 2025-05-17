@@ -2,7 +2,7 @@ import StatisticsPanel from "./Dashboard/StatisticsPanel";
 
 function Home() {
   return (
-    <div className="w-screen h-screen bg-background">
+    <div className="w-full min-h-screen bg-background">
       <StatisticsPanel />
     </div>
   );
