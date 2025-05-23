@@ -20,6 +20,13 @@ const ProgressChart = ({ logs, categories }: ProgressChartProps) => {
     categories.length > 0 ? categories[0].id : "",
   );
 
+  // Update selected category when categories change
+  useEffect(() => {
+    if (categories.length > 0 && !selectedCategoryId) {
+      setSelectedCategoryId(categories[0].id);
+    }
+  }, [categories, selectedCategoryId]);
+
   const selectedCategory = categories.find((c) => c.id === selectedCategoryId);
 
   // Get the last 7 days
@@ -44,9 +51,10 @@ const ProgressChart = ({ logs, categories }: ProgressChartProps) => {
       dateString,
       value,
       target: selectedCategory?.dailyTarget || 0,
-      percentage: selectedCategory
-        ? (value / selectedCategory.dailyTarget) * 100
-        : 0,
+      percentage:
+        selectedCategory && selectedCategory.dailyTarget > 0
+          ? (value / selectedCategory.dailyTarget) * 100
+          : 0,
     };
   });
 
@@ -83,28 +91,34 @@ const ProgressChart = ({ logs, categories }: ProgressChartProps) => {
         </Select>
       </CardHeader>
       <CardContent>
-        <div className="h-[200px] flex items-end justify-between gap-2">
+        <div className="h-[200px] flex items-end justify-between gap-2 p-4">
           {chartData.map((day) => {
-            const height = `${Math.min(day.percentage, 100)}%`;
+            const height = Math.max(Math.min(day.percentage, 100), 5); // Minimum 5% for visibility
             const bgColor =
               day.percentage >= 100 ? "bg-primary" : "bg-primary/60";
 
             return (
               <div
                 key={day.dateString}
-                className="flex flex-col items-center flex-1"
+                className="flex flex-col items-center flex-1 min-w-0"
               >
-                <div className="w-full h-full relative flex flex-col justify-end">
+                <div className="w-full h-full relative flex flex-col justify-end mb-2">
                   <div
-                    className={`w-full ${bgColor} rounded-t-sm transition-all duration-300`}
-                    style={{ height }}
+                    className={`w-full ${bgColor} rounded-t-sm transition-all duration-300 min-h-[4px]`}
+                    style={{ height: `${height}%` }}
+                    title={`${day.value} / ${day.target} ${
+                      selectedCategory?.unit || ""
+                    }`}
                   ></div>
                 </div>
-                <div className="text-xs mt-2 text-text">
+                <div className="text-xs font-medium text-text text-center">
                   {format(day.date, "EEE")}
                 </div>
-                <div className="text-xs text-text-secondary">
+                <div className="text-xs text-text-secondary text-center">
                   {format(day.date, "d")}
+                </div>
+                <div className="text-xs text-text-secondary text-center mt-1">
+                  {day.value}
                 </div>
               </div>
             );
@@ -112,7 +126,7 @@ const ProgressChart = ({ logs, categories }: ProgressChartProps) => {
         </div>
 
         {selectedCategory && (
-          <div className="mt-4 text-center text-sm text-text">
+          <div className="mt-4 text-center text-sm text-text border-t border-border pt-4">
             <span className="font-medium">{selectedCategory.name}</span> -
             Target: {selectedCategory.dailyTarget} {selectedCategory.unit} per
             day

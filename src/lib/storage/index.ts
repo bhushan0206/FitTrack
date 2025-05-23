@@ -11,6 +11,7 @@ import {
   deleteLogEntry as deleteLogEntryBase 
 } from './logs';
 import { generateId, mapCategoryFromDB, mapLogFromDB } from './utils';
+import { getAchievements, checkAndAwardAchievements } from './achievements';
 
 // Re-export utilities
 export { generateId, mapCategoryFromDB, mapLogFromDB };
@@ -65,3 +66,6 @@ export const initializeUserProfile = async (userId: string, userName?: string) =
     return null;
   }
 };
+
+// Export achievement functions
+export { getAchievements, checkAndAwardAchievements };
