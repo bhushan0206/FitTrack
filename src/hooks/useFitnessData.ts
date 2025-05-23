@@ -286,6 +286,7 @@ export const useFitnessData = () => {
   // Add profile update handler with better error handling
   const handleUpdateProfile = useCallback(async (profileData: Partial<UserProfile>): Promise<boolean> => {
     if (!userId) {
+      console.error("No user ID available");
       toast({
         title: "Error",
         description: "User not authenticated",
@@ -296,21 +297,29 @@ export const useFitnessData = () => {
 
     try {
       setIsLoading(true);
+      console.log("handleUpdateProfile called with:", profileData);
+
+      const finalProfileData = {
+        ...profileData,
+        name: profileData.name || user?.fullName || user?.firstName || user?.username || 'User',
+      };
 
       let updatedProfile: UserProfile;
 
-      if (profile) {
-        // Update existing profile
-        updatedProfile = await profileStorage.updateProfile(userId, profileData);
-      } else {
-        // Create new profile
-        updatedProfile = await profileStorage.createProfile(userId, {
-          name: profileData.name || user?.fullName || user?.firstName || 'User',
-          ...profileData,
-        });
+      try {
+        updatedProfile = await profileStorage.updateProfile(userId, finalProfileData);
+      } catch (error) {
+        console.log("Attempting to create profile...");
+        updatedProfile = await profileStorage.createProfile(userId, finalProfileData);
       }
 
-      setProfile(updatedProfile);
+      const finalProfile = {
+        ...updatedProfile,
+        categories: profile?.categories || [],
+        logs: profile?.logs || [],
+      };
+
+      setProfile(finalProfile);
 
       toast({
         title: "Success",
@@ -322,7 +331,7 @@ export const useFitnessData = () => {
       console.error('Error updating profile:', error);
       toast({
         title: "Error",
-        description: "Failed to update profile. Please try again.",
+        description: `Failed to update profile: ${error instanceof Error ? error.message : 'Unknown error'}`,
         variant: "destructive",
       });
       return false;

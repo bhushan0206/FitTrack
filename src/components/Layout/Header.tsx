@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { format } from "date-fns";
 import { Calendar, ChevronDown, LogOut, User, Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -9,15 +9,19 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { useClerk } from "@clerk/clerk-react";
-import ProfileForm from "@/components/Profile/ProfileForm";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useTheme } from "@/contexts/ThemeContext";
+import { UserProfile } from "@/types/fitness";
 
 interface HeaderProps {
   selectedDate: Date;
   onDateChange: (date: Date) => void;
   datePickerOpen: boolean;
   onDatePickerToggle: (open: boolean) => void;
+  profile: UserProfile | null;
+  onProfileUpdate: (profileData: Partial<UserProfile>) => Promise<boolean>;
+  isLoading: boolean;
+  children?: React.ReactNode; // For ProfileForm
 }
 
 const Header = ({
@@ -25,10 +29,21 @@ const Header = ({
   onDateChange,
   datePickerOpen,
   onDatePickerToggle,
+  profile,
+  onProfileUpdate,
+  isLoading,
+  children,
 }: HeaderProps) => {
   const { signOut } = useClerk();
   const { theme, toggleTheme } = useTheme();
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
+
+  const handleProfileSave = async (profileData: Partial<UserProfile>) => {
+    const success = await onProfileUpdate(profileData);
+    if (success) {
+      setProfileDialogOpen(false);
+    }
+  };
 
   return (
     <header className="w-full bg-gradient-to-r from-indigo-600 via-purple-600 to-blue-600 dark:from-gray-800 dark:via-gray-900 dark:to-black shadow-xl border-b border-white/10 dark:border-gray-700/30 backdrop-blur-sm">
@@ -132,24 +147,14 @@ const Header = ({
       {/* Profile dialog */}
       <Dialog open={profileDialogOpen} onOpenChange={setProfileDialogOpen}>
         <DialogContent className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md border-gray-200/50 dark:border-gray-600/50 max-w-4xl rounded-2xl shadow-2xl">
-          <ProfileForm
-            profile={{
-              id: "user-id", // Replace with actual user ID
-              name: "John Doe", // Replace with actual user name
-              age: 30,
-              gender: "male",
-              weight: 70,
-              height: 175,
-              fitnessGoal: "maintain_health",
-              categories: [],
-              logs: [],
-            }}
-            onSave={(profileData) => {
-              console.log("Profile saved:", profileData);
-              setProfileDialogOpen(false);
-            }}
-            onCancel={() => setProfileDialogOpen(false)}
-          />
+          {children && 
+            React.cloneElement(children as React.ReactElement, {
+              profile,
+              onSave: handleProfileSave,
+              onCancel: () => setProfileDialogOpen(false),
+              isLoading,
+            })
+          }
         </DialogContent>
       </Dialog>
     </header>

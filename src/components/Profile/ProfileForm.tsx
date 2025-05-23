@@ -20,38 +20,48 @@ import {
 import { User, Scale, Ruler, Target } from "lucide-react";
 
 interface ProfileFormProps {
-  profile: UserProfile;
-  onSave: (profileData: Partial<UserProfile>) => void;
+  profile?: UserProfile | null;
+  onSave?: (profileData: Partial<UserProfile>) => void;
   onCancel?: () => void;
   isLoading?: boolean;
 }
 
-const ProfileForm = ({ profile, onSave, onCancel, isLoading }: ProfileFormProps) => {
+const ProfileForm = ({ 
+  profile = null, 
+  onSave = () => {}, 
+  onCancel, 
+  isLoading = false 
+}: ProfileFormProps) => {
   const [formData, setFormData] = useState({
-    name: profile.name || "",
-    age: profile.age?.toString() || "",
-    gender: profile.gender || "",
-    weight: profile.weight?.toString() || "",
-    height: profile.height?.toString() || "",
-    fitnessGoal: profile.fitnessGoal || "",
+    name: "",
+    age: "",
+    gender: "",
+    weight: "",
+    height: "",
+    fitnessGoal: "",
   });
 
   // Update form when profile changes
   useEffect(() => {
-    setFormData({
-      name: profile.name || "",
-      age: profile.age?.toString() || "",
-      gender: profile.gender || "",
-      weight: profile.weight?.toString() || "",
-      height: profile.height?.toString() || "",
-      fitnessGoal: profile.fitnessGoal || "",
-    });
+    if (profile) {
+      setFormData({
+        name: profile.name || "",
+        age: profile.age?.toString() || "",
+        gender: profile.gender || "",
+        weight: profile.weight?.toString() || "",
+        height: profile.height?.toString() || "",
+        fitnessGoal: profile.fitnessGoal || "",
+      });
+    }
   }, [profile]);
+
+  const handleInputChange = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validate required fields
     if (!formData.name.trim()) {
       return;
     }
@@ -65,12 +75,7 @@ const ProfileForm = ({ profile, onSave, onCancel, isLoading }: ProfileFormProps)
       fitnessGoal: formData.fitnessGoal as UserProfile['fitnessGoal'] || undefined,
     };
 
-    console.log('Submitting profile data:', profileData); // Debug log
     onSave(profileData);
-  };
-
-  const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
   };
 
   return (

@@ -499,6 +499,7 @@ function mapLogFromDB(dbLog: any): DailyLog {
 
 // Helper function to convert database profile to frontend profile
 const mapDatabaseToProfile = (dbProfile: any): UserProfile => {
+  console.log("Mapping database profile to frontend:", dbProfile);
   return {
     id: dbProfile.id,
     name: dbProfile.name,
@@ -516,7 +517,8 @@ const mapDatabaseToProfile = (dbProfile: any): UserProfile => {
 
 // Helper function to convert frontend profile to database format
 const mapProfileToDatabase = (profile: Partial<UserProfile>) => {
-  return {
+  console.log("Mapping frontend profile to database:", profile);
+  const mapped = {
     name: profile.name,
     age: profile.age,
     gender: profile.gender,
@@ -524,36 +526,61 @@ const mapProfileToDatabase = (profile: Partial<UserProfile>) => {
     height: profile.height,
     fitness_goal: profile.fitnessGoal, // Map from camelCase to snake_case
   };
+  console.log("Mapped result:", mapped);
+  return mapped;
 };
 
 export const profileStorage = {
   async getProfile(userId: string): Promise<UserProfile | null> {
     try {
+      console.log("Getting profile for user:", userId);
+      
+      // First check if the profiles table exists
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
         .single();
 
-      if (error && error.code !== 'PGRST116') {
+      if (error) {
+        console.error("Error fetching profile:", error);
+        if (error.code === 'PGRST116') {
+          // No rows found
+          console.log("No profile found for user:", userId);
+          return null;
+        }
+        if (error.message.includes('relation "profiles" does not exist')) {
+          console.error("Profiles table does not exist!");
+          return null;
+        }
         throw error;
       }
 
-      if (!data) return null;
-
+      console.log("Profile data from database:", data);
       return mapDatabaseToProfile(data);
     } catch (error) {
       console.error('Error fetching profile:', error);
-      throw error;
+      return null; // Return null instead of throwing to allow fallback
     }
   },
 
   async createProfile(userId: string, profileData: Partial<UserProfile>): Promise<UserProfile> {
     try {
+      console.log("Creating profile for user:", userId, "with data:", profileData);
+      
+      // Check if profile already exists first
+      const existingProfile = await this.getProfile(userId);
+      if (existingProfile) {
+        console.log("Profile already exists, updating instead");
+        return await this.updateProfile(userId, profileData);
+      }
+
       const dbData = {
         id: userId,
         ...mapProfileToDatabase(profileData),
       };
+
+      console.log("Database data to insert:", dbData);
 
       const { data, error } = await supabase
         .from('profiles')
@@ -561,8 +588,12 @@ export const profileStorage = {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error creating profile:", error);
+        throw error;
+      }
 
+      console.log("Profile created successfully:", data);
       return mapDatabaseToProfile(data);
     } catch (error) {
       console.error('Error creating profile:', error);
@@ -572,7 +603,9 @@ export const profileStorage = {
 
   async updateProfile(userId: string, profileData: Partial<UserProfile>): Promise<UserProfile> {
     try {
+      console.log("Updating profile for user:", userId, "with data:", profileData);
       const dbData = mapProfileToDatabase(profileData);
+      console.log("Mapped database data:", dbData);
 
       const { data, error } = await supabase
         .from('profiles')
@@ -581,14 +614,21 @@ export const profileStorage = {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error updating profile:", error);
+        // If profile doesn't exist, create it
+        if (error.code === 'PGRST116') {
+          console.log("Profile doesn't exist, creating new one");
+          return await this.createProfile(userId, profileData);
+        }
+        throw error;
+      }
 
+      console.log("Profile updated successfully:", data);
       return mapDatabaseToProfile(data);
     } catch (error) {
       console.error('Error updating profile:', error);
       throw error;
     }
   },
-
-  // ...existing code...
 };

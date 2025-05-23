@@ -14,7 +14,6 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { Button } from "@/components/ui/button";
 import { LogOut, User } from "lucide-react";
-import UnifiedHeader from "@/components/Layout/UnifiedHeader";
 import Header from "@/components/Layout/Header";
 import Footer from "@/components/Layout/Footer";
 
@@ -118,12 +117,17 @@ const StatisticsPanel = () => {
     );
   }
 
-  // Use profile from hook or create default
-  const currentProfile: UserProfile = profile || {
-    id: userId || '',
-    name: user?.fullName || user?.firstName || user?.username || 'User',
-    categories,
-    logs,
+  // Create a profile object with fallback values
+  const currentProfile = profile || {
+    id: userId || "temp-id",
+    name: user?.fullName || user?.firstName || user?.username || "",
+    age: undefined,
+    gender: undefined,
+    weight: undefined,
+    height: undefined,
+    fitnessGoal: undefined,
+    categories: [],
+    logs: [],
   };
 
   return (
@@ -139,7 +143,12 @@ const StatisticsPanel = () => {
         onDateChange={setSelectedDate}
         datePickerOpen={datePickerOpen}
         onDatePickerToggle={setDatePickerOpen}
-      />
+        profile={currentProfile}
+        onProfileUpdate={handleUpdateProfile}
+        isLoading={isLoading}
+      >
+        <ProfileForm />
+      </Header>
 
       <main className="flex-1 relative z-10 max-w-7xl mx-auto px-6 py-8 w-full">
         <DashboardTabs
