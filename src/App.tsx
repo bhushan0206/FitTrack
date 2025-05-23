@@ -118,7 +118,7 @@ function App() {
   }
 
   return (
-    <ClerkProvider publishableKey={clerkPubKey}>
+    <ClerkProvider publishableKey={cleanClerkKey}>
       <ThemeProvider>
         <Suspense fallback={
           <div className="flex items-center justify-center h-screen">
