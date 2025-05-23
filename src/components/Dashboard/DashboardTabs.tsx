@@ -14,14 +14,13 @@ interface DashboardTabsProps {
   logs: DailyLog[];
   selectedDate: Date;
   selectedDateLogs: DailyLog[];
+  profile: UserProfile;
   onEditCategory: (category: TrackingCategory) => void;
   onDeleteCategory: (categoryId: string) => void;
   onAddCategory: () => void;
   onEditLog: (log: DailyLog) => void;
   onDeleteLog: (logId: string) => void;
   onAddLog: () => void;
-  profile: UserProfile;
-  onEditProfile: () => void;
 }
 
 export default function DashboardTabs({
@@ -31,18 +30,17 @@ export default function DashboardTabs({
   logs,
   selectedDate,
   selectedDateLogs,
+  profile,
   onEditCategory,
   onDeleteCategory,
   onAddCategory,
   onEditLog,
   onDeleteLog,
   onAddLog,
-  profile,
-  onEditProfile,
 }: DashboardTabsProps) {
   return (
     <Tabs value={activeTab} onValueChange={onTabChange} className="w-full">
-      <TabsList className="grid w-full grid-cols-5 mb-6 bg-background-secondary">
+      <TabsList className="grid w-full grid-cols-4 mb-6 bg-background-secondary">
         <TabsTrigger value="dashboard" className="text-text data-[state=active]:bg-background">
           Dashboard
         </TabsTrigger>
@@ -51,9 +49,6 @@ export default function DashboardTabs({
         </TabsTrigger>
         <TabsTrigger value="categories" className="text-text data-[state=active]:bg-background">
           Categories
-        </TabsTrigger>
-        <TabsTrigger value="profile" className="text-text data-[state=active]:bg-background">
-          Profile
         </TabsTrigger>
         <TabsTrigger value="achievements" className="text-text data-[state=active]:bg-background">
           Achievements
@@ -98,10 +93,6 @@ export default function DashboardTabs({
           onDelete={onDeleteCategory}
           onAdd={onAddCategory}
         />
-      </TabsContent>
-
-      <TabsContent value="profile">
-        <ProfileView profile={profile} onEdit={onEditProfile} />
       </TabsContent>
 
       <TabsContent value="achievements">

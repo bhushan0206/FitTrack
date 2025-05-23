@@ -60,10 +60,16 @@ const ProgressChart = ({ logs, categories }: ProgressChartProps) => {
 
   if (categories.length === 0) {
     return (
-      <Card className="w-full bg-background border-border">
-        <CardContent className="pt-6">
-          <div className="text-center py-8 text-text-secondary">
-            Add categories to see progress charts
+      <Card className="bg-gradient-to-br from-white to-indigo-50/50 border-0 shadow-lg hover:shadow-xl transition-all duration-300 backdrop-blur-sm">
+        <CardContent className="pt-12 pb-12">
+          <div className="text-center">
+            <div className="w-16 h-16 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <span className="text-2xl">📈</span>
+            </div>
+            <p className="text-gray-600 font-medium mb-2">No Categories Yet</p>
+            <p className="text-gray-500 text-sm">
+              Add categories to see progress charts
+            </p>
           </div>
         </CardContent>
       </Card>
@@ -71,67 +77,131 @@ const ProgressChart = ({ logs, categories }: ProgressChartProps) => {
   }
 
   return (
-    <Card className="w-full bg-background border-border">
-      <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-0 px-4 sm:px-6">
-        <CardTitle className="text-text text-lg sm:text-xl">
+    <Card className="bg-gradient-to-br from-white to-indigo-50/50 border-0 shadow-lg hover:shadow-xl transition-all duration-300 backdrop-blur-sm">
+      <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-6 py-6">
+        <CardTitle className="text-gray-900 text-xl font-bold flex items-center gap-2">
+          <span className="text-2xl">📊</span>
           Weekly Progress
         </CardTitle>
         <Select
           value={selectedCategoryId}
           onValueChange={setSelectedCategoryId}
         >
-          <SelectTrigger className="w-full sm:w-[180px]">
+          <SelectTrigger className="w-full sm:w-[220px] bg-white/90 border-gray-200/50 rounded-xl font-medium">
             <SelectValue placeholder="Select category" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="bg-white/95 backdrop-blur-md border-gray-200/50 rounded-xl">
             {categories.map((category) => (
-              <SelectItem key={category.id} value={category.id}>
-                {category.name}
+              <SelectItem
+                key={category.id}
+                value={category.id}
+                className="hover:bg-gray-50/80 rounded-lg mx-1 font-medium"
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className="w-4 h-4 rounded-full shadow-sm"
+                    style={{ backgroundColor: category.color }}
+                  />
+                  <span className="text-gray-800 font-medium">{category.name}</span>
+                </div>
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
       </CardHeader>
-      <CardContent className="px-2 sm:px-6">
-        <div className="h-[150px] sm:h-[200px] flex items-end justify-between gap-1 sm:gap-2 p-2 sm:p-4">
-          {chartData.map((day) => {
-            const height = Math.max(Math.min(day.percentage, 100), 5);
-            const bgColor =
-              day.percentage >= 100 ? "bg-primary" : "bg-primary/60";
+      <CardContent className="px-6 pb-6">
+        <div className="bg-gradient-to-b from-gray-50/50 to-white rounded-xl p-4 border border-gray-100/50">
+          <div className="h-[180px] sm:h-[220px] flex items-end justify-between gap-2 sm:gap-3">
+            {chartData.map((day, index) => {
+              const height = Math.max(Math.min(day.percentage, 100), 8);
+              const isToday = index === chartData.length - 1;
+              const isCompleted = day.percentage >= 100;
 
-            return (
-              <div
-                key={day.dateString}
-                className="flex flex-col items-center flex-1 min-w-0"
-              >
-                <div className="w-full h-full relative flex flex-col justify-end mb-1 sm:mb-2">
+              return (
+                <div
+                  key={day.dateString}
+                  className="flex flex-col items-center flex-1 min-w-0 group"
+                >
+                  <div className="w-full h-full relative flex flex-col justify-end mb-2">
+                    <div
+                      className={`w-full rounded-t-lg transition-all duration-500 ease-out min-h-[8px] shadow-sm ${
+                        isCompleted
+                          ? "bg-gradient-to-t from-green-400 to-green-500"
+                          : selectedCategory?.color
+                          ? `bg-gradient-to-t from-gray-300 to-[${selectedCategory.color}]`
+                          : "bg-gradient-to-t from-gray-300 to-indigo-400"
+                      } ${isToday ? "ring-2 ring-indigo-300 ring-offset-2" : ""} group-hover:shadow-md`}
+                      style={{
+                        height: `${height}%`,
+                        backgroundColor: isCompleted
+                          ? undefined
+                          : selectedCategory?.color || "#6366f1",
+                      }}
+                      title={`${
+                        day.value
+                      } / ${day.target} ${selectedCategory?.unit || ""} (${Math.round(
+                        day.percentage,
+                      )}%)`}
+                    />
+
+                    {/* Completion indicator */}
+                    {isCompleted && (
+                      <div className="absolute -top-6 left-1/2 transform -translate-x-1/2">
+                        <div className="w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
+                          <span className="text-white text-xs font-bold">✓</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Day label - improved visibility */}
                   <div
-                    className={`w-full ${bgColor} rounded-t-sm transition-all duration-300 min-h-[4px]`}
-                    style={{ height: `${height}%` }}
-                    title={`${day.value} / ${day.target} ${
-                      selectedCategory?.unit || ""
+                    className={`text-xs font-bold text-center ${
+                      isToday ? "text-indigo-700 bg-indigo-100 px-2 py-1 rounded-lg" : "text-gray-800"
                     }`}
-                  ></div>
+                  >
+                    {format(day.date, "EEE")}
+                  </div>
+                  <div
+                    className={`text-xs text-center font-semibold ${
+                      isToday ? "text-indigo-600" : "text-gray-600"
+                    }`}
+                  >
+                    {format(day.date, "d")}
+                  </div>
+
+                  {/* Value display - improved visibility */}
+                  <div className="text-xs text-gray-700 text-center mt-1 font-bold hidden sm:block bg-gray-100 px-2 py-1 rounded">
+                    {day.value > 0 ? day.value : "—"}
+                  </div>
                 </div>
-                <div className="text-xs font-medium text-text text-center">
-                  {format(day.date, "EEE")}
-                </div>
-                <div className="text-xs text-text-secondary text-center">
-                  {format(day.date, "d")}
-                </div>
-                <div className="text-xs text-text-secondary text-center mt-1 hidden sm:block">
-                  {day.value}
-                </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
 
+        {/* Category info - improved styling */}
         {selectedCategory && (
-          <div className="mt-4 text-center text-xs sm:text-sm text-text border-t border-border pt-4">
-            <span className="font-medium">{selectedCategory.name}</span> -
-            Target: {selectedCategory.dailyTarget} {selectedCategory.unit} per
-            day
+          <div className="mt-6 p-5 bg-gradient-to-r from-indigo-50/80 to-purple-50/80 rounded-xl border border-indigo-100/50 shadow-sm">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div
+                  className="w-5 h-5 rounded-full shadow-md border-2 border-white"
+                  style={{ backgroundColor: selectedCategory.color }}
+                />
+                <span className="font-bold text-gray-900 text-lg">
+                  {selectedCategory.name}
+                </span>
+              </div>
+              <div className="text-right">
+                <div className="text-sm font-bold text-gray-800">
+                  Target: {selectedCategory.dailyTarget} {selectedCategory.unit}/day
+                </div>
+                <div className="text-xs text-gray-600 font-medium">
+                  Weekly Goal: {selectedCategory.dailyTarget * 7} {selectedCategory.unit}
+                </div>
+              </div>
+            </div>
           </div>
         )}
       </CardContent>

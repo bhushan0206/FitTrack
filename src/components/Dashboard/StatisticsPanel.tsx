@@ -125,8 +125,13 @@ const StatisticsPanel = () => {
   };
 
   return (
-    <div className="w-full h-full bg-background p-4 overflow-auto relative">
-      {/* Unified header */}
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 relative overflow-hidden">
+      {/* Background decoration */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-purple-200 to-indigo-200 rounded-full opacity-30 animate-pulse"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-br from-blue-200 to-purple-200 rounded-full opacity-30 animate-pulse" style={{ animationDelay: '1s' }}></div>
+      </div>
+
       <UnifiedHeader
         selectedDate={selectedDate}
         onDateChange={setSelectedDate}
@@ -134,8 +139,7 @@ const StatisticsPanel = () => {
         onDatePickerToggle={setDatePickerOpen}
       />
 
-      <AnimatedBackground />
-      <div className="max-w-7xl mx-auto relative z-10">
+      <div className="relative z-10 max-w-7xl mx-auto px-6 py-8">
         <DashboardTabs
           activeTab={activeTab}
           onTabChange={setActiveTab}
@@ -150,7 +154,6 @@ const StatisticsPanel = () => {
           onEditLog={openLogDialog}
           onDeleteLog={handleDeleteLog}
           onAddLog={() => openLogDialog()}
-          onEditProfile={handleEditProfile}
         />
 
         <CategoryDialog
@@ -168,23 +171,6 @@ const StatisticsPanel = () => {
           onSave={handleSaveLog}
           onClose={closeLogDialog}
         />
-
-        {/* Profile Dialog with proper cleanup */}
-        {profileDialogOpen && (
-          <Dialog open={profileDialogOpen} onOpenChange={setProfileDialogOpen}>
-            <DialogContent className="bg-background border-border max-w-3xl overflow-hidden">
-              <VisuallyHidden>
-                <DialogTitle>Edit Profile</DialogTitle>
-              </VisuallyHidden>
-              <ProfileForm
-                profile={currentProfile}
-                onSave={handleSaveProfile}
-                onCancel={() => setProfileDialogOpen(false)}
-                isLoading={isLoading}
-              />
-            </DialogContent>
-          </Dialog>
-        )}
       </div>
     </div>
   );

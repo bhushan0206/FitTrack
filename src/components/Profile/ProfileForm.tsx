@@ -73,40 +73,39 @@ const ProfileForm = ({ profile, onSave, onCancel, isLoading }: ProfileFormProps)
   };
 
   return (
-    <Card className="w-full max-w-4xl mx-auto bg-background border-border">
-      <CardHeader className="pb-4 px-4 sm:px-6">
-        <CardTitle className="text-text flex items-center gap-2 text-lg sm:text-xl" role="heading" aria-level={2}>
-          <User className="h-4 w-4 sm:h-5 sm:w-5" />
+    <Card className="w-full max-w-3xl mx-auto bg-gradient-to-b from-background to-background-secondary border border-border rounded-lg shadow-lg">
+      <CardHeader className="pb-4 px-6 bg-gradient-to-r from-primary to-secondary text-white rounded-t-lg">
+        <CardTitle className="text-lg sm:text-xl font-bold flex items-center gap-2">
+          <User className="h-5 w-5" />
           Profile Settings
         </CardTitle>
       </CardHeader>
-      
+
       <form onSubmit={handleSubmit}>
-        <CardContent className="space-y-6 px-4 sm:px-6">
+        <CardContent className="space-y-6 px-6 py-4">
           {/* Basic Information */}
           <div className="space-y-4">
-            <h3 className="text-base sm:text-lg font-medium text-text flex items-center gap-2" role="heading" aria-level={3}>
-              <User className="h-4 w-4" />
+            <h3 className="text-base sm:text-lg font-medium text-primary">
               Basic Information
             </h3>
-            
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {/* Name */}
               <div className="space-y-2 sm:col-span-2 lg:col-span-1">
-                <Label htmlFor="name" className="text-text text-sm">
+                <Label htmlFor="name" className="text-sm font-medium text-text">
                   Full Name
                 </Label>
                 <Input
                   id="name"
                   value={formData.name}
-                  onChange={(e) => handleInputChange('name', e.target.value)}
+                  onChange={(e) => handleInputChange("name", e.target.value)}
                   placeholder="Enter your full name"
-                  className="w-full"
+                  className="w-full rounded-lg"
                   required
                 />
               </div>
-
+              {/* Age */}
               <div className="space-y-2">
-                <Label htmlFor="age" className="text-text text-sm">
+                <Label htmlFor="age" className="text-sm font-medium text-text">
                   Age
                 </Label>
                 <Input
@@ -115,18 +114,21 @@ const ProfileForm = ({ profile, onSave, onCancel, isLoading }: ProfileFormProps)
                   min="13"
                   max="120"
                   value={formData.age}
-                  onChange={(e) => handleInputChange('age', e.target.value)}
+                  onChange={(e) => handleInputChange("age", e.target.value)}
                   placeholder="Enter your age"
-                  className="w-full"
+                  className="w-full rounded-lg"
                 />
               </div>
-
+              {/* Gender */}
               <div className="space-y-2">
-                <Label htmlFor="gender" className="text-text text-sm">
+                <Label htmlFor="gender" className="text-sm font-medium text-text">
                   Gender
                 </Label>
-                <Select value={formData.gender} onValueChange={(value) => handleInputChange('gender', value)}>
-                  <SelectTrigger className="w-full">
+                <Select
+                  value={formData.gender}
+                  onValueChange={(value) => handleInputChange("gender", value)}
+                >
+                  <SelectTrigger className="w-full rounded-lg">
                     <SelectValue placeholder="Select gender" />
                   </SelectTrigger>
                   <SelectContent>
@@ -142,15 +144,13 @@ const ProfileForm = ({ profile, onSave, onCancel, isLoading }: ProfileFormProps)
 
           {/* Physical Measurements */}
           <div className="space-y-4">
-            <h3 className="text-base sm:text-lg font-medium text-text flex items-center gap-2" role="heading" aria-level={3}>
-              <Scale className="h-4 w-4" />
+            <h3 className="text-base sm:text-lg font-medium text-primary">
               Physical Measurements
             </h3>
-            
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Weight */}
               <div className="space-y-2">
-                <Label htmlFor="weight" className="text-text text-sm flex items-center gap-2">
-                  <Scale className="h-3 w-3" />
+                <Label htmlFor="weight" className="text-sm font-medium text-text">
                   Weight (kg)
                 </Label>
                 <Input
@@ -160,15 +160,14 @@ const ProfileForm = ({ profile, onSave, onCancel, isLoading }: ProfileFormProps)
                   max="300"
                   step="0.1"
                   value={formData.weight}
-                  onChange={(e) => handleInputChange('weight', e.target.value)}
+                  onChange={(e) => handleInputChange("weight", e.target.value)}
                   placeholder="Enter weight in kg"
-                  className="w-full"
+                  className="w-full rounded-lg"
                 />
               </div>
-
+              {/* Height */}
               <div className="space-y-2">
-                <Label htmlFor="height" className="text-text text-sm flex items-center gap-2">
-                  <Ruler className="h-3 w-3" />
+                <Label htmlFor="height" className="text-sm font-medium text-text">
                   Height (cm)
                 </Label>
                 <Input
@@ -177,37 +176,28 @@ const ProfileForm = ({ profile, onSave, onCancel, isLoading }: ProfileFormProps)
                   min="100"
                   max="250"
                   value={formData.height}
-                  onChange={(e) => handleInputChange('height', e.target.value)}
+                  onChange={(e) => handleInputChange("height", e.target.value)}
                   placeholder="Enter height in cm"
-                  className="w-full"
+                  className="w-full rounded-lg"
                 />
               </div>
             </div>
-
-            {/* BMI Display */}
-            {formData.weight && formData.height && (
-              <div className="p-3 sm:p-4 bg-background-secondary rounded-lg border border-border">
-                <div className="text-sm text-text-secondary">Body Mass Index (BMI)</div>
-                <div className="text-lg sm:text-xl font-medium text-text">
-                  {((parseFloat(formData.weight) / Math.pow(parseInt(formData.height) / 100, 2))).toFixed(1)}
-                </div>
-              </div>
-            )}
           </div>
 
           {/* Fitness Goal */}
           <div className="space-y-4">
-            <h3 className="text-base sm:text-lg font-medium text-text flex items-center gap-2" role="heading" aria-level={3}>
-              <Target className="h-4 w-4" />
+            <h3 className="text-base sm:text-lg font-medium text-primary">
               Fitness Goal
             </h3>
-            
             <div className="space-y-2">
-              <Label htmlFor="fitnessGoal" className="text-text text-sm">
+              <Label htmlFor="fitnessGoal" className="text-sm font-medium text-text">
                 Primary Fitness Goal
               </Label>
-              <Select value={formData.fitnessGoal} onValueChange={(value) => handleInputChange('fitnessGoal', value)}>
-                <SelectTrigger className="w-full">
+              <Select
+                value={formData.fitnessGoal}
+                onValueChange={(value) => handleInputChange("fitnessGoal", value)}
+              >
+                <SelectTrigger className="w-full rounded-lg">
                   <SelectValue placeholder="Select your primary fitness goal" />
                 </SelectTrigger>
                 <SelectContent>
@@ -223,22 +213,22 @@ const ProfileForm = ({ profile, onSave, onCancel, isLoading }: ProfileFormProps)
           </div>
         </CardContent>
 
-        <CardFooter className="flex flex-col sm:flex-row justify-between gap-2 sm:gap-0 pt-6 px-4 sm:px-6">
+        <CardFooter className="flex flex-col sm:flex-row justify-between gap-2 sm:gap-4 px-6 py-4">
           {onCancel && (
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={onCancel} 
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onCancel}
               disabled={isLoading}
-              className="w-full sm:w-auto order-2 sm:order-1"
+              className="w-full sm:w-auto rounded-lg"
             >
               Cancel
             </Button>
           )}
-          <Button 
-            type="submit" 
+          <Button
+            type="submit"
             disabled={isLoading}
-            className="w-full sm:w-auto order-1 sm:order-2"
+            className="w-full sm:w-auto rounded-lg bg-primary text-white hover:bg-primary/90"
           >
             {isLoading ? "Saving..." : "Save Profile"}
           </Button>

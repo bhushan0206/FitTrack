@@ -40,43 +40,75 @@ const SummaryCards = ({
     categories.length > 0 ? (completedCategories / categories.length) * 100 : 0;
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-      <Card className="bg-background border-border">
-        <CardContent className="pt-4 sm:pt-6 px-4 sm:px-6">
-          <div className="text-xl sm:text-2xl font-bold text-text">
-            {completedCategories}/{categories.length}
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <Card className="bg-gradient-to-br from-white to-gray-50/50 border-0 shadow-lg hover:shadow-xl transition-all duration-300 backdrop-blur-sm">
+        <CardContent className="pt-6 px-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-3xl font-bold text-gray-900 mb-1">
+                {completedCategories}/{categories.length}
+              </div>
+              <p className="text-gray-600 text-sm font-medium">
+                Categories Completed
+              </p>
+            </div>
+            <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-green-600 rounded-xl flex items-center justify-center">
+              <span className="text-white text-lg font-bold">✓</span>
+            </div>
           </div>
-          <p className="text-text-secondary text-sm sm:text-base">
-            Categories Completed Today
-          </p>
-          <div className="w-full bg-background-secondary rounded-full h-2 mt-2">
+          <div className="w-full bg-gray-200 rounded-full h-3 mt-4 overflow-hidden">
             <div
-              className="bg-primary h-2 rounded-full transition-all duration-300"
+              className="bg-gradient-to-r from-green-400 to-green-600 h-3 rounded-full transition-all duration-700 ease-out"
               style={{ width: `${overallPercentage}%` }}
             ></div>
           </div>
-        </CardContent>
-      </Card>
-
-      <Card className="bg-background border-border">
-        <CardContent className="pt-4 sm:pt-6 px-4 sm:px-6">
-          <div className="text-xl sm:text-2xl font-bold text-text">
-            {todayLogs.length}
-          </div>
-          <p className="text-text-secondary text-sm sm:text-base">
-            Entries Logged Today
+          <p className="text-xs text-gray-500 mt-2 font-medium">
+            {Math.round(overallPercentage)}% Complete
           </p>
         </CardContent>
       </Card>
 
-      <Card className="bg-background border-border sm:col-span-2 lg:col-span-1">
-        <CardContent className="pt-4 sm:pt-6 px-4 sm:px-6">
-          <div className="text-lg sm:text-2xl font-bold text-text">
-            {format(selectedDate, "MMM d, yyyy")}
+      <Card className="bg-gradient-to-br from-white to-blue-50/50 border-0 shadow-lg hover:shadow-xl transition-all duration-300 backdrop-blur-sm">
+        <CardContent className="pt-6 px-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-3xl font-bold text-gray-900 mb-1">
+                {todayLogs.length}
+              </div>
+              <p className="text-gray-600 text-sm font-medium">
+                Entries Logged
+              </p>
+            </div>
+            <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-blue-600 rounded-xl flex items-center justify-center">
+              <span className="text-white text-lg">📝</span>
+            </div>
           </div>
-          <p className="text-text-secondary text-sm sm:text-base">
-            Current Date
-          </p>
+          <div className="mt-4">
+            <p className="text-xs text-gray-500 font-medium">Today's Activity</p>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="bg-gradient-to-br from-white to-purple-50/50 border-0 shadow-lg hover:shadow-xl transition-all duration-300 backdrop-blur-sm md:col-span-2 lg:col-span-1">
+        <CardContent className="pt-6 px-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-lg font-bold text-gray-900 mb-1">
+                {format(selectedDate, "MMM d, yyyy")}
+              </div>
+              <p className="text-gray-600 text-sm font-medium">
+                Current Date
+              </p>
+            </div>
+            <div className="w-12 h-12 bg-gradient-to-br from-purple-400 to-purple-600 rounded-xl flex items-center justify-center">
+              <span className="text-white text-lg">📅</span>
+            </div>
+          </div>
+          <div className="mt-4">
+            <p className="text-xs text-gray-500 font-medium">
+              {format(selectedDate, "EEEE")}
+            </p>
+          </div>
         </CardContent>
       </Card>
     </div>

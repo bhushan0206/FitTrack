@@ -17,53 +17,92 @@ const CategoryList = ({
   onAdd,
 }: CategoryListProps) => {
   return (
-    <Card className="w-full bg-background border-border">
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="text-text">Tracking Categories</CardTitle>
-        <Button onClick={onAdd} size="sm" className="flex items-center gap-1">
-          <Plus size={16} />
-          Add New
+    <Card className="bg-gradient-to-br from-white to-purple-50/50 border-0 shadow-lg hover:shadow-xl transition-all duration-300 backdrop-blur-sm">
+      <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-6 py-6">
+        <CardTitle className="text-gray-900 text-xl font-bold flex items-center gap-2">
+          <span className="text-2xl">🏷️</span>
+          Categories
+        </CardTitle>
+        <Button
+          onClick={onAdd}
+          className="bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white font-medium px-6 py-2 rounded-xl shadow-lg transition-all duration-200 flex items-center gap-2"
+        >
+          <Plus size={18} />
+          Add Category
         </Button>
       </CardHeader>
-      <CardContent>
+      <CardContent className="px-6 pb-6">
         {categories.length === 0 ? (
-          <div className="text-center py-8 text-text-secondary">
-            No categories yet. Add your first tracking category.
+          <div className="text-center py-12">
+            <div className="w-16 h-16 bg-gradient-to-br from-purple-100 to-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <span className="text-2xl">🏷️</span>
+            </div>
+            <p className="text-gray-600 font-medium mb-2">No categories yet</p>
+            <p className="text-gray-500 text-sm">
+              Create your first category to start tracking!
+            </p>
           </div>
         ) : (
-          <div className="space-y-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {categories.map((category) => (
               <div
                 key={category.id}
-                className="flex items-center justify-between p-3 rounded-md border border-border bg-background-secondary"
+                className="p-5 rounded-2xl border-0 bg-gradient-to-br from-white to-gray-50/50 shadow-md hover:shadow-lg transition-all duration-300"
                 style={{
-                  borderLeftColor: category.color,
-                  borderLeftWidth: "4px",
+                  borderLeft: `5px solid ${category.color}`,
                 }}
               >
-                <div>
-                  <h3 className="font-medium text-text">{category.name}</h3>
-                  <p className="text-sm text-text-secondary">
-                    Target: {category.dailyTarget} {category.unit}
-                  </p>
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div
+                      className="w-4 h-4 rounded-full shadow-sm"
+                      style={{ backgroundColor: category.color }}
+                    />
+                    <h3 className="font-bold text-gray-900 text-lg">
+                      {category.name}
+                    </h3>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => onEdit(category)}
+                      className="h-9 w-9 p-0 hover:bg-gray-100 rounded-lg"
+                    >
+                      <Pencil size={16} />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => onDelete(category.id)}
+                      className="h-9 w-9 p-0 text-red-500 hover:bg-red-50 hover:text-red-600 rounded-lg"
+                    >
+                      <Trash2 size={16} />
+                    </Button>
+                  </div>
                 </div>
-                <div className="flex gap-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => onEdit(category)}
-                    className="h-8 w-8 p-0"
-                  >
-                    <Pencil size={16} />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => onDelete(category.id)}
-                    className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                  >
-                    <Trash2 size={16} />
-                  </Button>
+
+                <div className="space-y-3">
+                  <div className="p-3 bg-gradient-to-r from-gray-50/50 to-purple-50/50 rounded-lg border border-gray-100/50">
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600 font-medium text-sm">
+                        Daily Target
+                      </span>
+                      <span className="font-bold text-gray-800">
+                        {category.dailyTarget} {category.unit}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="w-3 h-3 rounded-full"
+                      style={{ backgroundColor: category.color }}
+                    />
+                    <span className="text-gray-600 font-medium text-sm">
+                      Measured in {category.unit}
+                    </span>
+                  </div>
                 </div>
               </div>
             ))}

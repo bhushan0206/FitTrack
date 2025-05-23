@@ -56,42 +56,45 @@ const LogEntryForm = ({
   };
 
   return (
-    <Card className="w-full bg-background border-border">
-      <CardHeader className="pb-4 px-4 sm:px-6">
-        <CardTitle
-          className="text-text text-lg sm:text-xl"
-          role="heading"
-          aria-level={2}
-        >
+    <Card className="w-full bg-gradient-to-br from-white to-blue-50/30 border-0 shadow-lg backdrop-blur-sm">
+      <CardHeader className="pb-4 px-6 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-t-lg">
+        <CardTitle className="text-lg sm:text-xl font-bold flex items-center gap-2">
+          <span className="text-2xl">📝</span>
           {log ? "Edit Log Entry" : "Add New Log Entry"}
         </CardTitle>
       </CardHeader>
       <form onSubmit={handleSubmit}>
-        <CardContent className="space-y-4 sm:space-y-6 px-4 sm:px-6">
+        <CardContent className="space-y-6 px-6 py-6">
           <div className="space-y-3">
-            <Label htmlFor="category" className="text-text block mb-1 text-sm">
+            <Label htmlFor="category" className="text-gray-700 font-medium text-sm">
               Category
             </Label>
             <Select value={categoryId} onValueChange={setCategoryId}>
-              <SelectTrigger className="w-full">
+              <SelectTrigger className="w-full bg-white/80 border-gray-200/50 rounded-xl">
                 <SelectValue placeholder="Select a category" />
               </SelectTrigger>
-              <SelectContent className="z-50 bg-background">
+              <SelectContent className="bg-white/95 backdrop-blur-md border-gray-200/50 rounded-xl">
                 {categories.map((category) => (
                   <SelectItem
                     key={category.id}
                     value={category.id}
-                    className="cursor-pointer"
+                    className="cursor-pointer hover:bg-gray-50/80 rounded-lg mx-1"
                   >
-                    {category.name}
+                    <div className="flex items-center gap-2">
+                      <div
+                        className="w-3 h-3 rounded-full"
+                        style={{ backgroundColor: category.color }}
+                      />
+                      {category.name}
+                    </div>
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
 
-          <div className="space-y-3 pt-1">
-            <Label htmlFor="value" className="text-text block mb-1 text-sm">
+          <div className="space-y-3">
+            <Label htmlFor="value" className="text-gray-700 font-medium text-sm">
               Value {selectedCategory ? `(${selectedCategory.unit})` : ""}
             </Label>
             <Input
@@ -104,39 +107,45 @@ const LogEntryForm = ({
                   ? `Enter ${selectedCategory.unit}`
                   : "Enter value"
               }
-              className="w-full"
+              className="w-full bg-white/80 border-gray-200/50 rounded-xl"
               required
             />
             {selectedCategory && (
-              <p className="text-xs text-text-secondary mt-1">
-                Daily target: {selectedCategory.dailyTarget}{" "}
-                {selectedCategory.unit}
-              </p>
+              <div className="p-3 bg-gradient-to-r from-gray-50/50 to-blue-50/50 rounded-lg border border-gray-100/50">
+                <p className="text-sm text-gray-600 font-medium">
+                  Daily target: {selectedCategory.dailyTarget} {selectedCategory.unit}
+                </p>
+                {value && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    Progress: {Math.round((parseFloat(value) / selectedCategory.dailyTarget) * 100)}% of daily goal
+                  </p>
+                )}
+              </div>
             )}
           </div>
 
-          <div className="space-y-3 pt-1">
-            <Label htmlFor="notes" className="text-text block mb-1 text-sm">
+          <div className="space-y-3">
+            <Label htmlFor="notes" className="text-gray-700 font-medium text-sm">
               Notes (Optional)
             </Label>
             <Textarea
               id="notes"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="Add any additional notes here"
+              placeholder="Add any additional notes here..."
               rows={3}
-              className="min-h-[80px] w-full resize-none"
+              className="min-h-[80px] w-full resize-none bg-white/80 border-gray-200/50 rounded-xl"
             />
           </div>
         </CardContent>
 
-        <CardFooter className="flex flex-col sm:flex-row justify-between gap-2 sm:gap-0 pt-4 sm:pt-6 px-4 sm:px-6">
+        <CardFooter className="flex flex-col sm:flex-row justify-between gap-3 px-6 py-6">
           {onCancel && (
             <Button
               type="button"
               variant="outline"
               onClick={onCancel}
-              className="w-full sm:w-auto order-2 sm:order-1"
+              className="w-full sm:w-auto order-2 sm:order-1 rounded-xl border-gray-200 hover:bg-gray-50"
             >
               Cancel
             </Button>
@@ -144,19 +153,12 @@ const LogEntryForm = ({
           <Button
             type="submit"
             disabled={!categoryId}
-            className="w-full sm:w-auto order-1 sm:order-2"
+            className="w-full sm:w-auto order-1 sm:order-2 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white rounded-xl shadow-lg"
           >
             {log ? "Update" : "Add"} Log Entry
           </Button>
         </CardFooter>
       </form>
-      <div className="px-4 sm:px-6 pb-4 sm:pb-6">
-        <p className="text-xs text-text-secondary">
-          {log
-            ? "Last updated: " + new Date(log.date).toLocaleString()
-            : "Note: All fields are required."}
-        </p>
-      </div>
     </Card>
   );
 };
