@@ -9,10 +9,23 @@ import StatisticsPanel from "./components/Dashboard/StatisticsPanel";
 import SignInPage from "@/components/Auth/SignInPage";
 import { setupAuthSync } from './lib/supabase';
 
+// Add debugging and validation
+console.log("Environment variables check:");
+console.log("Raw VITE_CLERK_PUBLISHABLE_KEY:", import.meta.env.VITE_CLERK_PUBLISHABLE_KEY);
 const clerkPubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
+console.log("Processed clerkPubKey:", clerkPubKey);
+console.log("All env vars:", import.meta.env);
 
-if (!clerkPubKey) {
-  throw new Error("Missing Publishable Key");
+// Clean the key if it contains the variable name
+const cleanClerkKey = clerkPubKey?.includes('=') 
+  ? clerkPubKey.split('=').pop()?.trim() || clerkPubKey
+  : clerkPubKey;
+
+console.log("Cleaned clerkPubKey:", cleanClerkKey);
+
+if (!cleanClerkKey || !cleanClerkKey.startsWith('pk_')) {
+  console.error("Invalid Clerk publishable key:", cleanClerkKey);
+  throw new Error(`Missing or invalid Publishable Key. Expected key starting with 'pk_' but got: ${cleanClerkKey}`);
 }
 
 // Create a separate component for auth-dependent logic
