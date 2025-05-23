@@ -1,0 +1,36 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: #ffffff;
+    --background-secondary: #f4f4f5;
+    --text: #18181b;
+    --text-secondary: #71717a;
+    --primary: #3b82f6;
+    --primary-foreground: #ffffff;
+    --border: #e4e4e7;
+  }
+
+  .dark {
+    --background: #18181b;
+    --background-secondary: #27272a;
+    --text: #fafafa;
+    --text-secondary: #a1a1aa;
+    --primary: #60a5fa;
+    --primary-foreground: #18181b;
+    --border: #3f3f46;
+  }
+
+  body {
+    @apply bg-background text-text transition-colors duration-300;
+  }
+}
+
+@layer components {
+  /* Fix z-index issues with dropdowns */
+  [data-radix-popper-content-wrapper] {
+    z-index: 50 !important;
+  }
+}

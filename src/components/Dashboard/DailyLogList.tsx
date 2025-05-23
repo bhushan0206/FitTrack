@@ -26,9 +26,9 @@ const DailyLogList = ({
   };
 
   return (
-    <Card className="w-full bg-white">
+    <Card className="w-full bg-background border-border">
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>
+        <CardTitle className="text-text">
           Daily Logs - {format(selectedDate, "MMMM d, yyyy")}
         </CardTitle>
         <Button onClick={onAdd} size="sm" className="flex items-center gap-1">
@@ -38,7 +38,7 @@ const DailyLogList = ({
       </CardHeader>
       <CardContent>
         {logs.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
+          <div className="text-center py-8 text-text-secondary">
             No logs for this date. Add your first log entry.
           </div>
         ) : (
@@ -49,19 +49,19 @@ const DailyLogList = ({
 
               const progress = (log.value / category.dailyTarget) * 100;
               const progressColor =
-                progress >= 100 ? "bg-green-500" : "bg-blue-500";
+                progress >= 100 ? "bg-primary" : "bg-primary/60";
 
               return (
                 <div
                   key={log.id}
-                  className="p-3 rounded-md border"
+                  className="p-3 rounded-md border border-border bg-background-secondary"
                   style={{
                     borderLeftColor: category?.color || "#3b82f6",
                     borderLeftWidth: "4px",
                   }}
                 >
                   <div className="flex items-center justify-between mb-2">
-                    <h3 className="font-medium">{category?.name}</h3>
+                    <h3 className="font-medium text-text">{category?.name}</h3>
                     <div className="flex gap-2">
                       <Button
                         variant="ghost"
@@ -83,15 +83,15 @@ const DailyLogList = ({
                   </div>
 
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm">
+                    <span className="text-sm text-text-secondary">
                       {log.value} / {category?.dailyTarget} {category?.unit}
                     </span>
-                    <span className="text-sm font-medium">
+                    <span className="text-sm font-medium text-text-secondary">
                       {Math.round(progress)}%
                     </span>
                   </div>
 
-                  <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div className="w-full bg-background rounded-full h-2">
                     <div
                       className={`${progressColor} h-2 rounded-full`}
                       style={{ width: `${Math.min(progress, 100)}%` }}
@@ -99,7 +99,7 @@ const DailyLogList = ({
                   </div>
 
                   {log.notes && (
-                    <p className="mt-2 text-sm text-muted-foreground">
+                    <p className="mt-2 text-sm text-text-secondary">
                       {log.notes}
                     </p>
                   )}

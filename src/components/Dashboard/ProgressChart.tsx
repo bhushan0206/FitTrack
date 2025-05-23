@@ -52,9 +52,9 @@ const ProgressChart = ({ logs, categories }: ProgressChartProps) => {
 
   if (categories.length === 0) {
     return (
-      <Card className="w-full bg-white">
+      <Card className="w-full bg-background border-border">
         <CardContent className="pt-6">
-          <div className="text-center py-8 text-muted-foreground">
+          <div className="text-center py-8 text-text-secondary">
             Add categories to see progress charts
           </div>
         </CardContent>
@@ -63,9 +63,9 @@ const ProgressChart = ({ logs, categories }: ProgressChartProps) => {
   }
 
   return (
-    <Card className="w-full bg-white">
+    <Card className="w-full bg-background border-border">
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Weekly Progress</CardTitle>
+        <CardTitle className="text-text">Weekly Progress</CardTitle>
         <Select
           value={selectedCategoryId}
           onValueChange={setSelectedCategoryId}
@@ -87,7 +87,7 @@ const ProgressChart = ({ logs, categories }: ProgressChartProps) => {
           {chartData.map((day) => {
             const height = `${Math.min(day.percentage, 100)}%`;
             const bgColor =
-              day.percentage >= 100 ? "bg-green-500" : "bg-blue-500";
+              day.percentage >= 100 ? "bg-primary" : "bg-primary/60";
 
             return (
               <div
@@ -100,10 +100,10 @@ const ProgressChart = ({ logs, categories }: ProgressChartProps) => {
                     style={{ height }}
                   ></div>
                 </div>
-                <div className="text-xs mt-2 text-center">
+                <div className="text-xs mt-2 text-text">
                   {format(day.date, "EEE")}
                 </div>
-                <div className="text-xs text-muted-foreground">
+                <div className="text-xs text-text-secondary">
                   {format(day.date, "d")}
                 </div>
               </div>
@@ -112,7 +112,7 @@ const ProgressChart = ({ logs, categories }: ProgressChartProps) => {
         </div>
 
         {selectedCategory && (
-          <div className="mt-4 text-center text-sm">
+          <div className="mt-4 text-center text-sm text-text">
             <span className="font-medium">{selectedCategory.name}</span> -
             Target: {selectedCategory.dailyTarget} {selectedCategory.unit} per
             day

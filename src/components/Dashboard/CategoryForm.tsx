@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { TrackingCategory } from "@/types/fitness";
-import { generateId } from "@/lib/storage";
+import { generateId } from "@/lib/supabaseStorage";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -41,14 +41,18 @@ const CategoryForm = ({ onSave, category, onCancel }: CategoryFormProps) => {
   };
 
   return (
-    <Card className="w-full bg-white">
-      <CardHeader>
-        <CardTitle>{category ? "Edit Category" : "Add New Category"}</CardTitle>
+    <Card className="w-full bg-background border-border max-w-md mx-auto">
+      <CardHeader className="pb-4">
+        <CardTitle className="text-text">
+          {category ? "Edit Category" : "Add New Category"}
+        </CardTitle>
       </CardHeader>
       <form onSubmit={handleSubmit}>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-6">
           <div className="space-y-2">
-            <Label htmlFor="name">Category Name</Label>
+            <Label htmlFor="name" className="text-text">
+              Category Name
+            </Label>
             <Input
               id="name"
               value={name}
@@ -59,7 +63,9 @@ const CategoryForm = ({ onSave, category, onCancel }: CategoryFormProps) => {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="unit">Unit of Measurement</Label>
+            <Label htmlFor="unit" className="text-text">
+              Unit of Measurement
+            </Label>
             <Input
               id="unit"
               value={unit}
@@ -70,7 +76,9 @@ const CategoryForm = ({ onSave, category, onCancel }: CategoryFormProps) => {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="target">Daily Target</Label>
+            <Label htmlFor="target" className="text-text">
+              Daily Target
+            </Label>
             <Input
               id="target"
               type="number"
@@ -82,7 +90,9 @@ const CategoryForm = ({ onSave, category, onCancel }: CategoryFormProps) => {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="color">Color</Label>
+            <Label htmlFor="color" className="text-text">
+              Color
+            </Label>
             <div className="flex items-center gap-2">
               <Input
                 id="color"
@@ -101,7 +111,7 @@ const CategoryForm = ({ onSave, category, onCancel }: CategoryFormProps) => {
           </div>
         </CardContent>
 
-        <CardFooter className="flex justify-between">
+        <CardFooter className="flex justify-between pt-6">
           {onCancel && (
             <Button type="button" variant="outline" onClick={onCancel}>
               Cancel

@@ -11,6 +11,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { useAuth, useUser } from '@clerk/clerk-react';
 
 import CategoryList from "./CategoryList";
 import CategoryForm from "./CategoryForm";
@@ -30,11 +31,12 @@ import {
   addLogEntry,
   updateLogEntry,
   deleteLogEntry,
-  getLogsByDate,
   generateId,
 } from "@/lib/supabaseStorage";
 
 const StatisticsPanel = () => {
+  const { userId } = useAuth();
+  const { user } = useUser();
   const [categories, setCategories] = useState<TrackingCategory[]>([]);
   const [logs, setLogs] = useState<DailyLog[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -56,9 +58,13 @@ const StatisticsPanel = () => {
   // Initialize data from Supabase
   useEffect(() => {
     const loadUserData = async () => {
+      if (!userId) return;
+      
       try {
         setIsLoading(true);
-        const profile = await initializeUserProfile();
+        // Get user name from Clerk
+        const userName = user?.fullName || user?.firstName || user?.username;
+        const profile = await initializeUserProfile(userId, userName);
         if (profile) {
           setCategories(profile.categories);
           setLogs(profile.logs);
@@ -75,7 +81,7 @@ const StatisticsPanel = () => {
     };
 
     loadUserData();
-  }, [toast]);
+  }, [toast, userId, user]);
 
   // Format selected date as string
   const selectedDateString = format(selectedDate, "yyyy-MM-dd");
@@ -97,8 +103,10 @@ const StatisticsPanel = () => {
   };
 
   const handleDeleteCategory = async (categoryId: string) => {
+    if (!userId) return;
+    
     try {
-      const updatedProfile = await deleteCategory(categoryId);
+      const updatedProfile = await deleteCategory(categoryId, userId);
       if (updatedProfile) {
         setCategories(updatedProfile.categories);
         setLogs(updatedProfile.logs);
@@ -117,10 +125,14 @@ const StatisticsPanel = () => {
   };
 
   const handleSaveCategory = async (category: TrackingCategory) => {
+    if (!userId) return;
+    
     try {
+      console.log('Saving category:', category); // Add debug log
+      
       const updatedProfile = editingCategory
-        ? await updateCategory(category)
-        : await addCategory(category);
+        ? await updateCategory(category, userId)
+        : await addCategory(category, userId);
 
       if (updatedProfile) {
         setCategories(updatedProfile.categories);
@@ -131,6 +143,7 @@ const StatisticsPanel = () => {
         });
       }
     } catch (error: any) {
+      console.error('Error saving category:', error); // Add debug log
       toast({
         title: "Error",
         description:
@@ -153,8 +166,10 @@ const StatisticsPanel = () => {
   };
 
   const handleDeleteLog = async (logId: string) => {
+    if (!userId) return;
+    
     try {
-      const updatedProfile = await deleteLogEntry(logId);
+      const updatedProfile = await deleteLogEntry(logId, userId);
       if (updatedProfile) {
         setLogs(updatedProfile.logs);
         toast({
@@ -172,10 +187,12 @@ const StatisticsPanel = () => {
   };
 
   const handleSaveLog = async (log: DailyLog) => {
+    if (!userId) return;
+    
     try {
       const updatedProfile = editingLog
-        ? await updateLogEntry(log)
-        : await addLogEntry(log);
+        ? await updateLogEntry(log, userId)
+        : await addLogEntry(log, userId);
 
       if (updatedProfile) {
         setLogs(updatedProfile.logs);
@@ -205,20 +222,23 @@ const StatisticsPanel = () => {
   }
 
   return (
-    <div className="w-full h-full bg-gray-50 p-4 overflow-auto">
+    <div className="w-full h-full bg-background p-4 overflow-auto">
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-6">
-          <h1 className="text-3xl font-bold">Fitness Tracker</h1>
+          <h1 className="text-3xl font-bold text-text">Fitness Tracker</h1>
 
           <div className="flex items-center gap-2 mt-4 md:mt-0">
             <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
               <PopoverTrigger asChild>
-                <Button variant="outline" className="flex items-center gap-2">
+                <Button 
+                  variant="outline" 
+                  className="flex items-center gap-2 bg-background-secondary text-text"
+                >
                   <CalendarIcon size={16} />
                   {format(selectedDate, "MMMM d, yyyy")}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="end">
+              <PopoverContent className="w-auto p-0 bg-background border-border" align="end">
                 <Calendar
                   mode="single"
                   selected={selectedDate}
@@ -229,6 +249,7 @@ const StatisticsPanel = () => {
                     }
                   }}
                   initialFocus
+                  className="bg-background text-text"
                 />
               </PopoverContent>
             </Popover>
@@ -236,10 +257,10 @@ const StatisticsPanel = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-6">
-            <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-            <TabsTrigger value="logs">Daily Logs</TabsTrigger>
-            <TabsTrigger value="categories">Categories</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-3 mb-6 bg-background-secondary">
+            <TabsTrigger value="dashboard" className="text-text data-[state=active]:bg-background">Dashboard</TabsTrigger>
+            <TabsTrigger value="logs" className="text-text data-[state=active]:bg-background">Daily Logs</TabsTrigger>
+            <TabsTrigger value="categories" className="text-text data-[state=active]:bg-background">Categories</TabsTrigger>
           </TabsList>
 
           <TabsContent value="dashboard" className="space-y-6">
@@ -283,9 +304,8 @@ const StatisticsPanel = () => {
           </TabsContent>
         </Tabs>
 
-        {/* Category Dialog */}
         <Dialog open={categoryDialogOpen} onOpenChange={setCategoryDialogOpen}>
-          <DialogContent>
+          <DialogContent className="bg-background border-border max-w-lg overflow-hidden">
             <CategoryForm
               onSave={handleSaveCategory}
               category={editingCategory}
@@ -294,9 +314,8 @@ const StatisticsPanel = () => {
           </DialogContent>
         </Dialog>
 
-        {/* Log Entry Dialog */}
         <Dialog open={logDialogOpen} onOpenChange={setLogDialogOpen}>
-          <DialogContent>
+          <DialogContent className="bg-background border-border max-w-lg overflow-hidden">
             <LogEntryForm
               categories={categories}
               onSave={handleSaveLog}

@@ -41,34 +41,34 @@ const SummaryCards = ({
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-      <Card className="bg-white">
+      <Card className="bg-background border-border">
         <CardContent className="pt-6">
-          <div className="text-2xl font-bold">
+          <div className="text-2xl font-bold text-text">
             {completedCategories}/{categories.length}
           </div>
-          <p className="text-muted-foreground">Categories Completed Today</p>
-          <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+          <p className="text-text-secondary">Categories Completed Today</p>
+          <div className="w-full bg-background-secondary rounded-full h-2 mt-2">
             <div
-              className="bg-green-500 h-2 rounded-full"
+              className="bg-primary h-2 rounded-full"
               style={{ width: `${overallPercentage}%` }}
             ></div>
           </div>
         </CardContent>
       </Card>
 
-      <Card className="bg-white">
+      <Card className="bg-background border-border">
         <CardContent className="pt-6">
-          <div className="text-2xl font-bold">{todayLogs.length}</div>
-          <p className="text-muted-foreground">Entries Logged Today</p>
+          <div className="text-2xl font-bold text-text">{todayLogs.length}</div>
+          <p className="text-text-secondary">Entries Logged Today</p>
         </CardContent>
       </Card>
 
-      <Card className="bg-white">
+      <Card className="bg-background border-border">
         <CardContent className="pt-6">
-          <div className="text-2xl font-bold">
+          <div className="text-2xl font-bold text-text">
             {format(selectedDate, "MMMM d, yyyy")}
           </div>
-          <p className="text-muted-foreground">Current Date</p>
+          <p className="text-text-secondary">Current Date</p>
         </CardContent>
       </Card>
     </div>

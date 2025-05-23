@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { DailyLog, TrackingCategory } from "@/types/fitness";
-import { generateId } from "@/lib/storage";
+import { generateId } from "@/lib/supabaseStorage";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -56,21 +56,29 @@ const LogEntryForm = ({
   };
 
   return (
-    <Card className="w-full bg-white">
-      <CardHeader>
-        <CardTitle>{log ? "Edit Log Entry" : "Add New Log Entry"}</CardTitle>
+    <Card className="w-full bg-background border-border">
+      <CardHeader className="pb-4">
+        <CardTitle className="text-text">
+          {log ? "Edit Log Entry" : "Add New Log Entry"}
+        </CardTitle>
       </CardHeader>
       <form onSubmit={handleSubmit}>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="category">Category</Label>
+        <CardContent className="space-y-6">
+          <div className="space-y-3">
+            <Label htmlFor="category" className="text-text block mb-1">
+              Category
+            </Label>
             <Select value={categoryId} onValueChange={setCategoryId}>
-              <SelectTrigger>
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select a category" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="z-50 bg-background">
                 {categories.map((category) => (
-                  <SelectItem key={category.id} value={category.id}>
+                  <SelectItem
+                    key={category.id}
+                    value={category.id}
+                    className="cursor-pointer"
+                  >
                     {category.name}
                   </SelectItem>
                 ))}
@@ -78,8 +86,8 @@ const LogEntryForm = ({
             </Select>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="value">
+          <div className="space-y-3 pt-1">
+            <Label htmlFor="value" className="text-text block mb-1">
               Value {selectedCategory ? `(${selectedCategory.unit})` : ""}
             </Label>
             <Input
@@ -95,26 +103,29 @@ const LogEntryForm = ({
               required
             />
             {selectedCategory && (
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-text-secondary mt-1">
                 Daily target: {selectedCategory.dailyTarget}{" "}
                 {selectedCategory.unit}
               </p>
             )}
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="notes">Notes (Optional)</Label>
+          <div className="space-y-3 pt-1">
+            <Label htmlFor="notes" className="text-text block mb-1">
+              Notes (Optional)
+            </Label>
             <Textarea
               id="notes"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Add any additional notes here"
               rows={3}
+              className="min-h-[80px]"
             />
           </div>
         </CardContent>
 
-        <CardFooter className="flex justify-between">
+        <CardFooter className="flex justify-between pt-6">
           {onCancel && (
             <Button type="button" variant="outline" onClick={onCancel}>
               Cancel
@@ -125,6 +136,13 @@ const LogEntryForm = ({
           </Button>
         </CardFooter>
       </form>
+      <div className="px-6 pb-6">
+        <p className="text-xs text-text-secondary">
+          {log
+            ? "Last updated: " + new Date(log.date).toLocaleString()
+            : "Note: All fields are required."}
+        </p>
+      </div>
     </Card>
   );
 };

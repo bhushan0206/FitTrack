@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { signIn, signUp } from "@/lib/auth";
+import { SignIn } from "@clerk/clerk-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,13 +15,14 @@ import { useToast } from "@/components/ui/use-toast";
 
 interface AuthFormProps {
   onAuthSuccess?: () => void;
+  initialTab?: "login" | "register";
 }
 
-const AuthForm = ({ onAuthSuccess }: AuthFormProps) => {
+const AuthForm = ({ onAuthSuccess, initialTab = "login" }: AuthFormProps) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState("login");
+  const [activeTab, setActiveTab] = useState(initialTab);
   const { toast } = useToast();
 
   const handleAuth = async (e: React.FormEvent) => {
@@ -30,17 +31,9 @@ const AuthForm = ({ onAuthSuccess }: AuthFormProps) => {
 
     try {
       if (activeTab === "login") {
-        await signIn(email, password);
-        toast({
-          title: "Success",
-          description: "You have been logged in successfully",
-        });
+        // Handle login logic
       } else {
-        await signUp(email, password);
-        toast({
-          title: "Success",
-          description: "Account created! Check your email for confirmation.",
-        });
+        // Handle registration logic
       }
 
       if (onAuthSuccess) {
@@ -49,7 +42,8 @@ const AuthForm = ({ onAuthSuccess }: AuthFormProps) => {
     } catch (error: any) {
       toast({
         title: "Error",
-        description: error.message || "An error occurred during authentication",
+        description:
+          error.message || "An error occurred during authentication",
         variant: "destructive",
       });
     } finally {
@@ -58,63 +52,34 @@ const AuthForm = ({ onAuthSuccess }: AuthFormProps) => {
   };
 
   return (
-    <Card className="w-full max-w-md mx-auto bg-white">
+    <Card className="w-full max-w-md mx-auto bg-background border-border">
       <CardHeader>
-        <CardTitle className="text-center">Fitness Tracker</CardTitle>
+        <CardTitle className="text-center text-text">Fitness Tracker</CardTitle>
       </CardHeader>
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="login">Login</TabsTrigger>
-          <TabsTrigger value="register">Register</TabsTrigger>
-        </TabsList>
-        <CardContent className="pt-6">
-          <form onSubmit={handleAuth} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="your.email@example.com"
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                required
-              />
-            </div>
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading
-                ? "Processing..."
-                : activeTab === "login"
-                  ? "Login"
-                  : "Register"}
-            </Button>
-          </form>
-        </CardContent>
-      </Tabs>
-      <CardFooter className="flex justify-center text-sm text-muted-foreground">
-        {activeTab === "login"
-          ? "Don't have an account?"
-          : "Already have an account?"}
-        <Button
-          variant="link"
-          onClick={() =>
-            setActiveTab(activeTab === "login" ? "register" : "login")
-          }
-          className="px-2"
-        >
-          {activeTab === "login" ? "Register" : "Login"}
-        </Button>
-      </CardFooter>
+      <CardContent>
+        <SignIn
+          path="/login"
+          routing="path"
+          signUpUrl="/register"
+          redirectUrl="/"
+          afterSignInUrl="/"
+          appearance={{
+            elements: {
+              rootBox: "w-full",
+              card: "bg-background",
+              headerTitle: "text-text",
+              headerSubtitle: "text-text-secondary",
+              socialButtonsBlockButton:
+                "bg-background-secondary text-text border-border hover:bg-background-secondary/80",
+              formButtonPrimary:
+                "bg-primary text-primary-foreground hover:bg-primary/90",
+              formFieldInput: "bg-background-secondary text-text border-border",
+              formFieldLabel: "text-text",
+              footer: "text-text-secondary",
+            },
+          }}
+        />
+      </CardContent>
     </Card>
   );
 };

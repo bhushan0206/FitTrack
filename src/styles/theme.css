@@ -1,0 +1,63 @@
+:root {
+  --background-primary: #ffffff;
+  --text-primary: #000000;
+  --border: #e0e0e0;
+  --primary: #0070f3;
+  --primary-foreground: #ffffff;
+  --secondary: #606060;
+  --secondary-foreground: #ffffff;
+  --muted: #f0f0f0;
+  --muted-foreground: #606060;
+  --accent: #eaeaea;
+  --accent-foreground: #0f0f0f;
+  --card: #ffffff;
+  --card-foreground: #000000;
+}
+
+.dark {
+  --background-primary: #000000;
+  --text-primary: #ffffff;
+  --border: #404040;
+  --primary: #66b3ff;
+  --primary-foreground: #000000;
+  --secondary: #a0aec0;
+  --secondary-foreground: #000000;
+  --muted: #262626;
+  --muted-foreground: #a0aec0;
+  --accent: #262626;
+  --accent-foreground: #ffffff;
+  --card: #1a1a1a;
+  --card-foreground: #ffffff;
+}
+
+body {
+  background-color: var(--background-primary);
+  color: var(--text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Add this class to cards/containers in your app */
+.card {
+  background-color: var(--card-background);
+  border: 1px solid var(--border-color);
+}
+
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  background: var(--background-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.theme-toggle:hover {
+  background: var(--background-primary);
+  border-color: var(--primary);
+}

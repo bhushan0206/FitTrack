@@ -2,11 +2,16 @@ import { Suspense, useEffect, useState } from "react";
 import { useRoutes, Routes, Route } from "react-router-dom";
 import Home from "./components/home";
 import LoginPage from "./pages/LoginPage";
+import RegisterPage from "./pages/RegisterPage";
 import AppLayout from "./components/Layout/AppLayout";
 import AuthGuard from "./components/Auth/AuthGuard";
-import routes from "tempo-routes";
 import { Toaster } from "./components/ui/toaster";
 import { supabase } from "./lib/supabase";
+import { ThemeProvider } from "./contexts/ThemeContext";
+import { ClerkProvider } from "@clerk/clerk-react";
+import "./styles/theme.css";
+
+const clerkPubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
 function App() {
   const [isInitialized, setIsInitialized] = useState(false);
@@ -37,28 +42,30 @@ function App() {
   }
 
   return (
-    <Suspense fallback={<p>Loading...</p>}>
-      <>
-        <Routes>
-          <Route path="/login" element={<LoginPage />} />
-          <Route
-            path="/"
-            element={
-              <AuthGuard>
-                <AppLayout />
-              </AuthGuard>
-            }
-          >
-            <Route index element={<Home />} />
-          </Route>
-          {import.meta.env.VITE_TEMPO === "true" && (
-            <Route path="/tempobook/*" />
-          )}
-        </Routes>
-        {import.meta.env.VITE_TEMPO === "true" && useRoutes(routes)}
-        <Toaster />
-      </>
-    </Suspense>
+    <ClerkProvider publishableKey={clerkPubKey}>
+      <ThemeProvider>
+        <Suspense fallback={<p>Loading...</p>}>
+          <>
+            <Routes>
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/register" element={<RegisterPage />} />
+              <Route path="/sign-up" element={<RegisterPage />} />
+              <Route
+                path="/*"
+                element={
+                  <AuthGuard>
+                    <AppLayout />
+                  </AuthGuard>
+                }
+              >
+                <Route index element={<Home />} />
+              </Route>
+            </Routes>
+            <Toaster />
+          </>
+        </Suspense>
+      </ThemeProvider>
+    </ClerkProvider>
   );
 }
 

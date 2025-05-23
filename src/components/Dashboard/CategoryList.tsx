@@ -17,9 +17,9 @@ const CategoryList = ({
   onAdd,
 }: CategoryListProps) => {
   return (
-    <Card className="w-full bg-white">
+    <Card className="w-full bg-background border-border">
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Tracking Categories</CardTitle>
+        <CardTitle className="text-text">Tracking Categories</CardTitle>
         <Button onClick={onAdd} size="sm" className="flex items-center gap-1">
           <Plus size={16} />
           Add New
@@ -27,7 +27,7 @@ const CategoryList = ({
       </CardHeader>
       <CardContent>
         {categories.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
+          <div className="text-center py-8 text-text-secondary">
             No categories yet. Add your first tracking category.
           </div>
         ) : (
@@ -35,15 +35,15 @@ const CategoryList = ({
             {categories.map((category) => (
               <div
                 key={category.id}
-                className="flex items-center justify-between p-3 rounded-md border"
+                className="flex items-center justify-between p-3 rounded-md border border-border bg-background-secondary"
                 style={{
                   borderLeftColor: category.color,
                   borderLeftWidth: "4px",
                 }}
               >
                 <div>
-                  <h3 className="font-medium">{category.name}</h3>
-                  <p className="text-sm text-muted-foreground">
+                  <h3 className="font-medium text-text">{category.name}</h3>
+                  <p className="text-sm text-text-secondary">
                     Target: {category.dailyTarget} {category.unit}
                   </p>
                 </div>

@@ -1,36 +1,134 @@
+import { supabaseAdmin } from './supabaseAdmin';
 import { supabase } from "./supabase";
 import { TrackingCategory, DailyLog, UserProfile } from "@/types/fitness";
-import { getCurrentUser } from "./auth";
 
-// Initialize user profile in Supabase
-export const initializeUserProfile = async (): Promise<UserProfile | null> => {
+// Generate a unique ID
+export const generateId = (): string => {
+  return (
+    Math.random().toString(36).substring(2, 15) +
+    Math.random().toString(36).substring(2, 15)
+  );
+};
+
+// Add a new category
+export const addCategory = async (
+  category: TrackingCategory,
+  userId: string
+): Promise<UserProfile | null> => {
   try {
-    const user = await getCurrentUser();
-    if (!user) return null;
+    if (!userId) throw new Error("User not authenticated");
 
-    // Check if user profile exists
-    const { data: existingProfile } = await supabase
+    // Use admin client to bypass RLS
+    const { data, error } = await supabaseAdmin
+      .from("categories")
+      .insert({
+        id: category.id,
+        name: category.name,
+        unit: category.unit,
+        daily_target: category.dailyTarget,
+        color: category.color,
+        user_id: userId,
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    // Return updated profile with new category
+    const updatedProfile = await getUserProfile(userId);
+    return updatedProfile;
+  } catch (error) {
+    console.error("Error adding category:", error);
+    return null;
+  }
+};
+
+// Get user profile from Supabase
+export const getUserProfile = async (userId: string): Promise<UserProfile | null> => {
+  try {
+    if (!userId) throw new Error("User not authenticated");
+
+    // Get user profile info
+    const { data: profile, error: profileError } = await supabaseAdmin
       .from("profiles")
       .select("*")
-      .eq("id", user.id)
+      .eq("id", userId)
+      .single();
+
+    if (profileError) {
+      console.warn("Profile not found, creating new one");
+    }
+
+    // Use admin client to bypass RLS
+    const { data: categories, error: categoriesError } = await supabaseAdmin
+      .from("categories")
+      .select("*")
+      .eq("user_id", userId);
+
+    if (categoriesError) throw categoriesError;
+
+    const { data: logs, error: logsError } = await supabaseAdmin
+      .from("logs")
+      .select("*")
+      .eq("user_id", userId);
+
+    if (logsError) throw logsError;
+
+    // Transform data to match frontend types
+    const transformedCategories = (categories || []).map((cat) => ({
+      id: cat.id,
+      name: cat.name,
+      unit: cat.unit,
+      dailyTarget: cat.daily_target,
+      color: cat.color,
+    }));
+
+    const transformedLogs = (logs || []).map((log) => ({
+      id: log.id,
+      categoryId: log.category_id,
+      date: log.date,
+      value: log.value,
+      notes: log.notes,
+    }));
+
+    return {
+      id: userId,
+      name: profile?.name || "User",
+      categories: transformedCategories,
+      logs: transformedLogs,
+    };
+  } catch (error) {
+    console.error("Error getting user profile:", error);
+    return null;
+  }
+};
+
+// Initialize user profile in Supabase
+export const initializeUserProfile = async (userId: string, userName?: string): Promise<UserProfile | null> => {
+  try {
+    // Check if user profile exists
+    const { data: existingProfile } = await supabaseAdmin
+      .from("profiles")
+      .select("*")
+      .eq("id", userId)
       .single();
 
     if (existingProfile) {
       // Get categories for this user
-      const { data: categories } = await supabase
+      const { data: categories } = await supabaseAdmin
         .from("categories")
         .select("*")
-        .eq("user_id", user.id);
+        .eq("user_id", userId);
 
       // Get logs for this user
-      const { data: logs } = await supabase
+      const { data: logs } = await supabaseAdmin
         .from("logs")
         .select("*")
-        .eq("user_id", user.id);
+        .eq("user_id", userId);
 
       return {
-        id: user.id,
-        name: existingProfile.name || user.email?.split("@")[0] || "User",
+        id: userId,
+        name: existingProfile.name || "User",
         categories: categories?.map(mapCategoryFromDB) || [],
         logs: logs?.map(mapLogFromDB) || [],
       };
@@ -39,43 +137,46 @@ export const initializeUserProfile = async (): Promise<UserProfile | null> => {
     // Create default profile with sample categories
     const defaultCategories = [
       {
+        id: generateId(),
         name: "Steps",
         unit: "steps",
         daily_target: 10000,
         color: "#3b82f6",
-        user_id: user.id,
+        user_id: userId,
       },
       {
+        id: generateId(),
         name: "Water",
         unit: "glasses",
         daily_target: 8,
         color: "#06b6d4",
-        user_id: user.id,
+        user_id: userId,
       },
       {
+        id: generateId(),
         name: "Workout",
         unit: "minutes",
         daily_target: 30,
         color: "#10b981",
-        user_id: user.id,
+        user_id: userId,
       },
     ];
 
-    // Create profile
-    await supabase.from("profiles").insert({
-      id: user.id,
-      name: user.email?.split("@")[0] || "User",
+    // Create profile with admin client
+    await supabaseAdmin.from("profiles").insert({
+      id: userId,
+      name: userName || "User",
     });
 
-    // Create default categories
-    const { data: insertedCategories } = await supabase
+    // Create default categories with admin client
+    const { data: insertedCategories } = await supabaseAdmin
       .from("categories")
       .insert(defaultCategories)
       .select();
 
     return {
-      id: user.id,
-      name: user.email?.split("@")[0] || "User",
+      id: userId,
+      name: userName || "User",
       categories: insertedCategories?.map(mapCategoryFromDB) || [],
       logs: [],
     };
@@ -85,47 +186,15 @@ export const initializeUserProfile = async (): Promise<UserProfile | null> => {
   }
 };
 
-// Get user profile from Supabase
-export const getUserProfile = async (): Promise<UserProfile | null> => {
-  return await initializeUserProfile();
-};
-
-// Add a new category
-export const addCategory = async (
-  category: TrackingCategory,
-): Promise<UserProfile | null> => {
-  try {
-    const user = await getCurrentUser();
-    if (!user) return null;
-
-    const { data } = await supabase
-      .from("categories")
-      .insert({
-        id: category.id,
-        name: category.name,
-        unit: category.unit,
-        daily_target: category.dailyTarget,
-        color: category.color,
-        user_id: user.id,
-      })
-      .select();
-
-    return await getUserProfile();
-  } catch (error) {
-    console.error("Error adding category:", error);
-    return null;
-  }
-};
-
 // Update an existing category
 export const updateCategory = async (
   category: TrackingCategory,
+  userId: string
 ): Promise<UserProfile | null> => {
   try {
-    const user = await getCurrentUser();
-    if (!user) return null;
+    if (!userId) throw new Error("User not authenticated");
 
-    await supabase
+    const { data, error } = await supabaseAdmin
       .from("categories")
       .update({
         name: category.name,
@@ -134,9 +203,12 @@ export const updateCategory = async (
         color: category.color,
       })
       .eq("id", category.id)
-      .eq("user_id", user.id);
+      .eq("user_id", userId)
+      .select()
+      .single();
 
-    return await getUserProfile();
+    if (error) throw error;
+    return await getUserProfile(userId);
   } catch (error) {
     console.error("Error updating category:", error);
     return null;
@@ -146,26 +218,19 @@ export const updateCategory = async (
 // Delete a category
 export const deleteCategory = async (
   categoryId: string,
+  userId: string
 ): Promise<UserProfile | null> => {
   try {
-    const user = await getCurrentUser();
-    if (!user) return null;
+    if (!userId) throw new Error("User not authenticated");
 
-    // Delete all logs for this category first
-    await supabase
-      .from("logs")
-      .delete()
-      .eq("category_id", categoryId)
-      .eq("user_id", user.id);
-
-    // Then delete the category
-    await supabase
+    const { error } = await supabaseAdmin
       .from("categories")
       .delete()
       .eq("id", categoryId)
-      .eq("user_id", user.id);
+      .eq("user_id", userId);
 
-    return await getUserProfile();
+    if (error) throw error;
+    return await getUserProfile(userId);
   } catch (error) {
     console.error("Error deleting category:", error);
     return null;
@@ -175,21 +240,26 @@ export const deleteCategory = async (
 // Add a new log entry
 export const addLogEntry = async (
   log: DailyLog,
+  userId: string
 ): Promise<UserProfile | null> => {
   try {
-    const user = await getCurrentUser();
-    if (!user) return null;
+    if (!userId) throw new Error("User not authenticated");
 
-    await supabase.from("logs").insert({
-      id: log.id,
-      category_id: log.categoryId,
-      date: log.date,
-      value: log.value,
-      notes: log.notes,
-      user_id: user.id,
-    });
+    const { data, error } = await supabaseAdmin
+      .from("logs")
+      .insert({
+        id: log.id,
+        category_id: log.categoryId,
+        user_id: userId,
+        date: log.date,
+        value: log.value,
+        notes: log.notes,
+      })
+      .select()
+      .single();
 
-    return await getUserProfile();
+    if (error) throw error;
+    return await getUserProfile(userId);
   } catch (error) {
     console.error("Error adding log entry:", error);
     return null;
@@ -199,12 +269,12 @@ export const addLogEntry = async (
 // Update an existing log entry
 export const updateLogEntry = async (
   log: DailyLog,
+  userId: string
 ): Promise<UserProfile | null> => {
   try {
-    const user = await getCurrentUser();
-    if (!user) return null;
+    if (!userId) throw new Error("User not authenticated");
 
-    await supabase
+    const { data, error } = await supabaseAdmin
       .from("logs")
       .update({
         category_id: log.categoryId,
@@ -213,9 +283,12 @@ export const updateLogEntry = async (
         notes: log.notes,
       })
       .eq("id", log.id)
-      .eq("user_id", user.id);
+      .eq("user_id", userId)
+      .select()
+      .single();
 
-    return await getUserProfile();
+    if (error) throw error;
+    return await getUserProfile(userId);
   } catch (error) {
     console.error("Error updating log entry:", error);
     return null;
@@ -225,57 +298,22 @@ export const updateLogEntry = async (
 // Delete a log entry
 export const deleteLogEntry = async (
   logId: string,
+  userId: string
 ): Promise<UserProfile | null> => {
   try {
-    const user = await getCurrentUser();
-    if (!user) return null;
+    if (!userId) throw new Error("User not authenticated");
 
-    await supabase.from("logs").delete().eq("id", logId).eq("user_id", user.id);
+    const { error } = await supabaseAdmin
+      .from("logs")
+      .delete()
+      .eq("id", logId)
+      .eq("user_id", userId);
 
-    return await getUserProfile();
+    if (error) throw error;
+    return await getUserProfile(userId);
   } catch (error) {
     console.error("Error deleting log entry:", error);
     return null;
-  }
-};
-
-// Get logs for a specific date
-export const getLogsByDate = async (date: string): Promise<DailyLog[]> => {
-  try {
-    const user = await getCurrentUser();
-    if (!user) return [];
-
-    const { data } = await supabase
-      .from("logs")
-      .select("*")
-      .eq("date", date)
-      .eq("user_id", user.id);
-
-    return data?.map(mapLogFromDB) || [];
-  } catch (error) {
-    console.error("Error getting logs by date:", error);
-    return [];
-  }
-};
-
-// Get logs for a specific category
-export const getLogsByCategory = async (
-  categoryId: string,
-): Promise<DailyLog[]> => {
-  try {
-    const user = await getCurrentUser();
-    if (!user) return [];
-
-    const { data } = await supabase
-      .from("logs")
-      .select("*")
-      .eq("category_id", categoryId)
-      .eq("user_id", user.id);
-
-    return data?.map(mapLogFromDB) || [];
-  } catch (error) {
-    console.error("Error getting logs by category:", error);
-    return [];
   }
 };
 
@@ -299,11 +337,3 @@ function mapLogFromDB(dbLog: any): DailyLog {
     notes: dbLog.notes,
   };
 }
-
-// Generate a unique ID
-export const generateId = (): string => {
-  return (
-    Math.random().toString(36).substring(2, 15) +
-    Math.random().toString(36).substring(2, 15)
-  );
-};
