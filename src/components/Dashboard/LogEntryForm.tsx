@@ -56,8 +56,8 @@ const LogEntryForm = ({
   };
 
   return (
-    <Card className="w-full bg-gradient-to-br from-white to-blue-50/30 border-0 shadow-lg backdrop-blur-sm">
-      <CardHeader className="pb-4 px-6 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-t-lg">
+    <Card className="w-full bg-gradient-to-br from-white to-blue-50/30 dark:from-gray-800 dark:to-blue-900/20 border-0 shadow-lg backdrop-blur-sm">
+      <CardHeader className="pb-4 px-6 bg-gradient-to-r from-indigo-500 to-purple-600 dark:from-indigo-600 dark:to-purple-700 text-white rounded-t-lg">
         <CardTitle className="text-lg sm:text-xl font-bold flex items-center gap-2">
           <span className="text-2xl">📝</span>
           {log ? "Edit Log Entry" : "Add New Log Entry"}
@@ -66,19 +66,19 @@ const LogEntryForm = ({
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-6 px-6 py-6">
           <div className="space-y-3">
-            <Label htmlFor="category" className="text-gray-700 font-medium text-sm">
+            <Label htmlFor="category" className="text-gray-700 dark:text-gray-300 font-medium text-sm">
               Category
             </Label>
             <Select value={categoryId} onValueChange={setCategoryId}>
-              <SelectTrigger className="w-full bg-white/80 border-gray-200/50 rounded-xl">
+              <SelectTrigger className="w-full bg-white/80 dark:bg-gray-700/80 border-gray-200/50 dark:border-gray-600/50 rounded-xl text-gray-900 dark:text-white">
                 <SelectValue placeholder="Select a category" />
               </SelectTrigger>
-              <SelectContent className="bg-white/95 backdrop-blur-md border-gray-200/50 rounded-xl">
+              <SelectContent className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md border-gray-200/50 dark:border-gray-600/50 rounded-xl">
                 {categories.map((category) => (
                   <SelectItem
                     key={category.id}
                     value={category.id}
-                    className="cursor-pointer hover:bg-gray-50/80 rounded-lg mx-1"
+                    className="cursor-pointer hover:bg-gray-50/80 dark:hover:bg-gray-700/80 rounded-lg mx-1 text-gray-800 dark:text-gray-200"
                   >
                     <div className="flex items-center gap-2">
                       <div
@@ -94,7 +94,7 @@ const LogEntryForm = ({
           </div>
 
           <div className="space-y-3">
-            <Label htmlFor="value" className="text-gray-700 font-medium text-sm">
+            <Label htmlFor="value" className="text-gray-700 dark:text-gray-300 font-medium text-sm">
               Value {selectedCategory ? `(${selectedCategory.unit})` : ""}
             </Label>
             <Input
@@ -107,16 +107,16 @@ const LogEntryForm = ({
                   ? `Enter ${selectedCategory.unit}`
                   : "Enter value"
               }
-              className="w-full bg-white/80 border-gray-200/50 rounded-xl"
+              className="w-full bg-white/80 dark:bg-gray-700/80 border-gray-200/50 dark:border-gray-600/50 rounded-xl text-gray-900 dark:text-white"
               required
             />
             {selectedCategory && (
-              <div className="p-3 bg-gradient-to-r from-gray-50/50 to-blue-50/50 rounded-lg border border-gray-100/50">
-                <p className="text-sm text-gray-600 font-medium">
+              <div className="p-3 bg-gradient-to-r from-gray-50/50 to-blue-50/50 dark:from-gray-700/50 dark:to-blue-900/30 rounded-lg border border-gray-100/50 dark:border-gray-600/50">
+                <p className="text-sm text-gray-600 dark:text-gray-300 font-medium">
                   Daily target: {selectedCategory.dailyTarget} {selectedCategory.unit}
                 </p>
                 {value && (
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                     Progress: {Math.round((parseFloat(value) / selectedCategory.dailyTarget) * 100)}% of daily goal
                   </p>
                 )}
@@ -125,7 +125,7 @@ const LogEntryForm = ({
           </div>
 
           <div className="space-y-3">
-            <Label htmlFor="notes" className="text-gray-700 font-medium text-sm">
+            <Label htmlFor="notes" className="text-gray-700 dark:text-gray-300 font-medium text-sm">
               Notes (Optional)
             </Label>
             <Textarea
@@ -134,7 +134,7 @@ const LogEntryForm = ({
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Add any additional notes here..."
               rows={3}
-              className="min-h-[80px] w-full resize-none bg-white/80 border-gray-200/50 rounded-xl"
+              className="min-h-[80px] w-full resize-none bg-white/80 dark:bg-gray-700/80 border-gray-200/50 dark:border-gray-600/50 rounded-xl text-gray-900 dark:text-white"
             />
           </div>
         </CardContent>
@@ -145,7 +145,7 @@ const LogEntryForm = ({
               type="button"
               variant="outline"
               onClick={onCancel}
-              className="w-full sm:w-auto order-2 sm:order-1 rounded-xl border-gray-200 hover:bg-gray-50"
+              className="w-full sm:w-auto order-2 sm:order-1 rounded-xl border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-900 dark:text-white"
             >
               Cancel
             </Button>
@@ -153,7 +153,7 @@ const LogEntryForm = ({
           <Button
             type="submit"
             disabled={!categoryId}
-            className="w-full sm:w-auto order-1 sm:order-2 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white rounded-xl shadow-lg"
+            className="w-full sm:w-auto order-1 sm:order-2 bg-gradient-to-r from-indigo-500 to-purple-600 dark:from-indigo-600 dark:to-purple-700 hover:from-indigo-600 hover:to-purple-700 dark:hover:from-indigo-700 dark:hover:to-purple-800 text-white rounded-xl shadow-lg"
           >
             {log ? "Update" : "Add"} Log Entry
           </Button>

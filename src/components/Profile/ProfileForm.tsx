@@ -65,6 +65,7 @@ const ProfileForm = ({ profile, onSave, onCancel, isLoading }: ProfileFormProps)
       fitnessGoal: formData.fitnessGoal as UserProfile['fitnessGoal'] || undefined,
     };
 
+    console.log('Submitting profile data:', profileData); // Debug log
     onSave(profileData);
   };
 
@@ -73,8 +74,8 @@ const ProfileForm = ({ profile, onSave, onCancel, isLoading }: ProfileFormProps)
   };
 
   return (
-    <Card className="w-full max-w-3xl mx-auto bg-gradient-to-b from-background to-background-secondary border border-border rounded-lg shadow-lg">
-      <CardHeader className="pb-4 px-6 bg-gradient-to-r from-primary to-secondary text-white rounded-t-lg">
+    <Card className="w-full max-w-3xl mx-auto bg-gradient-to-b from-background to-background-secondary dark:from-gray-800 dark:to-gray-900 border border-border dark:border-gray-600 rounded-lg shadow-lg">
+      <CardHeader className="pb-4 px-6 bg-gradient-to-r from-primary to-secondary dark:from-gray-700 dark:to-gray-800 text-white rounded-t-lg">
         <CardTitle className="text-lg sm:text-xl font-bold flex items-center gap-2">
           <User className="h-5 w-5" />
           Profile Settings
@@ -85,13 +86,13 @@ const ProfileForm = ({ profile, onSave, onCancel, isLoading }: ProfileFormProps)
         <CardContent className="space-y-6 px-6 py-4">
           {/* Basic Information */}
           <div className="space-y-4">
-            <h3 className="text-base sm:text-lg font-medium text-primary">
+            <h3 className="text-base sm:text-lg font-medium text-primary dark:text-blue-400">
               Basic Information
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {/* Name */}
               <div className="space-y-2 sm:col-span-2 lg:col-span-1">
-                <Label htmlFor="name" className="text-sm font-medium text-text">
+                <Label htmlFor="name" className="text-sm font-medium text-text dark:text-gray-300">
                   Full Name
                 </Label>
                 <Input
@@ -99,7 +100,7 @@ const ProfileForm = ({ profile, onSave, onCancel, isLoading }: ProfileFormProps)
                   value={formData.name}
                   onChange={(e) => handleInputChange("name", e.target.value)}
                   placeholder="Enter your full name"
-                  className="w-full rounded-lg"
+                  className="w-full rounded-lg bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-900 dark:text-white"
                   required
                 />
               </div>
@@ -186,21 +187,19 @@ const ProfileForm = ({ profile, onSave, onCancel, isLoading }: ProfileFormProps)
 
           {/* Fitness Goal */}
           <div className="space-y-4">
-            <h3 className="text-base sm:text-lg font-medium text-primary">
+            <h3 className="text-base sm:text-lg font-medium text-primary dark:text-blue-400">
               Fitness Goal
             </h3>
+            
             <div className="space-y-2">
-              <Label htmlFor="fitnessGoal" className="text-sm font-medium text-text">
+              <Label htmlFor="fitnessGoal" className="text-sm font-medium text-text dark:text-gray-300">
                 Primary Fitness Goal
               </Label>
-              <Select
-                value={formData.fitnessGoal}
-                onValueChange={(value) => handleInputChange("fitnessGoal", value)}
-              >
-                <SelectTrigger className="w-full rounded-lg">
+              <Select value={formData.fitnessGoal} onValueChange={(value) => handleInputChange('fitnessGoal', value)}>
+                <SelectTrigger className="w-full rounded-lg bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-900 dark:text-white">
                   <SelectValue placeholder="Select your primary fitness goal" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-600">
                   <SelectItem value="lose_weight">Lose Weight</SelectItem>
                   <SelectItem value="gain_weight">Gain Weight</SelectItem>
                   <SelectItem value="build_muscle">Build Muscle</SelectItem>
@@ -220,7 +219,7 @@ const ProfileForm = ({ profile, onSave, onCancel, isLoading }: ProfileFormProps)
               variant="outline"
               onClick={onCancel}
               disabled={isLoading}
-              className="w-full sm:w-auto rounded-lg"
+              className="w-full sm:w-auto rounded-lg border-gray-200 dark:border-gray-600 text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700"
             >
               Cancel
             </Button>
@@ -228,7 +227,7 @@ const ProfileForm = ({ profile, onSave, onCancel, isLoading }: ProfileFormProps)
           <Button
             type="submit"
             disabled={isLoading}
-            className="w-full sm:w-auto rounded-lg bg-primary text-white hover:bg-primary/90"
+            className="w-full sm:w-auto rounded-lg bg-primary dark:bg-blue-600 text-white hover:bg-primary/90 dark:hover:bg-blue-700"
           >
             {isLoading ? "Saving..." : "Save Profile"}
           </Button>

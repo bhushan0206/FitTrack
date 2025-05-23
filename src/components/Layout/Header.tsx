@@ -13,19 +13,19 @@ import ProfileForm from "@/components/Profile/ProfileForm";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useTheme } from "@/contexts/ThemeContext";
 
-interface UnifiedHeaderProps {
+interface HeaderProps {
   selectedDate: Date;
   onDateChange: (date: Date) => void;
   datePickerOpen: boolean;
   onDatePickerToggle: (open: boolean) => void;
 }
 
-const UnifiedHeader = ({
+const Header = ({
   selectedDate,
   onDateChange,
   datePickerOpen,
   onDatePickerToggle,
-}: UnifiedHeaderProps) => {
+}: HeaderProps) => {
   const { signOut } = useClerk();
   const { theme, toggleTheme } = useTheme();
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
@@ -104,11 +104,7 @@ const UnifiedHeader = ({
               className="flex items-center gap-2 text-white hover:bg-white/10 dark:hover:bg-gray-700/50 hover:text-white transition-all duration-200 px-3 py-2 rounded-xl"
               onClick={toggleTheme}
             >
-              {theme === "dark" ? (
-                <Sun className="h-5 w-5" />
-              ) : (
-                <Moon className="h-5 w-5" />
-              )}
+              {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
             </Button>
 
             {/* Profile button */}
@@ -138,8 +134,8 @@ const UnifiedHeader = ({
         <DialogContent className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md border-gray-200/50 dark:border-gray-600/50 max-w-4xl rounded-2xl shadow-2xl">
           <ProfileForm
             profile={{
-              id: "user-id", // This should be replaced with actual user data
-              name: "John Doe", // This should be replaced with actual user data
+              id: "user-id", // Replace with actual user ID
+              name: "John Doe", // Replace with actual user name
               age: 30,
               gender: "male",
               weight: 70,
@@ -149,8 +145,7 @@ const UnifiedHeader = ({
               logs: [],
             }}
             onSave={(profileData) => {
-              console.log("Profile data being saved:", profileData); // Debug log
-              // This should call the actual save function from useFitnessData
+              console.log("Profile saved:", profileData);
               setProfileDialogOpen(false);
             }}
             onCancel={() => setProfileDialogOpen(false)}
@@ -161,4 +156,4 @@ const UnifiedHeader = ({
   );
 };
 
-export default UnifiedHeader;
+export default Header;

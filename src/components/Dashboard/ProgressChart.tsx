@@ -77,9 +77,9 @@ const ProgressChart = ({ logs, categories }: ProgressChartProps) => {
   }
 
   return (
-    <Card className="bg-gradient-to-br from-white to-indigo-50/50 border-0 shadow-lg hover:shadow-xl transition-all duration-300 backdrop-blur-sm">
+    <Card className="bg-gradient-to-br from-white to-indigo-50/50 dark:from-gray-800 dark:to-indigo-900/20 border-0 shadow-lg hover:shadow-xl transition-all duration-300 backdrop-blur-sm">
       <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-6 py-6">
-        <CardTitle className="text-gray-900 text-xl font-bold flex items-center gap-2">
+        <CardTitle className="text-gray-900 dark:text-white text-xl font-bold flex items-center gap-2">
           <span className="text-2xl">📊</span>
           Weekly Progress
         </CardTitle>
@@ -87,22 +87,22 @@ const ProgressChart = ({ logs, categories }: ProgressChartProps) => {
           value={selectedCategoryId}
           onValueChange={setSelectedCategoryId}
         >
-          <SelectTrigger className="w-full sm:w-[220px] bg-white/90 border-gray-200/50 rounded-xl font-medium">
+          <SelectTrigger className="w-full sm:w-[220px] bg-white/90 dark:bg-gray-700/90 border-gray-200/50 dark:border-gray-600/50 rounded-xl font-medium text-gray-900 dark:text-white">
             <SelectValue placeholder="Select category" />
           </SelectTrigger>
-          <SelectContent className="bg-white/95 backdrop-blur-md border-gray-200/50 rounded-xl">
+          <SelectContent className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md border-gray-200/50 dark:border-gray-600/50 rounded-xl">
             {categories.map((category) => (
               <SelectItem
                 key={category.id}
                 value={category.id}
-                className="hover:bg-gray-50/80 rounded-lg mx-1 font-medium"
+                className="hover:bg-gray-50/80 dark:hover:bg-gray-700/80 rounded-lg mx-1 font-medium text-gray-800 dark:text-gray-200"
               >
                 <div className="flex items-center gap-3">
                   <div
                     className="w-4 h-4 rounded-full shadow-sm"
                     style={{ backgroundColor: category.color }}
                   />
-                  <span className="text-gray-800 font-medium">{category.name}</span>
+                  <span className="text-gray-800 dark:text-gray-200 font-medium">{category.name}</span>
                 </div>
               </SelectItem>
             ))}
@@ -110,7 +110,7 @@ const ProgressChart = ({ logs, categories }: ProgressChartProps) => {
         </Select>
       </CardHeader>
       <CardContent className="px-6 pb-6">
-        <div className="bg-gradient-to-b from-gray-50/50 to-white rounded-xl p-4 border border-gray-100/50">
+        <div className="bg-gradient-to-b from-gray-50/50 to-white dark:from-gray-700/50 dark:to-gray-800 rounded-xl p-4 border border-gray-100/50 dark:border-gray-600/50">
           <div className="h-[180px] sm:h-[220px] flex items-end justify-between gap-2 sm:gap-3">
             {chartData.map((day, index) => {
               const height = Math.max(Math.min(day.percentage, 100), 8);
@@ -157,21 +157,21 @@ const ProgressChart = ({ logs, categories }: ProgressChartProps) => {
                   {/* Day label - improved visibility */}
                   <div
                     className={`text-xs font-bold text-center ${
-                      isToday ? "text-indigo-700 bg-indigo-100 px-2 py-1 rounded-lg" : "text-gray-800"
+                      isToday ? "text-indigo-700 dark:text-indigo-300 bg-indigo-100 dark:bg-indigo-900/50 px-2 py-1 rounded-lg" : "text-gray-800 dark:text-gray-200"
                     }`}
                   >
                     {format(day.date, "EEE")}
                   </div>
                   <div
                     className={`text-xs text-center font-semibold ${
-                      isToday ? "text-indigo-600" : "text-gray-600"
+                      isToday ? "text-indigo-600 dark:text-indigo-400" : "text-gray-600 dark:text-gray-400"
                     }`}
                   >
                     {format(day.date, "d")}
                   </div>
 
                   {/* Value display - improved visibility */}
-                  <div className="text-xs text-gray-700 text-center mt-1 font-bold hidden sm:block bg-gray-100 px-2 py-1 rounded">
+                  <div className="text-xs text-gray-700 dark:text-gray-300 text-center mt-1 font-bold hidden sm:block bg-gray-100 dark:bg-gray-600 px-2 py-1 rounded">
                     {day.value > 0 ? day.value : "—"}
                   </div>
                 </div>
@@ -182,22 +182,22 @@ const ProgressChart = ({ logs, categories }: ProgressChartProps) => {
 
         {/* Category info - improved styling */}
         {selectedCategory && (
-          <div className="mt-6 p-5 bg-gradient-to-r from-indigo-50/80 to-purple-50/80 rounded-xl border border-indigo-100/50 shadow-sm">
+          <div className="mt-6 p-5 bg-gradient-to-r from-indigo-50/80 to-purple-50/80 dark:from-indigo-900/30 dark:to-purple-900/30 rounded-xl border border-indigo-100/50 dark:border-indigo-800/50 shadow-sm">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div
-                  className="w-5 h-5 rounded-full shadow-md border-2 border-white"
+                  className="w-5 h-5 rounded-full shadow-md border-2 border-white dark:border-gray-800"
                   style={{ backgroundColor: selectedCategory.color }}
                 />
-                <span className="font-bold text-gray-900 text-lg">
+                <span className="font-bold text-gray-900 dark:text-white text-lg">
                   {selectedCategory.name}
                 </span>
               </div>
               <div className="text-right">
-                <div className="text-sm font-bold text-gray-800">
+                <div className="text-sm font-bold text-gray-800 dark:text-gray-200">
                   Target: {selectedCategory.dailyTarget} {selectedCategory.unit}/day
                 </div>
-                <div className="text-xs text-gray-600 font-medium">
+                <div className="text-xs text-gray-600 dark:text-gray-400 font-medium">
                   Weekly Goal: {selectedCategory.dailyTarget * 7} {selectedCategory.unit}
                 </div>
               </div>

@@ -15,6 +15,8 @@ import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { Button } from "@/components/ui/button";
 import { LogOut, User } from "lucide-react";
 import UnifiedHeader from "@/components/Layout/UnifiedHeader";
+import Header from "@/components/Layout/Header";
+import Footer from "@/components/Layout/Footer";
 
 const StatisticsPanel = () => {
   const { userId } = useAuth();
@@ -125,21 +127,21 @@ const StatisticsPanel = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-black relative overflow-hidden flex flex-col">
       {/* Background decoration */}
       <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-purple-200 to-indigo-200 rounded-full opacity-30 animate-pulse"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-br from-blue-200 to-purple-200 rounded-full opacity-30 animate-pulse" style={{ animationDelay: '1s' }}></div>
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-purple-200 to-indigo-200 dark:from-purple-800/30 dark:to-indigo-800/30 rounded-full opacity-30 animate-pulse"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-br from-blue-200 to-purple-200 dark:from-blue-800/30 dark:to-purple-800/30 rounded-full opacity-30 animate-pulse" style={{ animationDelay: '1s' }}></div>
       </div>
 
-      <UnifiedHeader
+      <Header
         selectedDate={selectedDate}
         onDateChange={setSelectedDate}
         datePickerOpen={datePickerOpen}
         onDatePickerToggle={setDatePickerOpen}
       />
 
-      <div className="relative z-10 max-w-7xl mx-auto px-6 py-8">
+      <main className="flex-1 relative z-10 max-w-7xl mx-auto px-6 py-8 w-full">
         <DashboardTabs
           activeTab={activeTab}
           onTabChange={setActiveTab}
@@ -171,7 +173,9 @@ const StatisticsPanel = () => {
           onSave={handleSaveLog}
           onClose={closeLogDialog}
         />
-      </div>
+      </main>
+
+      <Footer />
     </div>
   );
 };

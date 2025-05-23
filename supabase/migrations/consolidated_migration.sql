@@ -84,3 +84,15 @@ CREATE INDEX IF NOT EXISTS idx_categories_user_id ON categories(user_id);
 CREATE INDEX IF NOT EXISTS idx_logs_user_id ON logs(user_id);
 CREATE INDEX IF NOT EXISTS idx_logs_category_id ON logs(category_id);
 CREATE INDEX IF NOT EXISTS idx_logs_date ON logs(date);
+
+-- Add trigger to update updated_at timestamp
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ language 'plpgsql';
+
+CREATE TRIGGER update_profiles_updated_at BEFORE UPDATE ON profiles
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();

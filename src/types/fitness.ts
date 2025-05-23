@@ -35,15 +35,26 @@ export interface Achievement {
 export interface UserProfile {
   id: string;
   name: string;
-  categories: TrackingCategory[];
-  logs: DailyLog[];
-  achievements?: Achievement[];
-  // Add new profile fields
   age?: number;
   gender?: 'male' | 'female' | 'other' | 'prefer_not_to_say';
   weight?: number; // in kg
   height?: number; // in cm
   fitnessGoal?: 'lose_weight' | 'gain_weight' | 'build_muscle' | 'improve_endurance' | 'maintain_health' | 'other';
+  categories: TrackingCategory[];
+  logs: DailyLog[];
   createdAt?: string;
   updatedAt?: string;
+}
+
+// Database types for Supabase
+export interface DatabaseProfile {
+  id: string;
+  name: string;
+  age?: number;
+  gender?: string;
+  weight?: number;
+  height?: number;
+  fitness_goal?: string; // Note: snake_case for database
+  created_at?: string;
+  updated_at?: string;
 }

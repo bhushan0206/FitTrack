@@ -496,3 +496,99 @@ function mapLogFromDB(dbLog: any): DailyLog {
     notes: dbLog.notes,
   };
 }
+
+// Helper function to convert database profile to frontend profile
+const mapDatabaseToProfile = (dbProfile: any): UserProfile => {
+  return {
+    id: dbProfile.id,
+    name: dbProfile.name,
+    age: dbProfile.age,
+    gender: dbProfile.gender,
+    weight: dbProfile.weight,
+    height: dbProfile.height,
+    fitnessGoal: dbProfile.fitness_goal, // Map from snake_case to camelCase
+    categories: [],
+    logs: [],
+    createdAt: dbProfile.created_at,
+    updatedAt: dbProfile.updated_at,
+  };
+};
+
+// Helper function to convert frontend profile to database format
+const mapProfileToDatabase = (profile: Partial<UserProfile>) => {
+  return {
+    name: profile.name,
+    age: profile.age,
+    gender: profile.gender,
+    weight: profile.weight,
+    height: profile.height,
+    fitness_goal: profile.fitnessGoal, // Map from camelCase to snake_case
+  };
+};
+
+export const profileStorage = {
+  async getProfile(userId: string): Promise<UserProfile | null> {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        throw error;
+      }
+
+      if (!data) return null;
+
+      return mapDatabaseToProfile(data);
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+      throw error;
+    }
+  },
+
+  async createProfile(userId: string, profileData: Partial<UserProfile>): Promise<UserProfile> {
+    try {
+      const dbData = {
+        id: userId,
+        ...mapProfileToDatabase(profileData),
+      };
+
+      const { data, error } = await supabase
+        .from('profiles')
+        .insert(dbData)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      return mapDatabaseToProfile(data);
+    } catch (error) {
+      console.error('Error creating profile:', error);
+      throw error;
+    }
+  },
+
+  async updateProfile(userId: string, profileData: Partial<UserProfile>): Promise<UserProfile> {
+    try {
+      const dbData = mapProfileToDatabase(profileData);
+
+      const { data, error } = await supabase
+        .from('profiles')
+        .update(dbData)
+        .eq('id', userId)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      return mapDatabaseToProfile(data);
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      throw error;
+    }
+  },
+
+  // ...existing code...
+};

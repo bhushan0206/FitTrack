@@ -11,6 +11,7 @@ import {
   updateLogEntry,
   deleteLogEntry,
   updateUserProfile,
+  profileStorage,
 } from "@/lib/supabaseStorage";
 import { supabase } from "@/lib/supabase";
 
@@ -283,7 +284,7 @@ export const useFitnessData = () => {
   };
 
   // Add profile update handler with better error handling
-  const handleUpdateProfile = async (profileData: Partial<UserProfile>) => {
+  const handleUpdateProfile = useCallback(async (profileData: Partial<UserProfile>): Promise<boolean> => {
     if (!userId) {
       toast({
         title: "Error",
@@ -292,29 +293,43 @@ export const useFitnessData = () => {
       });
       return false;
     }
-    
+
     try {
-      const updatedProfile = await updateUserProfile(userId, profileData);
-      if (updatedProfile) {
-        setProfile(updatedProfile);
-        toast({
-          title: "Success",
-          description: "Profile updated successfully",
-        });
-        return true;
+      setIsLoading(true);
+
+      let updatedProfile: UserProfile;
+
+      if (profile) {
+        // Update existing profile
+        updatedProfile = await profileStorage.updateProfile(userId, profileData);
       } else {
-        throw new Error("Failed to update profile");
+        // Create new profile
+        updatedProfile = await profileStorage.createProfile(userId, {
+          name: profileData.name || user?.fullName || user?.firstName || 'User',
+          ...profileData,
+        });
       }
-    } catch (error: any) {
+
+      setProfile(updatedProfile);
+
+      toast({
+        title: "Success",
+        description: "Profile updated successfully",
+      });
+
+      return true;
+    } catch (error) {
       console.error('Error updating profile:', error);
       toast({
         title: "Error",
-        description: error.message || "Failed to update profile. Please try again.",
+        description: "Failed to update profile. Please try again.",
         variant: "destructive",
       });
+      return false;
+    } finally {
+      setIsLoading(false);
     }
-    return false;
-  };
+  }, [userId, profile, user, toast]);
 
   return {
     categories,
