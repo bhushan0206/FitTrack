@@ -1,23 +1,25 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseServiceKey = import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+const supabaseServiceKey = import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY
 
-if (!supabaseUrl) {
-  throw new Error('Missing VITE_SUPABASE_URL environment variable');
+if (!supabaseUrl || !supabaseServiceKey) {
+  throw new Error('Missing Supabase admin environment variables')
 }
 
-if (!supabaseServiceKey) {
-  throw new Error('Missing SUPABASE_SERVICE_ROLE_KEY environment variable');
-}
-
-export const supabaseAdmin = createClient(
-  supabaseUrl,
-  supabaseServiceKey,
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
+// Create admin client with service role key
+export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
+  auth: {
+    // Use different storage key for admin client
+    storageKey: 'fittrack-admin-auth',
+    autoRefreshToken: false,
+    persistSession: false,
+  },
+  global: {
+    headers: {
+      'x-client-info': 'fittrack-admin'
     }
   }
-);
+})
+
+export default supabaseAdmin

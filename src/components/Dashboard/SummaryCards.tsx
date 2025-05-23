@@ -40,16 +40,18 @@ const SummaryCards = ({
     categories.length > 0 ? (completedCategories / categories.length) * 100 : 0;
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
       <Card className="bg-background border-border">
-        <CardContent className="pt-6">
-          <div className="text-2xl font-bold text-text">
+        <CardContent className="pt-4 sm:pt-6 px-4 sm:px-6">
+          <div className="text-xl sm:text-2xl font-bold text-text">
             {completedCategories}/{categories.length}
           </div>
-          <p className="text-text-secondary">Categories Completed Today</p>
+          <p className="text-text-secondary text-sm sm:text-base">
+            Categories Completed Today
+          </p>
           <div className="w-full bg-background-secondary rounded-full h-2 mt-2">
             <div
-              className="bg-primary h-2 rounded-full"
+              className="bg-primary h-2 rounded-full transition-all duration-300"
               style={{ width: `${overallPercentage}%` }}
             ></div>
           </div>
@@ -57,18 +59,24 @@ const SummaryCards = ({
       </Card>
 
       <Card className="bg-background border-border">
-        <CardContent className="pt-6">
-          <div className="text-2xl font-bold text-text">{todayLogs.length}</div>
-          <p className="text-text-secondary">Entries Logged Today</p>
+        <CardContent className="pt-4 sm:pt-6 px-4 sm:px-6">
+          <div className="text-xl sm:text-2xl font-bold text-text">
+            {todayLogs.length}
+          </div>
+          <p className="text-text-secondary text-sm sm:text-base">
+            Entries Logged Today
+          </p>
         </CardContent>
       </Card>
 
-      <Card className="bg-background border-border">
-        <CardContent className="pt-6">
-          <div className="text-2xl font-bold text-text">
-            {format(selectedDate, "MMMM d, yyyy")}
+      <Card className="bg-background border-border sm:col-span-2 lg:col-span-1">
+        <CardContent className="pt-4 sm:pt-6 px-4 sm:px-6">
+          <div className="text-lg sm:text-2xl font-bold text-text">
+            {format(selectedDate, "MMM d, yyyy")}
           </div>
-          <p className="text-text-secondary">Current Date</p>
+          <p className="text-text-secondary text-sm sm:text-base">
+            Current Date
+          </p>
         </CardContent>
       </Card>
     </div>

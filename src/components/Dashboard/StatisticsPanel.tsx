@@ -1,18 +1,32 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { format } from "date-fns";
-import { TrackingCategory, DailyLog } from "@/types/fitness";
+import { useAuth, useUser, useClerk } from '@clerk/clerk-react';
+import { TrackingCategory, DailyLog, UserProfile } from "@/types/fitness";
 import { useFitnessData } from "@/hooks/useFitnessData";
+import { useToast } from "@/components/ui/use-toast";
 import { useDialogState } from "@/hooks/useDialogState";
-import DashboardHeader from "@/components/Layout/DashboardHeader";
 import DashboardTabs from "@/components/Dashboard/DashboardTabs";
 import CategoryDialog from "@/components/Categories/CategoryDialog";
 import LogDialog from "@/components/Logs/LogDialog";
+import AnimatedBackground from "@/components/ui/AnimatedBackground";
+import ProfileForm from "@/components/Profile/ProfileForm";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
+import { Button } from "@/components/ui/button";
+import { LogOut, User } from "lucide-react";
+import UnifiedHeader from "@/components/Layout/UnifiedHeader";
 
 const StatisticsPanel = () => {
+  const { userId } = useAuth();
+  const { user } = useUser();
+  const { signOut } = useClerk();
+  const { toast } = useToast();
+
   // State management hooks
   const {
     categories,
     logs,
+    profile,
     isLoading,
     handleAddCategory,
     handleUpdateCategory,
@@ -20,6 +34,7 @@ const StatisticsPanel = () => {
     handleAddLog,
     handleUpdateLog,
     handleDeleteLog,
+    handleUpdateProfile,
   } = useFitnessData();
 
   const {
@@ -32,6 +47,9 @@ const StatisticsPanel = () => {
     openLogDialog,
     closeLogDialog,
   } = useDialogState();
+
+  // Add profile dialog state
+  const [profileDialogOpen, setProfileDialogOpen] = useState(false);
 
   // Local state
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -62,25 +80,62 @@ const StatisticsPanel = () => {
       closeLogDialog();
     }
   };
+  // Add profile handlers with better error handling
+  
+  const handleEditProfile = useCallback(() => {
+    setProfileDialogOpen(true);
+  }, []);
+
+  // Update profile handler to use the hook
+  const handleSaveProfile = useCallback(async (profileData: Partial<UserProfile>) => {
+    const success = await handleUpdateProfile(profileData);
+    if (success) {
+      setProfileDialogOpen(false);
+    }
+  }, [handleUpdateProfile]);
+
+  // Add sign out handler
+  const handleSignOut = useCallback(async () => {
+    try {
+      await signOut();
+    } catch (error) {
+      console.error('Error signing out:', error);
+      toast({
+        title: "Error",
+        description: "Failed to sign out. Please try again.",
+        variant: "destructive",
+      });
+    }
+  }, [signOut, toast]);
 
   if (isLoading) {
     return (
-      <div className="w-full h-full flex items-center justify-center">
+      <div className="w-full h-full flex items-center justify-center bg-background">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
       </div>
     );
   }
 
-  return (
-    <div className="w-full h-full bg-background p-4 overflow-auto">
-      <div className="max-w-7xl mx-auto">
-        <DashboardHeader
-          selectedDate={selectedDate}
-          onDateChange={setSelectedDate}
-          datePickerOpen={datePickerOpen}
-          onDatePickerToggle={setDatePickerOpen}
-        />
+  // Use profile from hook or create default
+  const currentProfile: UserProfile = profile || {
+    id: userId || '',
+    name: user?.fullName || user?.firstName || user?.username || 'User',
+    categories,
+    logs,
+  };
 
+  return (
+    <div className="w-full h-full bg-background p-4 overflow-auto relative">
+      {/* Unified header */}
+      <UnifiedHeader
+        selectedDate={selectedDate}
+        onDateChange={setSelectedDate}
+        datePickerOpen={datePickerOpen}
+        onDatePickerToggle={setDatePickerOpen}
+      />
+
+      <AnimatedBackground />
+      <div className="max-w-7xl mx-auto relative z-10">
         <DashboardTabs
           activeTab={activeTab}
           onTabChange={setActiveTab}
@@ -88,12 +143,14 @@ const StatisticsPanel = () => {
           logs={logs}
           selectedDate={selectedDate}
           selectedDateLogs={selectedDateLogs}
+          profile={currentProfile}
           onEditCategory={openCategoryDialog}
           onDeleteCategory={handleDeleteCategory}
           onAddCategory={() => openCategoryDialog()}
           onEditLog={openLogDialog}
           onDeleteLog={handleDeleteLog}
           onAddLog={() => openLogDialog()}
+          onEditProfile={handleEditProfile}
         />
 
         <CategoryDialog
@@ -111,6 +168,23 @@ const StatisticsPanel = () => {
           onSave={handleSaveLog}
           onClose={closeLogDialog}
         />
+
+        {/* Profile Dialog with proper cleanup */}
+        {profileDialogOpen && (
+          <Dialog open={profileDialogOpen} onOpenChange={setProfileDialogOpen}>
+            <DialogContent className="bg-background border-border max-w-3xl overflow-hidden">
+              <VisuallyHidden>
+                <DialogTitle>Edit Profile</DialogTitle>
+              </VisuallyHidden>
+              <ProfileForm
+                profile={currentProfile}
+                onSave={handleSaveProfile}
+                onCancel={() => setProfileDialogOpen(false)}
+                isLoading={isLoading}
+              />
+            </DialogContent>
+          </Dialog>
+        )}
       </div>
     </div>
   );

@@ -26,11 +26,230 @@
   body {
     @apply bg-background text-text transition-colors duration-300;
   }
+  
+  /* Update high contrast support to use modern forced-colors */
+  @media (forced-colors: active) {
+    * {
+      forced-color-adjust: auto;
+    }
+    
+    .bg-primary {
+      background-color: ButtonText;
+    }
+    
+    .text-primary {
+      color: ButtonText;
+    }
+    
+    .border-border {
+      border-color: ButtonBorder;
+    }
+    
+    .bg-background {
+      background-color: Canvas;
+    }
+    
+    .text-text {
+      color: CanvasText;
+    }
+  }
 }
 
 @layer components {
+  /* Ensure UI components respect forced colors */
+  .card {
+    forced-color-adjust: auto;
+  }
+  
+  .button {
+    forced-color-adjust: auto;
+  }
+  
   /* Fix z-index issues with dropdowns */
   [data-radix-popper-content-wrapper] {
     z-index: 50 !important;
   }
+  
+  /* Custom animations for fitness theme */
+  @keyframes heartbeat {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+  }
+  
+  @keyframes float {
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    33% { transform: translateY(-10px) rotate(1deg); }
+    66% { transform: translateY(5px) rotate(-1deg); }
+  }
+  
+  @keyframes slideInFromLeft {
+    0% { transform: translateX(-100%); opacity: 0; }
+    100% { transform: translateX(0); opacity: 1; }
+  }
+  
+  .animate-heartbeat {
+    animation: heartbeat 1.5s ease-in-out infinite;
+  }
+  
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+  
+  .animate-slide-in {
+    animation: slideInFromLeft 0.8s ease-out;
+  }
+  
+  /* Fitness-themed gradient backgrounds */
+  .bg-fitness-gradient {
+    background: linear-gradient(135deg, 
+      rgba(59, 130, 246, 0.1) 0%, 
+      rgba(16, 185, 129, 0.1) 50%, 
+      rgba(245, 101, 101, 0.1) 100%);
+  }
+  
+  /* Glassmorphism effect */
+  .glass-effect {
+    backdrop-filter: blur(10px);
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+}
+
+@layer utilities {
+  /* Custom animations */
+  @keyframes fade-in {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+  }
+  
+  @keyframes slide-up {
+    0% { opacity: 0; transform: translateY(10px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+  
+  @keyframes gentle-bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
+  }
+  
+  @keyframes bounce-slow {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-3px); }
+  }
+  
+  @keyframes float {
+    0% { transform: translate(0, 0); }
+    33% { transform: translate(5px, -5px); }
+    66% { transform: translate(-5px, 5px); }
+    100% { transform: translate(0, 0); }
+  }
+  
+  @keyframes gradient-x {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+  
+  .animate-fade-in {
+    animation: fade-in 1s ease forwards;
+  }
+  
+  .animate-slide-up {
+    animation: slide-up 0.8s ease forwards;
+  }
+  
+  .animate-gentle-bounce {
+    animation: gentle-bounce 6s ease-in-out infinite;
+  }
+  
+  .animate-bounce-slow {
+    animation: bounce-slow 3s ease-in-out infinite;
+  }
+  
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+  
+  .animate-gradient-x {
+    background-size: 200% auto;
+    animation: gradient-x 8s ease infinite;
+  }
+  
+  /* Radial gradient background */
+  .bg-gradient-radial {
+    background-image: radial-gradient(var(--tw-gradient-stops));
+  }
+}
+
+/* Custom styles for clerk components */
+:root {
+  --clerk-form-width: 100%;
+  --clerk-form-max-width: 100%;
+}
+
+/* Fix clerk form styling */
+.cl-formButtonPrimary,
+.cl-formFieldInput,
+.cl-socialButtonsBlockButton {
+  max-width: 100% !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.cl-card {
+  width: 100% !important;
+  max-width: 100% !important;
+  padding: 0 !important;
+  overflow: visible !important;
+  margin: 0 !important;
+}
+
+/* Ensure all form elements fit within container */
+.cl-rootBox, .cl-component, .cl-main {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* Fix clerk input fields */
+.cl-formFieldInput {
+  height: 36px !important;
+  font-size: 14px !important;
+}
+
+/* Reduce spacing */
+.cl-form {
+  row-gap: 12px !important;
+}
+
+.cl-identityPreview {
+  padding: 8px !important;
+}
+
+/* Fix clerk sign-in form layout issues */
+.cl-rootBox {
+  width: 100% !important;
+}
+
+.cl-card {
+  width: 100% !important;
+  box-shadow: none !important;
+  padding: 1.5rem !important;
+}
+
+.cl-main {
+  padding: 0 !important;
+}
+
+.cl-form {
+  gap: 1rem !important;
+}
+
+.cl-internal-b3fm6y {
+  width: 100% !important;
+}
+
+.cl-socialButtonsBlockButtonText {
+  text-align: center;
+  flex-grow: 1;
 }

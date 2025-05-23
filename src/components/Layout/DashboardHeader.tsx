@@ -1,7 +1,7 @@
 import { format } from "date-fns";
-import { Calendar } from "@/components/ui/calendar";
+import { Calendar, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { CalendarIcon } from "lucide-react";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import {
   Popover,
   PopoverContent,
@@ -15,32 +15,39 @@ interface DashboardHeaderProps {
   onDatePickerToggle: (open: boolean) => void;
 }
 
-export default function DashboardHeader({
+const DashboardHeader = ({
   selectedDate,
   onDateChange,
   datePickerOpen,
   onDatePickerToggle,
-}: DashboardHeaderProps) {
+}: DashboardHeaderProps) => {
   return (
-    <div className="flex flex-col md:flex-row md:items-center justify-between mb-6">
-      <h1 className="text-3xl font-bold text-text">Fitness Tracker</h1>
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+      <div>
+        <h2 className="text-2xl sm:text-3xl font-bold text-text mb-1">
+          Dashboard
+        </h2>
+        <p className="text-text-secondary text-sm sm:text-base">
+          Track your fitness journey and achieve your goals
+        </p>
+      </div>
 
-      <div className="flex items-center gap-2 mt-4 md:mt-0">
+      <div className="flex items-center gap-2">
         <Popover open={datePickerOpen} onOpenChange={onDatePickerToggle}>
           <PopoverTrigger asChild>
             <Button
               variant="outline"
-              className="flex items-center gap-2 bg-background-secondary text-text"
+              className="flex items-center gap-2 min-w-[200px] justify-start"
             >
-              <CalendarIcon size={16} />
-              {format(selectedDate, "MMMM d, yyyy")}
+              <Calendar className="h-4 w-4" />
+              <span className="flex-1 text-left">
+                {format(selectedDate, "MMMM d, yyyy")}
+              </span>
+              <ChevronDown className="h-4 w-4 opacity-50" />
             </Button>
           </PopoverTrigger>
-          <PopoverContent
-            className="w-auto p-0 bg-background border-border"
-            align="end"
-          >
-            <Calendar
+          <PopoverContent className="w-auto p-0" align="end">
+            <CalendarComponent
               mode="single"
               selected={selectedDate}
               onSelect={(date) => {
@@ -50,11 +57,12 @@ export default function DashboardHeader({
                 }
               }}
               initialFocus
-              className="bg-background text-text"
             />
           </PopoverContent>
         </Popover>
       </div>
     </div>
   );
-}
+};
+
+export default DashboardHeader;

@@ -1,4 +1,5 @@
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { TrackingCategory } from "@/types/fitness";
 import CategoryForm from "@/components/Dashboard/CategoryForm";
 
@@ -18,6 +19,11 @@ export default function CategoryDialog({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="bg-background border-border max-w-lg overflow-hidden">
+        <VisuallyHidden>
+          <DialogTitle>
+            {category ? "Edit Category" : "Add New Category"}
+          </DialogTitle>
+        </VisuallyHidden>
         <CategoryForm
           onSave={onSave}
           category={category}

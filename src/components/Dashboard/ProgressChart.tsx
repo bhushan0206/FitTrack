@@ -72,13 +72,15 @@ const ProgressChart = ({ logs, categories }: ProgressChartProps) => {
 
   return (
     <Card className="w-full bg-background border-border">
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="text-text">Weekly Progress</CardTitle>
+      <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-0 px-4 sm:px-6">
+        <CardTitle className="text-text text-lg sm:text-xl">
+          Weekly Progress
+        </CardTitle>
         <Select
           value={selectedCategoryId}
           onValueChange={setSelectedCategoryId}
         >
-          <SelectTrigger className="w-[180px]">
+          <SelectTrigger className="w-full sm:w-[180px]">
             <SelectValue placeholder="Select category" />
           </SelectTrigger>
           <SelectContent>
@@ -90,10 +92,10 @@ const ProgressChart = ({ logs, categories }: ProgressChartProps) => {
           </SelectContent>
         </Select>
       </CardHeader>
-      <CardContent>
-        <div className="h-[200px] flex items-end justify-between gap-2 p-4">
+      <CardContent className="px-2 sm:px-6">
+        <div className="h-[150px] sm:h-[200px] flex items-end justify-between gap-1 sm:gap-2 p-2 sm:p-4">
           {chartData.map((day) => {
-            const height = Math.max(Math.min(day.percentage, 100), 5); // Minimum 5% for visibility
+            const height = Math.max(Math.min(day.percentage, 100), 5);
             const bgColor =
               day.percentage >= 100 ? "bg-primary" : "bg-primary/60";
 
@@ -102,7 +104,7 @@ const ProgressChart = ({ logs, categories }: ProgressChartProps) => {
                 key={day.dateString}
                 className="flex flex-col items-center flex-1 min-w-0"
               >
-                <div className="w-full h-full relative flex flex-col justify-end mb-2">
+                <div className="w-full h-full relative flex flex-col justify-end mb-1 sm:mb-2">
                   <div
                     className={`w-full ${bgColor} rounded-t-sm transition-all duration-300 min-h-[4px]`}
                     style={{ height: `${height}%` }}
@@ -117,7 +119,7 @@ const ProgressChart = ({ logs, categories }: ProgressChartProps) => {
                 <div className="text-xs text-text-secondary text-center">
                   {format(day.date, "d")}
                 </div>
-                <div className="text-xs text-text-secondary text-center mt-1">
+                <div className="text-xs text-text-secondary text-center mt-1 hidden sm:block">
                   {day.value}
                 </div>
               </div>
@@ -126,7 +128,7 @@ const ProgressChart = ({ logs, categories }: ProgressChartProps) => {
         </div>
 
         {selectedCategory && (
-          <div className="mt-4 text-center text-sm text-text border-t border-border pt-4">
+          <div className="mt-4 text-center text-xs sm:text-sm text-text border-t border-border pt-4">
             <span className="font-medium">{selectedCategory.name}</span> -
             Target: {selectedCategory.dailyTarget} {selectedCategory.unit} per
             day

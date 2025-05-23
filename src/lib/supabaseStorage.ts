@@ -1,5 +1,4 @@
-import { supabaseAdmin } from './supabaseAdmin';
-import { supabase } from "./supabase";
+import { supabase } from './supabase';
 import { TrackingCategory, DailyLog, UserProfile } from "@/types/fitness";
 
 // Generate a unique ID
@@ -19,7 +18,7 @@ export const addCategory = async (
     if (!userId) throw new Error("User not authenticated");
 
     // Use admin client to bypass RLS
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await supabase
       .from("categories")
       .insert({
         id: category.id,
@@ -43,31 +42,267 @@ export const addCategory = async (
   }
 };
 
+// Initialize user profile in Supabase with proper auth handling
+export const initializeUserProfile = async (userId: string, userName?: string): Promise<UserProfile | null> => {
+  try {
+    // Remove the session check since we're using Clerk auth
+    // We'll rely on RLS policies or handle auth differently
+    
+    // Check if profile exists
+    const { data: existingProfile, error: fetchError } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .maybeSingle();
+
+    if (fetchError && fetchError.code !== 'PGRST116') {
+      console.error('Error fetching profile:', fetchError);
+    }
+
+    if (existingProfile) {
+      // Get categories and logs separately
+      const { data: categories } = await supabase
+        .from("categories")
+        .select("*")
+        .eq("user_id", userId);
+
+      const { data: logs } = await supabase
+        .from("logs")
+        .select("*")
+        .eq("user_id", userId);
+
+      // Transform data to match frontend types
+      const transformedCategories = (categories || []).map((cat) => ({
+        id: cat.id,
+        name: cat.name,
+        unit: cat.unit,
+        dailyTarget: cat.daily_target,
+        color: cat.color,
+      }));
+
+      const transformedLogs = (logs || []).map((log) => ({
+        id: log.id,
+        categoryId: log.category_id,
+        date: log.date,
+        value: log.value,
+        notes: log.notes,
+      }));
+
+      const profile: UserProfile = {
+        id: existingProfile.id,
+        name: existingProfile.name,
+        age: existingProfile.age,
+        gender: existingProfile.gender,
+        weight: existingProfile.weight,
+        height: existingProfile.height,
+        fitnessGoal: existingProfile.fitness_goal,
+        categories: transformedCategories,
+        logs: transformedLogs,
+        createdAt: existingProfile.created_at,
+        updatedAt: existingProfile.updated_at,
+      };
+      return profile;
+    }
+
+    // Create new profile if it doesn't exist
+    const now = new Date().toISOString();
+    const newProfileData = {
+      id: userId,
+      name: userName || 'User',
+      created_at: now,
+      updated_at: now,
+    };
+
+    const { data, error } = await supabase
+      .from('profiles')
+      .insert(newProfileData)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error creating profile:', error);
+      throw error;
+    }
+
+    return {
+      id: data.id,
+      name: data.name,
+      age: data.age,
+      gender: data.gender,
+      weight: data.weight,
+      height: data.height,
+      fitnessGoal: data.fitness_goal,
+      categories: [],
+      logs: [],
+      createdAt: data.created_at,
+      updatedAt: data.updated_at,
+    };
+  } catch (error) {
+    console.error('Error in initializeUserProfile:', error);
+    return null;
+  }
+};
+
+// Update profile update function
+export const updateUserProfile = async (
+  userId: string,
+  profileData: Partial<UserProfile>
+): Promise<UserProfile | null> => {
+  try {
+    // Remove session check
+    
+    // First check if profile exists
+    const { data: existingProfile, error: fetchError } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .maybeSingle(); // Use maybeSingle() instead of single() to avoid error when no rows
+
+    if (fetchError && fetchError.code !== 'PGRST116') {
+      console.error('Error checking existing profile:', fetchError);
+      throw fetchError;
+    }
+
+    const now = new Date().toISOString();
+
+    if (existingProfile) {
+      // Profile exists, update it
+      const { data, error } = await supabase
+        .from('profiles')
+        .update({
+          name: profileData.name,
+          age: profileData.age,
+          gender: profileData.gender,
+          weight: profileData.weight,
+          height: profileData.height,
+          fitness_goal: profileData.fitnessGoal,
+          updated_at: now,
+        })
+        .eq('id', userId)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error updating profile:', error);
+        throw error;
+      }
+
+      // Get categories and logs separately
+      const { data: categories } = await supabase
+        .from("categories")
+        .select("*")
+        .eq("user_id", userId);
+
+      const { data: logs } = await supabase
+        .from("logs")
+        .select("*")
+        .eq("user_id", userId);
+
+      // Transform data to match frontend types
+      const transformedCategories = (categories || []).map((cat) => ({
+        id: cat.id,
+        name: cat.name,
+        unit: cat.unit,
+        dailyTarget: cat.daily_target,
+        color: cat.color,
+      }));
+
+      const transformedLogs = (logs || []).map((log) => ({
+        id: log.id,
+        categoryId: log.category_id,
+        date: log.date,
+        value: log.value,
+        notes: log.notes,
+      }));
+
+      const profile: UserProfile = {
+        id: data.id,
+        name: data.name,
+        age: data.age,
+        gender: data.gender,
+        weight: data.weight,
+        height: data.height,
+        fitnessGoal: data.fitness_goal,
+        categories: transformedCategories,
+        logs: transformedLogs,
+        createdAt: data.created_at,
+        updatedAt: data.updated_at,
+      };
+
+      return profile;
+    } else {
+      // Profile doesn't exist, create it with the provided data
+      const newProfileData = {
+        id: userId,
+        name: profileData.name || 'User',
+        age: profileData.age,
+        gender: profileData.gender,
+        weight: profileData.weight,
+        height: profileData.height,
+        fitness_goal: profileData.fitnessGoal,
+        created_at: now,
+        updated_at: now,
+      };
+
+      const { data, error } = await supabase
+        .from('profiles')
+        .insert(newProfileData)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error creating profile:', error);
+        throw error;
+      }
+
+      const profile: UserProfile = {
+        id: data.id,
+        name: data.name,
+        age: data.age,
+        gender: data.gender,
+        weight: data.weight,
+        height: data.height,
+        fitnessGoal: data.fitness_goal,
+        categories: [],
+        logs: [],
+        createdAt: data.created_at,
+        updatedAt: data.updated_at,
+      };
+
+      return profile;
+    }
+  } catch (error) {
+    console.error('Error in updateUserProfile:', error);
+    return null;
+  }
+};
+
 // Get user profile from Supabase
 export const getUserProfile = async (userId: string): Promise<UserProfile | null> => {
   try {
     if (!userId) throw new Error("User not authenticated");
 
     // Get user profile info
-    const { data: profile, error: profileError } = await supabaseAdmin
+    const { data: profile, error: profileError } = await supabase
       .from("profiles")
       .select("*")
       .eq("id", userId)
-      .single();
+      .maybeSingle();
 
-    if (profileError) {
-      console.warn("Profile not found, creating new one");
+    if (profileError && profileError.code !== 'PGRST116') {
+      console.error('Error fetching profile:', profileError);
+      throw profileError;
     }
 
-    // Use admin client to bypass RLS
-    const { data: categories, error: categoriesError } = await supabaseAdmin
+    // Get categories and logs separately
+    const { data: categories, error: categoriesError } = await supabase
       .from("categories")
       .select("*")
       .eq("user_id", userId);
 
     if (categoriesError) throw categoriesError;
 
-    const { data: logs, error: logsError } = await supabaseAdmin
+    const { data: logs, error: logsError } = await supabase
       .from("logs")
       .select("*")
       .eq("user_id", userId);
@@ -94,94 +329,18 @@ export const getUserProfile = async (userId: string): Promise<UserProfile | null
     return {
       id: userId,
       name: profile?.name || "User",
+      age: profile?.age,
+      gender: profile?.gender,
+      weight: profile?.weight,
+      height: profile?.height,
+      fitnessGoal: profile?.fitness_goal,
       categories: transformedCategories,
       logs: transformedLogs,
+      createdAt: profile?.created_at,
+      updatedAt: profile?.updated_at,
     };
   } catch (error) {
     console.error("Error getting user profile:", error);
-    return null;
-  }
-};
-
-// Initialize user profile in Supabase
-export const initializeUserProfile = async (userId: string, userName?: string): Promise<UserProfile | null> => {
-  try {
-    // Check if user profile exists
-    const { data: existingProfile } = await supabaseAdmin
-      .from("profiles")
-      .select("*")
-      .eq("id", userId)
-      .single();
-
-    if (existingProfile) {
-      // Get categories for this user
-      const { data: categories } = await supabaseAdmin
-        .from("categories")
-        .select("*")
-        .eq("user_id", userId);
-
-      // Get logs for this user
-      const { data: logs } = await supabaseAdmin
-        .from("logs")
-        .select("*")
-        .eq("user_id", userId);
-
-      return {
-        id: userId,
-        name: existingProfile.name || "User",
-        categories: categories?.map(mapCategoryFromDB) || [],
-        logs: logs?.map(mapLogFromDB) || [],
-      };
-    }
-
-    // Create default profile with sample categories
-    const defaultCategories = [
-      {
-        id: generateId(),
-        name: "Steps",
-        unit: "steps",
-        daily_target: 10000,
-        color: "#3b82f6",
-        user_id: userId,
-      },
-      {
-        id: generateId(),
-        name: "Water",
-        unit: "glasses",
-        daily_target: 8,
-        color: "#06b6d4",
-        user_id: userId,
-      },
-      {
-        id: generateId(),
-        name: "Workout",
-        unit: "minutes",
-        daily_target: 30,
-        color: "#10b981",
-        user_id: userId,
-      },
-    ];
-
-    // Create profile with admin client
-    await supabaseAdmin.from("profiles").insert({
-      id: userId,
-      name: userName || "User",
-    });
-
-    // Create default categories with admin client
-    const { data: insertedCategories } = await supabaseAdmin
-      .from("categories")
-      .insert(defaultCategories)
-      .select();
-
-    return {
-      id: userId,
-      name: userName || "User",
-      categories: insertedCategories?.map(mapCategoryFromDB) || [],
-      logs: [],
-    };
-  } catch (error) {
-    console.error("Error initializing user profile:", error);
     return null;
   }
 };
@@ -194,7 +353,7 @@ export const updateCategory = async (
   try {
     if (!userId) throw new Error("User not authenticated");
 
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await supabase
       .from("categories")
       .update({
         name: category.name,
@@ -223,7 +382,7 @@ export const deleteCategory = async (
   try {
     if (!userId) throw new Error("User not authenticated");
 
-    const { error } = await supabaseAdmin
+    const { error } = await supabase
       .from("categories")
       .delete()
       .eq("id", categoryId)
@@ -245,7 +404,7 @@ export const addLogEntry = async (
   try {
     if (!userId) throw new Error("User not authenticated");
 
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await supabase
       .from("logs")
       .insert({
         id: log.id,
@@ -274,7 +433,7 @@ export const updateLogEntry = async (
   try {
     if (!userId) throw new Error("User not authenticated");
 
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await supabase
       .from("logs")
       .update({
         category_id: log.categoryId,
@@ -303,7 +462,7 @@ export const deleteLogEntry = async (
   try {
     if (!userId) throw new Error("User not authenticated");
 
-    const { error } = await supabaseAdmin
+    const { error } = await supabase
       .from("logs")
       .delete()
       .eq("id", logId)

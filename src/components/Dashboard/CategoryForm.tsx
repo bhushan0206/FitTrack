@@ -42,15 +42,15 @@ const CategoryForm = ({ onSave, category, onCancel }: CategoryFormProps) => {
 
   return (
     <Card className="w-full bg-background border-border max-w-md mx-auto">
-      <CardHeader className="pb-4">
-        <CardTitle className="text-text">
+      <CardHeader className="pb-4 px-4 sm:px-6">
+        <CardTitle className="text-text text-lg sm:text-xl" role="heading" aria-level={2}>
           {category ? "Edit Category" : "Add New Category"}
         </CardTitle>
       </CardHeader>
       <form onSubmit={handleSubmit}>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-4 sm:space-y-6 px-4 sm:px-6">
           <div className="space-y-2">
-            <Label htmlFor="name" className="text-text">
+            <Label htmlFor="name" className="text-text text-sm">
               Category Name
             </Label>
             <Input
@@ -58,12 +58,13 @@ const CategoryForm = ({ onSave, category, onCancel }: CategoryFormProps) => {
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g., Steps, Water, Workout"
+              className="w-full"
               required
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="unit" className="text-text">
+            <Label htmlFor="unit" className="text-text text-sm">
               Unit of Measurement
             </Label>
             <Input
@@ -71,12 +72,13 @@ const CategoryForm = ({ onSave, category, onCancel }: CategoryFormProps) => {
               value={unit}
               onChange={(e) => setUnit(e.target.value)}
               placeholder="e.g., steps, glasses, minutes"
+              className="w-full"
               required
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="target" className="text-text">
+            <Label htmlFor="target" className="text-text text-sm">
               Daily Target
             </Label>
             <Input
@@ -85,12 +87,13 @@ const CategoryForm = ({ onSave, category, onCancel }: CategoryFormProps) => {
               value={dailyTarget}
               onChange={(e) => setDailyTarget(e.target.value)}
               placeholder="e.g., 10000, 8, 30"
+              className="w-full"
               required
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="color" className="text-text">
+            <Label htmlFor="color" className="text-text text-sm">
               Color
             </Label>
             <div className="flex items-center gap-2">
@@ -99,25 +102,35 @@ const CategoryForm = ({ onSave, category, onCancel }: CategoryFormProps) => {
                 type="color"
                 value={color}
                 onChange={(e) => setColor(e.target.value)}
-                className="w-12 h-10 p-1"
+                className="w-12 h-10 p-1 flex-shrink-0"
               />
               <Input
                 type="text"
                 value={color}
                 onChange={(e) => setColor(e.target.value)}
-                className="flex-1"
+                className="flex-1 min-w-0"
               />
             </div>
           </div>
         </CardContent>
 
-        <CardFooter className="flex justify-between pt-6">
+        <CardFooter className="flex flex-col sm:flex-row justify-between gap-2 sm:gap-0 pt-4 sm:pt-6 px-4 sm:px-6">
           {onCancel && (
-            <Button type="button" variant="outline" onClick={onCancel}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onCancel}
+              className="w-full sm:w-auto order-2 sm:order-1"
+            >
               Cancel
             </Button>
           )}
-          <Button type="submit">{category ? "Update" : "Add"} Category</Button>
+          <Button
+            type="submit"
+            className="w-full sm:w-auto order-1 sm:order-2"
+          >
+            {category ? "Update" : "Add"} Category
+          </Button>
         </CardFooter>
       </form>
     </Card>

@@ -38,4 +38,12 @@ export interface UserProfile {
   categories: TrackingCategory[];
   logs: DailyLog[];
   achievements?: Achievement[];
+  // Add new profile fields
+  age?: number;
+  gender?: 'male' | 'female' | 'other' | 'prefer_not_to_say';
+  weight?: number; // in kg
+  height?: number; // in cm
+  fitnessGoal?: 'lose_weight' | 'gain_weight' | 'build_muscle' | 'improve_endurance' | 'maintain_health' | 'other';
+  createdAt?: string;
+  updatedAt?: string;
 }
