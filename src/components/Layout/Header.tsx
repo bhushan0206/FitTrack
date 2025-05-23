@@ -21,7 +21,7 @@ interface HeaderProps {
   profile: UserProfile | null;
   onProfileUpdate: (profileData: Partial<UserProfile>) => Promise<boolean>;
   isLoading: boolean;
-  children?: React.ReactNode; // For ProfileForm
+  children?: React.ReactNode;
 }
 
 const Header = ({
