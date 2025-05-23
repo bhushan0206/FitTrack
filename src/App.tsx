@@ -11,6 +11,10 @@ import { setupAuthSync } from './lib/supabase';
 
 const clerkPubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
+if (!clerkPubKey) {
+  throw new Error("Missing Publishable Key");
+}
+
 // Create a separate component for auth-dependent logic
 const AppContent = () => {
   const { userId } = useAuth();
