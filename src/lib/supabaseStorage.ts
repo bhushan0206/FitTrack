@@ -17,7 +17,6 @@ export const addCategory = async (
   try {
     if (!userId) throw new Error("User not authenticated");
 
-    // Use admin client to bypass RLS
     const { data, error } = await supabase
       .from("categories")
       .insert({
@@ -26,7 +25,8 @@ export const addCategory = async (
         unit: category.unit,
         daily_target: category.dailyTarget,
         color: category.color,
-        user_id: userId,
+        exerciseType: category.exerciseType,
+        user_id: userId, // Include the userId when adding a new category
       })
       .select()
       .single();
@@ -360,11 +360,10 @@ export const updateCategory = async (
         unit: category.unit,
         daily_target: category.dailyTarget,
         color: category.color,
+        exerciseType: category.exerciseType,
       })
       .eq("id", category.id)
-      .eq("user_id", userId)
-      .select()
-      .single();
+      .eq("user_id", userId); // Ensure the userId is used for filtering
 
     if (error) throw error;
     return await getUserProfile(userId);
@@ -631,4 +630,23 @@ export const profileStorage = {
       throw error;
     }
   },
+  
+  async updateTheme(userId: string, theme: string, accentColor: string) {
+    const { data, error } = await supabase
+      .from("profiles")
+      .update({ theme, accentColor })
+      .eq("id", userId);
+
+    if (error) {
+      console.error("Error updating theme:", error);
+      throw error;
+    }
+
+    return data;
+  },
+};
+
+// Export updateTheme as a standalone function
+export const updateTheme = async (userId: string, theme: string, accentColor: string) => {
+  return profileStorage.updateTheme(userId, theme, accentColor);
 };

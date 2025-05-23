@@ -1,3 +1,4 @@
+import React from "react";
 import { DailyLog, TrackingCategory } from "@/types/fitness";
 import { Card, CardContent } from "@/components/ui/card";
 import { format } from "date-fns";

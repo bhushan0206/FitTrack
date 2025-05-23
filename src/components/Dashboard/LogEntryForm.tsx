@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { DailyLog, TrackingCategory } from "@/types/fitness";
 import { generateId } from "@/lib/supabaseStorage";
 import { Button } from "@/components/ui/button";

@@ -22,7 +22,8 @@ const CategoryList = ({ profile, onUpdate }: CategoryListProps) => {
   const handleDeleteCategory = async (categoryId: string) => {
     try {
       setIsDeleting(categoryId);
-      await deleteCategory(categoryId);
+      const userId = "user-id"; // Replace with actual userId
+      await deleteCategory(categoryId, userId);
       onUpdate();
       toast({
         title: "Success",

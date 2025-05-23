@@ -35,7 +35,7 @@ const Header = ({
   children,
 }: HeaderProps) => {
   const { signOut } = useClerk();
-  const { theme, toggleTheme } = useTheme();
+  const { theme, setTheme } = useTheme();
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
 
   const handleProfileSave = async (profileData: Partial<UserProfile>) => {
@@ -43,6 +43,10 @@ const Header = ({
     if (success) {
       setProfileDialogOpen(false);
     }
+  };
+
+  const toggleTheme = () => {
+    setTheme(theme === 'dark' ? 'light' : 'dark');
   };
 
   return (

@@ -6,6 +6,7 @@ import { Moon, Sun, Monitor } from "lucide-react";
 import { UserProfile } from "@/types/fitness";
 import { updateTheme } from "@/lib/supabaseStorage";
 import { useToast } from "@/components/ui/use-toast";
+import { useAuth } from "@clerk/clerk-react";
 
 interface ThemeSettingsProps {
   profile: UserProfile;
@@ -13,8 +14,12 @@ interface ThemeSettingsProps {
 }
 
 const ThemeSettings = ({ profile, onUpdate }: ThemeSettingsProps) => {
+  const { userId } = useAuth(); // Get the userId from Clerk
   const [isUpdating, setIsUpdating] = useState(false);
   const { toast } = useToast();
+
+  const theme = profile.theme || "light"; // Fallback to "light"
+  const accentColor = profile.accentColor || "#3b82f6"; // Fallback to default color
 
   const handleThemeChange = async (
     theme: "light" | "dark" | "system",
@@ -22,7 +27,7 @@ const ThemeSettings = ({ profile, onUpdate }: ThemeSettingsProps) => {
   ) => {
     try {
       setIsUpdating(true);
-      await updateTheme(theme, accentColor);
+      await updateTheme(userId!, theme, accentColor!); // Pass userId
       onUpdate();
       toast({
         title: "Success",
@@ -45,27 +50,27 @@ const ThemeSettings = ({ profile, onUpdate }: ThemeSettingsProps) => {
         <h2 className="text-xl font-semibold mb-4">Theme</h2>
         <div className="flex flex-wrap gap-4">
           <Button
-            variant={profile.theme === "light" ? "default" : "outline"}
+            variant={theme === "light" ? "default" : "outline"}
             className="flex items-center gap-2"
-            onClick={() => handleThemeChange("light", profile.accentColor)}
+            onClick={() => handleThemeChange("light", accentColor)}
             disabled={isUpdating}
           >
             <Sun size={16} />
             Light
           </Button>
           <Button
-            variant={profile.theme === "dark" ? "default" : "outline"}
+            variant={theme === "dark" ? "default" : "outline"}
             className="flex items-center gap-2"
-            onClick={() => handleThemeChange("dark", profile.accentColor)}
+            onClick={() => handleThemeChange("dark", accentColor)}
             disabled={isUpdating}
           >
             <Moon size={16} />
             Dark
           </Button>
           <Button
-            variant={profile.theme === "system" ? "default" : "outline"}
+            variant={theme === "system" ? "default" : "outline"}
             className="flex items-center gap-2"
-            onClick={() => handleThemeChange("system", profile.accentColor)}
+            onClick={() => handleThemeChange("system", accentColor)}
             disabled={isUpdating}
           >
             <Monitor size={16} />
@@ -78,18 +83,18 @@ const ThemeSettings = ({ profile, onUpdate }: ThemeSettingsProps) => {
           <div className="flex items-center gap-2">
             <Input
               type="color"
-              value={profile.accentColor || "#3b82f6"}
+              value={accentColor}
               onChange={(e) =>
-                handleThemeChange(profile.theme || "light", e.target.value)
+                handleThemeChange(theme, e.target.value)
               }
               className="w-12 h-10 p-1"
               disabled={isUpdating}
             />
             <Input
               type="text"
-              value={profile.accentColor || "#3b82f6"}
+              value={accentColor}
               onChange={(e) =>
-                handleThemeChange(profile.theme || "light", e.target.value)
+                handleThemeChange(theme, e.target.value)
               }
               className="flex-1 dark:bg-gray-700"
               disabled={isUpdating}

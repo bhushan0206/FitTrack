@@ -4,6 +4,7 @@ export interface TrackingCategory {
   unit: string;
   dailyTarget: number;
   color?: string;
+  exerciseType?: string; // Added exerciseType
 }
 
 export interface DailyLog {
@@ -40,6 +41,8 @@ export interface UserProfile {
   weight?: number; // in kg
   height?: number; // in cm
   fitnessGoal?: 'lose_weight' | 'gain_weight' | 'build_muscle' | 'improve_endurance' | 'maintain_health' | 'other';
+  theme?: "light" | "dark" | "system"; // Added theme
+  accentColor?: string; // Added accentColor
   categories: TrackingCategory[];
   logs: DailyLog[];
   createdAt?: string;

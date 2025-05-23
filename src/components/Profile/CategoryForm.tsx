@@ -1,3 +1,4 @@
+import { useAuth } from "@clerk/clerk-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,7 +25,7 @@ import { generateId } from "@/lib/storage";
 interface CategoryFormProps {
   category?: TrackingCategory | null;
   onClose: () => void;
-  onSave: () => void;
+  onSave: (category: TrackingCategory) => void;
 }
 
 const exerciseTypes = [
@@ -36,6 +37,7 @@ const exerciseTypes = [
 ];
 
 const CategoryForm = ({ category, onClose, onSave }: CategoryFormProps) => {
+  const { userId } = useAuth(); // Get the userId from Clerk
   const [name, setName] = useState(category?.name || "");
   const [unit, setUnit] = useState(category?.unit || "");
   const [dailyTarget, setDailyTarget] = useState<number>(
@@ -71,19 +73,19 @@ const CategoryForm = ({ category, onClose, onSave }: CategoryFormProps) => {
       };
 
       if (category) {
-        await updateCategory(categoryData);
+        await updateCategory(categoryData, userId!); // Pass userId
         toast({
           title: "Success",
           description: "Category updated successfully",
         });
       } else {
-        await addCategory(categoryData);
+        await addCategory(categoryData, userId!); // Pass userId
         toast({
           title: "Success",
           description: "Category added successfully",
         });
       }
-      onSave();
+      onSave(categoryData);
     } catch (error: any) {
       toast({
         title: "Error",
