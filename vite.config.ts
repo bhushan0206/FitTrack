@@ -20,7 +20,10 @@ export default defineConfig({
     },
   },
   server: {
-    // @ts-ignore
-    allowedHosts: true,
-  }
+    port: 5173,
+    host: true,
+    hmr: {
+      port: 5173,
+    },
+  },
 });

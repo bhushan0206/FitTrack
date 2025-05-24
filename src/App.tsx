@@ -65,6 +65,7 @@ const AppContent = () => {
         />
       </Routes>
 
+      {/* Toast notifications - using correct Toaster API */}
       <Toaster />
     </div>
   );

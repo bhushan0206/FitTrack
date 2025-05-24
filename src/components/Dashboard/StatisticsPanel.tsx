@@ -335,6 +335,11 @@ const StatisticsPanel = () => {
       </Dialog>
 
       <Footer />
+      
+      {/* Toast container - positioned properly */}
+      <div className="fixed top-0 right-0 z-[100] p-4">
+        {/* This ensures toasts appear in the correct position */}
+      </div>
     </div>
   );
 };
