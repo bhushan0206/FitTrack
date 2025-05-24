@@ -53,29 +53,41 @@ const FriendsPanel = ({ onOpenChat }: FriendsPanelProps) => {
     setError('');
     setSuccess('');
     
-    const result = await socialStorage.sendFriendRequest(friendEmail.trim().toLowerCase());
-    
-    if (result.success) {
-      setFriendEmail('');
-      setShowAddFriend(false);
-      setSuccess('Friend request sent successfully!');
-      setTimeout(() => setSuccess(''), 5000);
-    } else {
-      setError(result.error || 'Failed to send friend request.');
+    try {
+      const result = await socialStorage.sendFriendRequest(friendEmail.trim().toLowerCase());
+      
+      if (result.success) {
+        setFriendEmail('');
+        setShowAddFriend(false);
+        setSuccess('Friend request sent successfully!');
+        loadFriends(); // Refresh friends list
+        setTimeout(() => setSuccess(''), 5000);
+      } else {
+        setError(result.error || 'Failed to send friend request.');
+      }
+    } catch (error) {
+      console.error('Error in handleSendFriendRequest:', error);
+      setError('An unexpected error occurred. Please try again.');
     }
     
     setLoading(false);
   };
 
   const handleAcceptRequest = async (friendshipId: string) => {
-    const result = await socialStorage.acceptFriendRequest(friendshipId);
-    if (result.success) {
-      loadFriends();
-      loadPendingRequests();
-      setSuccess('Friend request accepted!');
-      setTimeout(() => setSuccess(''), 3000);
-    } else {
-      setError(result.error || 'Failed to accept friend request.');
+    try {
+      const result = await socialStorage.acceptFriendRequest(friendshipId);
+      if (result.success) {
+        // Refresh both lists to show the updated friendship status
+        await Promise.all([loadFriends(), loadPendingRequests()]);
+        setSuccess('Friend request accepted! You are now friends.');
+        setTimeout(() => setSuccess(''), 3000);
+      } else {
+        setError(result.error || 'Failed to accept friend request.');
+        setTimeout(() => setError(''), 3000);
+      }
+    } catch (error) {
+      console.error('Error in handleAcceptRequest:', error);
+      setError('An unexpected error occurred. Please try again.');
       setTimeout(() => setError(''), 3000);
     }
   };

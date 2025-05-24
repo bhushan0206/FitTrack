@@ -63,9 +63,13 @@ export interface ProgressShare {
 export interface Conversation {
   id: string;
   participant_id: string;
-  participant_name: string;
-  participant_avatar?: string;
-  last_message?: string;
-  last_message_time?: string;
+  participant_profile: {
+    id: string;
+    name: string;
+    email: string;
+    avatar_url?: string;
+  } | null;
+  last_message: Message;
   unread_count: number;
+  updated_at: string;
 }

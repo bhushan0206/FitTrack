@@ -61,12 +61,46 @@ const ChatPanel = ({ friendId, friendName, onBack }: ChatPanelProps) => {
   const handleSendMessage = async () => {
     if (!newMessage.trim()) return;
 
+    const messageContent = newMessage.trim();
     setLoading(true);
-    const success = await socialStorage.sendMessage(friendId, newMessage.trim());
-    if (success) {
-      setNewMessage('');
+    setNewMessage(''); // Clear input immediately
+    
+    // Create optimistic message
+    const optimisticMessage: Message = {
+      id: `temp-${Date.now()}-${Math.random()}`,
+      sender_id: user?.id || '',
+      receiver_id: friendId,
+      content: messageContent,
+      message_type: 'text',
+      shared_data: null,
+      read: false,
+      created_at: new Date().toISOString(),
+      sender_profile: {
+        id: user?.id || '',
+        name: user?.name || user?.email?.split('@')[0] || 'You',
+        avatar_url: user?.avatar
+      }
+    };
+
+    // Add to messages immediately
+    setMessages(prev => [...prev, optimisticMessage]);
+
+    try {
+      const result = await socialStorage.sendMessage(friendId, messageContent);
+      if (!result.success) {
+        // Remove optimistic message and restore input on error
+        setMessages(prev => prev.filter(m => m.id !== optimisticMessage.id));
+        setNewMessage(messageContent);
+        console.error('Failed to send message:', result.error);
+      }
+    } catch (error) {
+      // Remove optimistic message and restore input on error
+      setMessages(prev => prev.filter(m => m.id !== optimisticMessage.id));
+      setNewMessage(messageContent);
+      console.error('Error sending message:', error);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const renderSharedContent = (message: Message) => {

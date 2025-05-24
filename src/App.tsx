@@ -1,5 +1,5 @@
 import { Suspense, useEffect } from "react";
-import { Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";
+import { Routes, Route, Navigate, useNavigate, useLocation, BrowserRouter as Router } from "react-router-dom";
 import { Toaster } from "./components/ui/toaster";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
@@ -7,6 +7,7 @@ import "./styles/theme.css";
 import StatisticsPanel from "./components/Dashboard/StatisticsPanel";
 import SignInPage from "@/components/Auth/SignInPage";
 import DataDeletionPage from "./pages/DataDeletionPage";
+import NotificationToast from '@/components/Notifications/NotificationToast';
 
 // Create a separate component for auth-dependent logic
 const AppContent = () => {
@@ -21,10 +22,11 @@ const AppContent = () => {
       return;
     }
 
-    const isSignInPage = location.pathname === '/sign-in';
-    const isDashboardPage = location.pathname === '/dashboard';
-    const isRootPage = location.pathname === '/';
-    const isDataDeletionPage = location.pathname === '/data-deletion';
+    const currentPath = location.pathname;
+    const isSignInPage = currentPath === '/sign-in';
+    const isDashboardPage = currentPath === '/dashboard';
+    const isRootPage = currentPath === '/';
+    const isDataDeletionPage = currentPath === '/data-deletion';
 
     // Skip navigation for data deletion page
     if (isDataDeletionPage) return;
@@ -38,7 +40,13 @@ const AppContent = () => {
       return;
     }
 
-    console.log('Navigation check:', { user: !!user, isSignInPage, isDashboardPage, isRootPage });
+    console.log('Navigation check:', { 
+      user: !!user, 
+      currentPath, 
+      isSignInPage, 
+      isDashboardPage, 
+      isRootPage 
+    });
 
     // If user is authenticated
     if (user) {
@@ -49,14 +57,12 @@ const AppContent = () => {
     } 
     // If user is not authenticated
     else {
-      if (isDashboardPage) {
+      if (isDashboardPage || isRootPage) {
         console.log('User not authenticated, redirecting to sign-in');
-        navigate('/sign-in', { replace: true });
-      } else if (isRootPage) {
         navigate('/sign-in', { replace: true });
       }
     }
-  }, [user, loading, location.pathname, navigate]);
+  }, [user, loading, location.pathname]); // Only depend on primitive values
 
   // Show loading while auth is being determined
   if (loading) {
@@ -76,7 +82,7 @@ const AppContent = () => {
         <Route path="/sign-in" element={<SignInPage />} />
         <Route path="/dashboard" element={<StatisticsPanel />} />
         <Route path="/data-deletion" element={<DataDeletionPage />} />
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/" element={<Navigate to={user ? "/dashboard" : "/sign-in"} replace />} />
       </Routes>
 
       <Toaster />
@@ -86,17 +92,18 @@ const AppContent = () => {
 
 function App() {
   return (
-    <AuthProvider>
-      <ThemeProvider>
-        <Suspense fallback={
-          <div className="flex items-center justify-center h-screen">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+    <ThemeProvider>
+      <AuthProvider>
+        <Router>
+          <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+            <AppContent />
+            
+            {/* Add notification toast */}
+            <NotificationToast />
           </div>
-        }>
-          <AppContent />
-        </Suspense>
-      </ThemeProvider>
-    </AuthProvider>
+        </Router>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 

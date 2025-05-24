@@ -26,12 +26,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<AuthUser | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
     let mounted = true;
+    let sessionCheckInterval: NodeJS.Timeout;
 
     const initializeAuth = async () => {
       try {
+        console.log('🔄 Initializing auth...');
+        
         // First, check for OAuth callback in URL
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
         const accessToken = hashParams.get('access_token');
@@ -52,13 +56,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               if (mounted) {
                 setSession(data.session);
                 setUser(data.user ? transformUser(data.user) : null);
-                localStorage.setItem('supabase-auth-token', 'authenticated');
+                localStorage.setItem('supabase-auth-token', JSON.stringify(data.session));
+                setIsInitialized(true);
+                setLoading(false);
               }
               // Clear the hash from URL
               window.history.replaceState({}, document.title, window.location.pathname);
-              if (mounted) {
-                setLoading(false);
-              }
               return;
             }
           } catch (err) {
@@ -67,30 +70,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
 
         // If no OAuth callback, check for existing session
-        const { data: { session }, error } = await supabase.auth.getSession();
+        const { data: { session: initialSession }, error } = await supabase.auth.getSession();
         
         if (error) {
           console.error('Error getting initial session:', error);
+          localStorage.removeItem('supabase-auth-token');
         } else {
           console.log('Auth context - initial session check:', {
-            hasSession: !!session,
-            userEmail: session?.user?.email,
-            userId: session?.user?.id
+            hasSession: !!initialSession,
+            userEmail: initialSession?.user?.email,
+            userId: initialSession?.user?.id
           });
           
           if (mounted) {
-            setSession(session);
-            setUser(session?.user ? transformUser(session.user) : null);
+            setSession(initialSession);
+            setUser(initialSession?.user ? transformUser(initialSession.user) : null);
             
-            if (session) {
-              localStorage.setItem('supabase-auth-token', 'authenticated');
+            if (initialSession) {
+              localStorage.setItem('supabase-auth-token', JSON.stringify(initialSession));
+              await ensureUserProfile(initialSession.user);
             } else {
               localStorage.removeItem('supabase-auth-token');
             }
+            
+            setIsInitialized(true);
           }
         }
       } catch (error) {
         console.error('Error in initializeAuth:', error);
+        if (mounted) {
+          localStorage.removeItem('supabase-auth-token');
+          setSession(null);
+          setUser(null);
+          setIsInitialized(true);
+        }
       } finally {
         if (mounted) {
           setLoading(false);
@@ -99,88 +112,129 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log('Auth context - state changed:', {
-          event,
-          hasSession: !!session,
-          userEmail: session?.user?.email,
-          userId: session?.user?.id,
-          timestamp: new Date().toISOString()
-        });
-        
-        if (mounted) {
-          setSession(session);
-          setUser(session?.user ? transformUser(session.user) : null);
-          setLoading(false);
-        }
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('🔄 Auth state changed:', event, session?.user?.id);
+      
+      if (mounted) {
+        setSession(session);
+        setUser(session?.user ? transformUser(session.user) : null);
+        setLoading(false);
+        setIsInitialized(true);
 
-        // Handle cross-tab sync
-        if (event === 'SIGNED_IN' && session) {
-          console.log('✅ User successfully signed in:', session.user.email);
-          localStorage.setItem('supabase-auth-token', 'authenticated');
-        } else if (event === 'SIGNED_OUT') {
-          console.log('👋 User signed out');
+        if (session) {
+          localStorage.setItem('supabase-auth-token', JSON.stringify(session));
+        } else {
           localStorage.removeItem('supabase-auth-token');
-        } else if (event === 'TOKEN_REFRESHED' && session) {
-          console.log('🔄 Token refreshed for:', session.user.email);
-          localStorage.setItem('supabase-auth-token', 'authenticated');
+        }
+
+        if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session?.user) {
+          await ensureUserProfile(session.user);
         }
       }
-    );
+    });
 
-    // Cross-tab synchronization
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'supabase-auth-token' && mounted) {
-        if (e.newValue && !session) {
-          console.log('📡 Cross-tab sign-in detected');
-          setTimeout(() => {
-            if (mounted) initializeAuth();
-          }, 100);
-        } else if (!e.newValue && session) {
-          console.log('📡 Cross-tab sign-out detected');
-          setSession(null);
-          setUser(null);
-        }
-      }
-    };
-
-    // Check for existing session when window gains focus
-    const handleFocus = () => {
-      if (mounted && !session && !document.hidden) {
-        const hasStoredToken = localStorage.getItem('supabase-auth-token');
-        if (hasStoredToken) {
-          console.log('🎯 Window focused with stored token, checking session...');
-          initializeAuth();
-        }
-      }
-    };
-
-    // Check for existing session when page becomes visible
-    const handleVisibilityChange = () => {
-      if (!document.hidden && mounted && !session) {
-        const hasStoredToken = localStorage.getItem('supabase-auth-token');
-        if (hasStoredToken) {
-          console.log('👁️ Page became visible with stored token, checking session...');
-          initializeAuth();
-        }
-      }
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    window.addEventListener('focus', handleFocus);
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-
+    // Initialize auth
     initializeAuth();
+
+    // Reduce frequency of session checks to prevent loops
+    sessionCheckInterval = setInterval(async () => {
+      if (!mounted || !isInitialized || loading) return;
+      
+      try {
+        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        
+        // Only update if session actually changed
+        if (currentSession?.access_token !== session?.access_token) {
+          console.log('🔄 Session changed during periodic check');
+          setSession(currentSession);
+          setUser(currentSession?.user ? transformUser(currentSession.user) : null);
+          
+          if (currentSession) {
+            localStorage.setItem('supabase-auth-token', JSON.stringify(currentSession));
+          } else {
+            localStorage.removeItem('supabase-auth-token');
+          }
+        }
+      } catch (error) {
+        console.error('Error during periodic session check:', error);
+      }
+    }, 60000); // Check every 60 seconds instead of 10
 
     return () => {
       mounted = false;
       subscription.unsubscribe();
-      window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('focus', handleFocus);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      if (sessionCheckInterval) {
+        clearInterval(sessionCheckInterval);
+      }
     };
-  }, []); // Remove session dependency to prevent loops
+  }, []); // Remove all dependencies to prevent loops
+
+  // Helper function to ensure user profile exists
+  const ensureUserProfile = async (user: any) => {
+    try {
+      console.log('Checking profile for user:', user.id);
+      
+      // First check if profile exists
+      const { data: existingProfile, error: fetchError } = await supabase
+        .from('profiles')
+        .select('id, name, email')
+        .eq('id', user.id)
+        .single();
+
+      if (fetchError && fetchError.code === 'PGRST116') {
+        // Profile doesn't exist, create it
+        console.log('Creating profile for user:', user.id);
+        
+        const profileData = {
+          id: user.id,
+          email: user.email,
+          name: user.user_metadata?.name || 
+                user.user_metadata?.full_name || 
+                user.user_metadata?.display_name ||
+                user.email?.split('@')[0] || 
+                'User',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        };
+
+        const { error: createError } = await supabase
+          .from('profiles')
+          .insert(profileData);
+
+        if (createError) {
+          console.error('Error creating profile:', createError);
+        } else {
+          console.log('Profile created successfully for user:', user.id);
+        }
+      } else if (fetchError) {
+        console.error('Error fetching profile:', fetchError);
+      } else {
+        console.log('Profile already exists for user:', user.id);
+        
+        // Update profile name if it's from social auth and we have better metadata
+        const newName = user.user_metadata?.name || 
+                       user.user_metadata?.full_name || 
+                       user.user_metadata?.display_name;
+        
+        if (newName && newName !== existingProfile.name && 
+            (existingProfile.name === 'User' || !existingProfile.name)) {
+          await supabase
+            .from('profiles')
+            .update({ 
+              name: newName,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', user.id);
+          
+          console.log('Updated profile name for user:', user.id, 'to:', newName);
+        }
+      }
+    } catch (error) {
+      console.error('Error in ensureUserProfile:', error);
+    }
+  };
 
   const transformUser = (user: User): AuthUser => ({
     id: user.id,
@@ -323,7 +377,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const value = {
     user,
     session,
-    loading,
+    loading: loading || !isInitialized,
     signIn,
     signUp,
     signOut,
@@ -338,3 +392,5 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     </AuthContext.Provider>
   );
 };
+
+export default AuthProvider;
