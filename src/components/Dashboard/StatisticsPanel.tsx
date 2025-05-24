@@ -328,7 +328,7 @@ const StatisticsPanel = () => {
                       variant="outline"
                       disabled={!user}
                     >
-                      <span className="text-2xl">🏷️</span>
+                      <span className="text-2xl">🎯</span>
                       <span className="font-semibold">Add Category</span>
                     </Button>
                   </div>
@@ -481,7 +481,11 @@ const StatisticsPanel = () => {
                 </h2>
               </div>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <ProgressChart logs={logs} categories={categories} />
+                <ProgressChart 
+                  logs={logs} 
+                  categories={categories} 
+                  exerciseLogs={exerciseLogs}
+                />
                 <CategoryManager
                   categories={categories}
                   onCategoryUpdate={() => {}}
