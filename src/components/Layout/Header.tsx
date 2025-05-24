@@ -44,7 +44,7 @@ const Header = ({
   isLoading,
   children,
 }: HeaderProps) => {
-  const { signOut, user } = useAuth();
+  const { user, signOut } = useAuth();
   const { theme, setTheme } = useTheme();
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
 
@@ -67,31 +67,27 @@ const Header = ({
     }
   };
 
+  const handleLogoClick = () => {
+    // Reset to main dashboard view by reloading the page
+    window.location.href = '/';
+  };
+
   return (
-    <header className="relative z-20 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md border-b border-gray-200/50 dark:border-gray-600/50 sticky top-0">
+    <header className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border-b border-gray-200/50 dark:border-gray-700/50 sticky top-0 z-50 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16 sm:h-20">
-          {/* Logo and Welcome */}
-          <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
-            <div className="flex-shrink-0">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center">
-                <svg width="20" height="20" className="sm:w-6 sm:h-6" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <rect x="6" y="14" width="20" height="4" rx="2" fill="white" />
-                  <rect x="2" y="10" width="8" height="12" rx="4" fill="white" />
-                  <rect x="22" y="10" width="8" height="12" rx="4" fill="white" />
-                </svg>
-              </div>
+        <div className="flex items-center justify-between h-16">
+          {/* Logo */}
+          <button
+            onClick={handleLogoClick}
+            className="flex items-center gap-3 hover:opacity-80 transition-opacity duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 rounded-lg p-2 -m-2"
+          >
+            <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+              <span className="text-white font-bold text-lg">F</span>
             </div>
-            
-            <div className="min-w-0 flex-1">
-              <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 dark:text-white truncate">
-                FitTrack
-              </h1>
-              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 truncate">
-                Welcome back, {profile?.name || user?.name || 'User'}!
-              </p>
-            </div>
-          </div>
+            <h1 className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+              FitTrack
+            </h1>
+          </button>
 
           {/* Center Section - Date Picker */}
           <div className="hidden md:flex items-center justify-center flex-1 max-w-xs">

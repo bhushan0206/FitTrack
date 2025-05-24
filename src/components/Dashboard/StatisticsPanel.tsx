@@ -21,6 +21,7 @@ import { exerciseStorage } from "@/lib/exerciseStorage";
 import ExerciseLibrary from "@/components/Exercise/ExerciseLibrary";
 import ExerciseDetails from "@/components/Exercise/ExerciseDetails";
 import ExerciseTracker from "@/components/Exercise/ExerciseTracker";
+import SocialHub from "@/components/Social/SocialHub";
 
 const StatisticsPanel = () => {
   const { user } = useAuth();
@@ -53,6 +54,7 @@ const StatisticsPanel = () => {
   const [showExerciseDetails, setShowExerciseDetails] = useState(false);
   const [showExerciseTracker, setShowExerciseTracker] = useState(false);
   const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
+  const [showSocialHub, setShowSocialHub] = useState(false);
 
   // Load exercises and exercise logs
   useEffect(() => {
@@ -217,6 +219,26 @@ const StatisticsPanel = () => {
       </Header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Social Hub */}
+        {showSocialHub && (
+          <div className="space-y-6 mb-8">
+            <div className="flex items-center justify-between">
+              <Button
+                variant="outline"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setShowSocialHub(false);
+                }}
+                className="mb-4"
+              >
+                ← Back to Dashboard
+              </Button>
+            </div>
+            <SocialHub />
+          </div>
+        )}
+
         {/* Exercise Library */}
         {showExerciseLibrary && (
           <div className="space-y-6 mb-8">
@@ -298,7 +320,7 @@ const StatisticsPanel = () => {
         )}
 
         {/* Main Dashboard - Reorganized for better UX */}
-        {!showExerciseLibrary && !showExerciseDetails && !showExerciseTracker && (
+        {!showExerciseLibrary && !showExerciseDetails && !showExerciseTracker && !showSocialHub && (
           <>
             {/* Quick Actions Section - High Priority */}
             <div className="mb-8">
@@ -311,7 +333,7 @@ const StatisticsPanel = () => {
                   <p className="text-indigo-100">Start tracking your fitness journey</p>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <Button
                       onClick={(e) => {
                         e.preventDefault();
@@ -352,6 +374,19 @@ const StatisticsPanel = () => {
                       <span className="text-2xl">🎯</span>
                       <span className="font-semibold">Add Category</span>
                     </Button>
+                    <Button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setShowSocialHub(true);
+                      }}
+                      className="bg-white/20 hover:bg-white/30 text-white border-white/30 h-20 flex flex-col gap-2 backdrop-blur-sm"
+                      variant="outline"
+                      disabled={!user}
+                    >
+                      <span className="text-2xl">👥</span>
+                      <span className="font-semibold">Social Hub</span>
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
@@ -364,9 +399,25 @@ const StatisticsPanel = () => {
                   <span className="text-3xl">📊</span>
                   Today's Overview
                 </h2>
-                <p className="text-gray-600 dark:text-gray-400">
-                  {format(selectedDate, "EEEE, MMMM d, yyyy")}
-                </p>
+                <div className="flex items-center gap-4">
+                  <p className="text-gray-600 dark:text-gray-400">
+                    {format(selectedDate, "EEEE, MMMM d, yyyy")}
+                  </p>
+                  <Button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setShowSocialHub(true);
+                    }}
+                    variant="outline"
+                    size="sm"
+                    className="flex items-center gap-2"
+                    disabled={!user}
+                  >
+                    <span className="text-lg">👥</span>
+                    Social
+                  </Button>
+                </div>
               </div>
               <SummaryCards
                 logs={logs}
