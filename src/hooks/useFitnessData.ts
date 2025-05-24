@@ -1,155 +1,76 @@
 import { useState, useEffect, useCallback } from "react";
-import { useAuth, useUser } from '@clerk/clerk-react';
+import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/components/ui/use-toast";
 import { TrackingCategory, DailyLog, UserProfile } from "@/types/fitness";
 import {
+  getUserProfile,
   initializeUserProfile,
+  updateUserProfile,
   addCategory,
   updateCategory,
   deleteCategory,
   addLogEntry,
   updateLogEntry,
   deleteLogEntry,
-  updateUserProfile,
-  profileStorage,
 } from "@/lib/supabaseStorage";
-import { supabase } from "@/lib/supabase";
 
 export const useFitnessData = () => {
-  const { userId } = useAuth();
-  const { user } = useUser();
+  const { user, loading: authLoading } = useAuth();
   const { toast } = useToast();
   
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [categories, setCategories] = useState<TrackingCategory[]>([]);
   const [logs, setLogs] = useState<DailyLog[]>([]);
-  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Memoize the data loading function to prevent infinite re-renders
-  const loadUserData = useCallback(async () => {
-    if (!userId) {
-      setIsLoading(false);
-      return;
-    }
-    
-    try {
-      setIsLoading(true);
-      
-      // Wait a bit to ensure Clerk auth is fully loaded
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      const userName = user?.fullName || user?.firstName || user?.username;
-      const userProfile = await initializeUserProfile(userId, userName);
-      
-      if (userProfile) {
-        setProfile(userProfile);
-        setCategories(userProfile.categories);
-        setLogs(userProfile.logs);
-      } else {
-        // Create a basic profile locally if database creation fails
-        console.warn('Failed to load profile from database, using local fallback');
-        const fallbackProfile: UserProfile = {
-          id: userId,
-          name: userName || 'User',
-          categories: [],
-          logs: [],
-        };
-        setProfile(fallbackProfile);
-        setCategories([]);
-        setLogs([]);
-        
-        toast({
-          title: "Notice",
-          description: "Using offline mode. Data will not be saved.",
-          variant: "default",
-        });
+  // Load user data when user changes
+  useEffect(() => {
+    const loadUserData = async () => {
+      if (!user || authLoading) {
+        setIsLoading(authLoading);
+        return;
       }
-    } catch (error: any) {
-      console.error('Error loading user data:', error);
-      // Create fallback profile
-      const fallbackProfile: UserProfile = {
-        id: userId,
-        name: user?.fullName || user?.firstName || user?.username || 'User',
-        categories: [],
-        logs: [],
-      };
-      setProfile(fallbackProfile);
-      setCategories([]);
-      setLogs([]);
-      
-      toast({
-        title: "Error",
-        description: "Could not connect to database. Using offline mode.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  }, [userId, user?.fullName, user?.firstName, user?.username, toast]);
 
-  // Initialize data from Supabase
-  useEffect(() => {
-    loadUserData();
-  }, [loadUserData]);
-
-  // Set up real-time subscriptions using the single supabase instance
-  useEffect(() => {
-    if (!userId) return;
-
-    const categoriesSubscription = supabase
-      .channel('categories-changes')
-      .on('postgres_changes', 
-        { 
-          event: '*', 
-          schema: 'public', 
-          table: 'categories',
-          filter: `user_id=eq.${userId}`
-        }, 
-        (payload) => {
-          console.log('Categories changed:', payload);
-          // Refresh data when changes occur
-          loadUserData();
+      try {
+        setIsLoading(true);
+        
+        // Try to get existing profile
+        let userProfile = await getUserProfile();
+        
+        // If no profile exists, initialize one
+        if (!userProfile) {
+          userProfile = await initializeUserProfile(user.name);
         }
-      )
-      .subscribe();
 
-    const logsSubscription = supabase
-      .channel('logs-changes')
-      .on('postgres_changes', 
-        { 
-          event: '*', 
-          schema: 'public', 
-          table: 'daily_logs',
-          filter: `user_id=eq.${userId}`
-        }, 
-        (payload) => {
-          console.log('Logs changed:', payload);
-          // Refresh data when changes occur
-          loadUserData();
+        if (userProfile) {
+          setProfile(userProfile);
+          setCategories(userProfile.categories || []);
+          setLogs(userProfile.logs || []);
         }
-      )
-      .subscribe();
-
-    return () => {
-      categoriesSubscription.unsubscribe();
-      logsSubscription.unsubscribe();
+      } catch (error) {
+        console.error("Error loading user data:", error);
+      } finally {
+        setIsLoading(false);
+      }
     };
-  }, [loadUserData, userId]);
 
-  // Category operations
-  const handleAddCategory = async (category: TrackingCategory) => {
-    if (!userId) return false;
-    
+    loadUserData();
+  }, [user, authLoading]);
+
+  // Category management
+  const handleAddCategory = async (category: TrackingCategory): Promise<boolean> => {
     try {
-      const updatedProfile = await addCategory(category, userId);
+      const updatedProfile = await addCategory(category);
       if (updatedProfile) {
-        setCategories(updatedProfile.categories);
+        setProfile(updatedProfile);
+        setCategories(updatedProfile.categories || []);
         toast({
           title: "Success",
           description: "Category added successfully",
         });
         return true;
       }
+      return false;
     } catch (error: any) {
       console.error('Error adding category:', error);
       toast({
@@ -161,19 +82,19 @@ export const useFitnessData = () => {
     return false;
   };
 
-  const handleUpdateCategory = async (category: TrackingCategory) => {
-    if (!userId) return false;
-    
+  const handleUpdateCategory = async (category: TrackingCategory): Promise<boolean> => {
     try {
-      const updatedProfile = await updateCategory(category, userId);
+      const updatedProfile = await updateCategory(category);
       if (updatedProfile) {
-        setCategories(updatedProfile.categories);
+        setProfile(updatedProfile);
+        setCategories(updatedProfile.categories || []);
         toast({
           title: "Success",
           description: "Category updated successfully",
         });
         return true;
       }
+      return false;
     } catch (error: any) {
       console.error('Error updating category:', error);
       toast({
@@ -185,20 +106,20 @@ export const useFitnessData = () => {
     return false;
   };
 
-  const handleDeleteCategory = async (categoryId: string) => {
-    if (!userId) return false;
-    
+  const handleDeleteCategory = async (categoryId: string): Promise<boolean> => {
     try {
-      const updatedProfile = await deleteCategory(categoryId, userId);
+      const updatedProfile = await deleteCategory(categoryId);
       if (updatedProfile) {
-        setCategories(updatedProfile.categories);
-        setLogs(updatedProfile.logs);
+        setProfile(updatedProfile);
+        setCategories(updatedProfile.categories || []);
+        setLogs(updatedProfile.logs || []);
         toast({
           title: "Success",
           description: "Category deleted successfully",
         });
         return true;
       }
+      return false;
     } catch (error: any) {
       console.error('Error deleting category:', error);
       toast({
@@ -210,20 +131,20 @@ export const useFitnessData = () => {
     return false;
   };
 
-  // Log operations
-  const handleAddLog = async (log: DailyLog) => {
-    if (!userId) return false;
-    
+  // Log management
+  const handleAddLog = async (log: DailyLog): Promise<boolean> => {
     try {
-      const updatedProfile = await addLogEntry(log, userId);
+      const updatedProfile = await addLogEntry(log);
       if (updatedProfile) {
-        setLogs(updatedProfile.logs);
+        setProfile(updatedProfile);
+        setLogs(updatedProfile.logs || []);
         toast({
           title: "Success",
           description: "Log entry added successfully",
         });
         return true;
       }
+      return false;
     } catch (error: any) {
       console.error('Error adding log entry:', error);
       toast({
@@ -235,19 +156,19 @@ export const useFitnessData = () => {
     return false;
   };
 
-  const handleUpdateLog = async (log: DailyLog) => {
-    if (!userId) return false;
-    
+  const handleUpdateLog = async (log: DailyLog): Promise<boolean> => {
     try {
-      const updatedProfile = await updateLogEntry(log, userId);
+      const updatedProfile = await updateLogEntry(log);
       if (updatedProfile) {
-        setLogs(updatedProfile.logs);
+        setProfile(updatedProfile);
+        setLogs(updatedProfile.logs || []);
         toast({
           title: "Success",
           description: "Log entry updated successfully",
         });
         return true;
       }
+      return false;
     } catch (error: any) {
       console.error('Error updating log entry:', error);
       toast({
@@ -259,19 +180,19 @@ export const useFitnessData = () => {
     return false;
   };
 
-  const handleDeleteLog = async (logId: string) => {
-    if (!userId) return false;
-    
+  const handleDeleteLog = async (logId: string): Promise<boolean> => {
     try {
-      const updatedProfile = await deleteLogEntry(logId, userId);
+      const updatedProfile = await deleteLogEntry(logId);
       if (updatedProfile) {
-        setLogs(updatedProfile.logs);
+        setProfile(updatedProfile);
+        setLogs(updatedProfile.logs || []);
         toast({
           title: "Success",
           description: "Log entry deleted successfully",
         });
         return true;
       }
+      return false;
     } catch (error: any) {
       console.error('Error deleting log entry:', error);
       toast({
@@ -283,50 +204,19 @@ export const useFitnessData = () => {
     return false;
   };
 
-  // Add profile update handler with better error handling
+  // Profile management
   const handleUpdateProfile = useCallback(async (profileData: Partial<UserProfile>): Promise<boolean> => {
-    if (!userId) {
-      console.error("No user ID available");
-      toast({
-        title: "Error",
-        description: "User not authenticated",
-        variant: "destructive",
-      });
-      return false;
-    }
-
     try {
-      setIsLoading(true);
-      console.log("handleUpdateProfile called with:", profileData);
-
-      const finalProfileData = {
-        ...profileData,
-        name: profileData.name || user?.fullName || user?.firstName || user?.username || 'User',
-      };
-
-      let updatedProfile: UserProfile;
-
-      try {
-        updatedProfile = await profileStorage.updateProfile(userId, finalProfileData);
-      } catch (error) {
-        console.log("Attempting to create profile...");
-        updatedProfile = await profileStorage.createProfile(userId, finalProfileData);
+      const updatedProfile = await updateUserProfile(profileData);
+      if (updatedProfile) {
+        setProfile(updatedProfile);
+        toast({
+          title: "Success",
+          description: "Profile updated successfully",
+        });
+        return true;
       }
-
-      const finalProfile = {
-        ...updatedProfile,
-        categories: profile?.categories || [],
-        logs: profile?.logs || [],
-      };
-
-      setProfile(finalProfile);
-
-      toast({
-        title: "Success",
-        description: "Profile updated successfully",
-      });
-
-      return true;
+      return false;
     } catch (error) {
       console.error('Error updating profile:', error);
       toast({
@@ -335,16 +225,14 @@ export const useFitnessData = () => {
         variant: "destructive",
       });
       return false;
-    } finally {
-      setIsLoading(false);
     }
-  }, [userId, profile, user, toast]);
+  }, [toast]);
 
   return {
+    profile,
     categories,
     logs,
-    profile,
-    isLoading,
+    isLoading: isLoading || authLoading,
     handleAddCategory,
     handleUpdateCategory,
     handleDeleteCategory,

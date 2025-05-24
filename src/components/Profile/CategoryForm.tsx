@@ -1,4 +1,4 @@
-import { useAuth } from "@clerk/clerk-react";
+import { useAuth } from "@/contexts/AuthContext";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,7 +37,7 @@ const exerciseTypes = [
 ];
 
 const CategoryForm = ({ category, onClose, onSave }: CategoryFormProps) => {
-  const { userId } = useAuth(); // Get the userId from Clerk
+  const { user } = useAuth(); // Get the user from Supabase auth context
   const [name, setName] = useState(category?.name || "");
   const [unit, setUnit] = useState(category?.unit || "");
   const [dailyTarget, setDailyTarget] = useState<number>(
@@ -73,13 +73,13 @@ const CategoryForm = ({ category, onClose, onSave }: CategoryFormProps) => {
       };
 
       if (category) {
-        await updateCategory(categoryData, userId!); // Pass userId
+        await updateCategory(categoryData); // Remove user.id parameter
         toast({
           title: "Success",
           description: "Category updated successfully",
         });
       } else {
-        await addCategory(categoryData, userId!); // Pass userId
+        await addCategory(categoryData); // Remove user.id parameter
         toast({
           title: "Success",
           description: "Category added successfully",

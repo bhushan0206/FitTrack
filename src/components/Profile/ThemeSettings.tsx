@@ -6,7 +6,7 @@ import { Moon, Sun, Monitor } from "lucide-react";
 import { UserProfile } from "@/types/fitness";
 import { updateTheme } from "@/lib/supabaseStorage";
 import { useToast } from "@/components/ui/use-toast";
-import { useAuth } from "@clerk/clerk-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface ThemeSettingsProps {
   profile: UserProfile;
@@ -14,7 +14,7 @@ interface ThemeSettingsProps {
 }
 
 const ThemeSettings = ({ profile, onUpdate }: ThemeSettingsProps) => {
-  const { userId } = useAuth(); // Get the userId from Clerk
+  const { user } = useAuth(); // Get the user from Supabase auth context
   const [isUpdating, setIsUpdating] = useState(false);
   const { toast } = useToast();
 
@@ -27,7 +27,7 @@ const ThemeSettings = ({ profile, onUpdate }: ThemeSettingsProps) => {
   ) => {
     try {
       setIsUpdating(true);
-      await updateTheme(userId!, theme, accentColor!); // Pass userId
+      await updateTheme(theme, accentColor!); // Remove userId parameter
       onUpdate();
       toast({
         title: "Success",

@@ -3,14 +3,14 @@ export interface TrackingCategory {
   name: string;
   unit: string;
   dailyTarget: number;
-  color?: string;
-  exerciseType?: string; // Added exerciseType
+  color: string;
+  exerciseType?: string;
 }
 
 export interface DailyLog {
   id: string;
   categoryId: string;
-  date: string; // ISO date string
+  date: string; // YYYY-MM-DD format
   value: number;
   notes?: string;
 }
@@ -37,12 +37,12 @@ export interface UserProfile {
   id: string;
   name: string;
   age?: number;
-  gender?: 'male' | 'female' | 'other' | 'prefer_not_to_say';
-  weight?: number; // in kg
-  height?: number; // in cm
-  fitnessGoal?: 'lose_weight' | 'gain_weight' | 'build_muscle' | 'improve_endurance' | 'maintain_health' | 'other';
-  theme?: "light" | "dark" | "system"; // Added theme
-  accentColor?: string; // Added accentColor
+  gender?: string;
+  weight?: number;
+  height?: number;
+  fitnessGoal?: string;
+  theme?: "light" | "dark" | "system";
+  accentColor?: string;
   categories: TrackingCategory[];
   logs: DailyLog[];
   createdAt?: string;

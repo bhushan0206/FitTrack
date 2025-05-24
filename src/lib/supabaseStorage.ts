@@ -9,13 +9,21 @@ export const generateId = (): string => {
   );
 };
 
+// Helper function to get current user ID
+const getCurrentUserId = async (): Promise<string> => {
+  const { data: { user }, error } = await supabase.auth.getUser();
+  if (error || !user) {
+    throw new Error("User not authenticated");
+  }
+  return user.id;
+};
+
 // Add a new category
 export const addCategory = async (
-  category: TrackingCategory,
-  userId: string
+  category: TrackingCategory
 ): Promise<UserProfile | null> => {
   try {
-    if (!userId) throw new Error("User not authenticated");
+    const userId = await getCurrentUserId();
 
     const { data, error } = await supabase
       .from("categories")
@@ -26,7 +34,7 @@ export const addCategory = async (
         daily_target: category.dailyTarget,
         color: category.color,
         exerciseType: category.exerciseType,
-        user_id: userId, // Include the userId when adding a new category
+        user_id: userId,
       })
       .select()
       .single();
@@ -42,11 +50,135 @@ export const addCategory = async (
   }
 };
 
-// Initialize user profile in Supabase with proper auth handling
-export const initializeUserProfile = async (userId: string, userName?: string): Promise<UserProfile | null> => {
+// Update an existing category
+export const updateCategory = async (
+  category: TrackingCategory
+): Promise<UserProfile | null> => {
   try {
-    // Remove the session check since we're using Clerk auth
-    // We'll rely on RLS policies or handle auth differently
+    const userId = await getCurrentUserId();
+
+    const { data, error } = await supabase
+      .from("categories")
+      .update({
+        name: category.name,
+        unit: category.unit,
+        daily_target: category.dailyTarget,
+        color: category.color,
+        exerciseType: category.exerciseType,
+      })
+      .eq("id", category.id)
+      .eq("user_id", userId);
+
+    if (error) throw error;
+    return await getUserProfile(userId);
+  } catch (error) {
+    console.error("Error updating category:", error);
+    return null;
+  }
+};
+
+// Delete a category
+export const deleteCategory = async (
+  categoryId: string
+): Promise<UserProfile | null> => {
+  try {
+    const userId = await getCurrentUserId();
+
+    const { error } = await supabase
+      .from("categories")
+      .delete()
+      .eq("id", categoryId)
+      .eq("user_id", userId);
+
+    if (error) throw error;
+    return await getUserProfile(userId);
+  } catch (error) {
+    console.error("Error deleting category:", error);
+    return null;
+  }
+};
+
+// Add a new log entry
+export const addLogEntry = async (
+  log: DailyLog
+): Promise<UserProfile | null> => {
+  try {
+    const userId = await getCurrentUserId();
+
+    const { data, error } = await supabase
+      .from("logs")
+      .insert({
+        id: log.id,
+        category_id: log.categoryId,
+        user_id: userId,
+        date: log.date,
+        value: log.value,
+        notes: log.notes,
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+    return await getUserProfile(userId);
+  } catch (error) {
+    console.error("Error adding log entry:", error);
+    return null;
+  }
+};
+
+// Update an existing log entry
+export const updateLogEntry = async (
+  log: DailyLog
+): Promise<UserProfile | null> => {
+  try {
+    const userId = await getCurrentUserId();
+
+    const { data, error } = await supabase
+      .from("logs")
+      .update({
+        category_id: log.categoryId,
+        date: log.date,
+        value: log.value,
+        notes: log.notes,
+      })
+      .eq("id", log.id)
+      .eq("user_id", userId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return await getUserProfile(userId);
+  } catch (error) {
+    console.error("Error updating log entry:", error);
+    return null;
+  }
+};
+
+// Delete a log entry
+export const deleteLogEntry = async (
+  logId: string
+): Promise<UserProfile | null> => {
+  try {
+    const userId = await getCurrentUserId();
+
+    const { error } = await supabase
+      .from("logs")
+      .delete()
+      .eq("id", logId)
+      .eq("user_id", userId);
+
+    if (error) throw error;
+    return await getUserProfile(userId);
+  } catch (error) {
+    console.error("Error deleting log entry:", error);
+    return null;
+  }
+};
+
+// Initialize user profile in Supabase with proper auth handling
+export const initializeUserProfile = async (userName?: string): Promise<UserProfile | null> => {
+  try {
+    const userId = await getCurrentUserId();
     
     // Check if profile exists
     const { data: existingProfile, error: fetchError } = await supabase
@@ -78,6 +210,7 @@ export const initializeUserProfile = async (userId: string, userName?: string): 
         unit: cat.unit,
         dailyTarget: cat.daily_target,
         color: cat.color,
+        exerciseType: cat.exerciseType,
       }));
 
       const transformedLogs = (logs || []).map((log) => ({
@@ -96,6 +229,8 @@ export const initializeUserProfile = async (userId: string, userName?: string): 
         weight: existingProfile.weight,
         height: existingProfile.height,
         fitnessGoal: existingProfile.fitness_goal,
+        theme: existingProfile.theme,
+        accentColor: existingProfile.accentColor,
         categories: transformedCategories,
         logs: transformedLogs,
         createdAt: existingProfile.created_at,
@@ -132,6 +267,8 @@ export const initializeUserProfile = async (userId: string, userName?: string): 
       weight: data.weight,
       height: data.height,
       fitnessGoal: data.fitness_goal,
+      theme: data.theme,
+      accentColor: data.accentColor,
       categories: [],
       logs: [],
       createdAt: data.created_at,
@@ -143,20 +280,19 @@ export const initializeUserProfile = async (userId: string, userName?: string): 
   }
 };
 
-// Update profile update function
+// Update profile function
 export const updateUserProfile = async (
-  userId: string,
   profileData: Partial<UserProfile>
 ): Promise<UserProfile | null> => {
   try {
-    // Remove session check
+    const userId = await getCurrentUserId();
     
     // First check if profile exists
     const { data: existingProfile, error: fetchError } = await supabase
       .from('profiles')
       .select('*')
       .eq('id', userId)
-      .maybeSingle(); // Use maybeSingle() instead of single() to avoid error when no rows
+      .maybeSingle();
 
     if (fetchError && fetchError.code !== 'PGRST116') {
       console.error('Error checking existing profile:', fetchError);
@@ -176,6 +312,8 @@ export const updateUserProfile = async (
           weight: profileData.weight,
           height: profileData.height,
           fitness_goal: profileData.fitnessGoal,
+          theme: profileData.theme,
+          accentColor: profileData.accentColor,
           updated_at: now,
         })
         .eq('id', userId)
@@ -205,6 +343,7 @@ export const updateUserProfile = async (
         unit: cat.unit,
         dailyTarget: cat.daily_target,
         color: cat.color,
+        exerciseType: cat.exerciseType,
       }));
 
       const transformedLogs = (logs || []).map((log) => ({
@@ -223,6 +362,8 @@ export const updateUserProfile = async (
         weight: data.weight,
         height: data.height,
         fitnessGoal: data.fitness_goal,
+        theme: data.theme,
+        accentColor: data.accentColor,
         categories: transformedCategories,
         logs: transformedLogs,
         createdAt: data.created_at,
@@ -240,6 +381,8 @@ export const updateUserProfile = async (
         weight: profileData.weight,
         height: profileData.height,
         fitness_goal: profileData.fitnessGoal,
+        theme: profileData.theme,
+        accentColor: profileData.accentColor,
         created_at: now,
         updated_at: now,
       };
@@ -263,6 +406,8 @@ export const updateUserProfile = async (
         weight: data.weight,
         height: data.height,
         fitnessGoal: data.fitness_goal,
+        theme: data.theme,
+        accentColor: data.accentColor,
         categories: [],
         logs: [],
         createdAt: data.created_at,
@@ -278,15 +423,15 @@ export const updateUserProfile = async (
 };
 
 // Get user profile from Supabase
-export const getUserProfile = async (userId: string): Promise<UserProfile | null> => {
+export const getUserProfile = async (userId?: string): Promise<UserProfile | null> => {
   try {
-    if (!userId) throw new Error("User not authenticated");
+    const currentUserId = userId || await getCurrentUserId();
 
     // Get user profile info
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
       .select("*")
-      .eq("id", userId)
+      .eq("id", currentUserId)
       .maybeSingle();
 
     if (profileError && profileError.code !== 'PGRST116') {
@@ -298,14 +443,14 @@ export const getUserProfile = async (userId: string): Promise<UserProfile | null
     const { data: categories, error: categoriesError } = await supabase
       .from("categories")
       .select("*")
-      .eq("user_id", userId);
+      .eq("user_id", currentUserId);
 
     if (categoriesError) throw categoriesError;
 
     const { data: logs, error: logsError } = await supabase
       .from("logs")
       .select("*")
-      .eq("user_id", userId);
+      .eq("user_id", currentUserId);
 
     if (logsError) throw logsError;
 
@@ -316,6 +461,7 @@ export const getUserProfile = async (userId: string): Promise<UserProfile | null
       unit: cat.unit,
       dailyTarget: cat.daily_target,
       color: cat.color,
+      exerciseType: cat.exerciseType,
     }));
 
     const transformedLogs = (logs || []).map((log) => ({
@@ -327,13 +473,15 @@ export const getUserProfile = async (userId: string): Promise<UserProfile | null
     }));
 
     return {
-      id: userId,
+      id: currentUserId,
       name: profile?.name || "User",
       age: profile?.age,
       gender: profile?.gender,
       weight: profile?.weight,
       height: profile?.height,
       fitnessGoal: profile?.fitness_goal,
+      theme: profile?.theme,
+      accentColor: profile?.accentColor,
       categories: transformedCategories,
       logs: transformedLogs,
       createdAt: profile?.created_at,
@@ -345,133 +493,25 @@ export const getUserProfile = async (userId: string): Promise<UserProfile | null
   }
 };
 
-// Update an existing category
-export const updateCategory = async (
-  category: TrackingCategory,
-  userId: string
-): Promise<UserProfile | null> => {
+// Export updateTheme as a standalone function
+export const updateTheme = async (theme: string, accentColor: string) => {
   try {
-    if (!userId) throw new Error("User not authenticated");
-
+    const userId = await getCurrentUserId();
+    
     const { data, error } = await supabase
-      .from("categories")
-      .update({
-        name: category.name,
-        unit: category.unit,
-        daily_target: category.dailyTarget,
-        color: category.color,
-        exerciseType: category.exerciseType,
-      })
-      .eq("id", category.id)
-      .eq("user_id", userId); // Ensure the userId is used for filtering
+      .from("profiles")
+      .update({ theme, accentColor })
+      .eq("id", userId);
 
-    if (error) throw error;
-    return await getUserProfile(userId);
+    if (error) {
+      console.error("Error updating theme:", error);
+      throw error;
+    }
+
+    return data;
   } catch (error) {
-    console.error("Error updating category:", error);
-    return null;
-  }
-};
-
-// Delete a category
-export const deleteCategory = async (
-  categoryId: string,
-  userId: string
-): Promise<UserProfile | null> => {
-  try {
-    if (!userId) throw new Error("User not authenticated");
-
-    const { error } = await supabase
-      .from("categories")
-      .delete()
-      .eq("id", categoryId)
-      .eq("user_id", userId);
-
-    if (error) throw error;
-    return await getUserProfile(userId);
-  } catch (error) {
-    console.error("Error deleting category:", error);
-    return null;
-  }
-};
-
-// Add a new log entry
-export const addLogEntry = async (
-  log: DailyLog,
-  userId: string
-): Promise<UserProfile | null> => {
-  try {
-    if (!userId) throw new Error("User not authenticated");
-
-    const { data, error } = await supabase
-      .from("logs")
-      .insert({
-        id: log.id,
-        category_id: log.categoryId,
-        user_id: userId,
-        date: log.date,
-        value: log.value,
-        notes: log.notes,
-      })
-      .select()
-      .single();
-
-    if (error) throw error;
-    return await getUserProfile(userId);
-  } catch (error) {
-    console.error("Error adding log entry:", error);
-    return null;
-  }
-};
-
-// Update an existing log entry
-export const updateLogEntry = async (
-  log: DailyLog,
-  userId: string
-): Promise<UserProfile | null> => {
-  try {
-    if (!userId) throw new Error("User not authenticated");
-
-    const { data, error } = await supabase
-      .from("logs")
-      .update({
-        category_id: log.categoryId,
-        date: log.date,
-        value: log.value,
-        notes: log.notes,
-      })
-      .eq("id", log.id)
-      .eq("user_id", userId)
-      .select()
-      .single();
-
-    if (error) throw error;
-    return await getUserProfile(userId);
-  } catch (error) {
-    console.error("Error updating log entry:", error);
-    return null;
-  }
-};
-
-// Delete a log entry
-export const deleteLogEntry = async (
-  logId: string,
-  userId: string
-): Promise<UserProfile | null> => {
-  try {
-    if (!userId) throw new Error("User not authenticated");
-
-    const { error } = await supabase
-      .from("logs")
-      .delete()
-      .eq("id", logId)
-      .eq("user_id", userId);
-
-    if (error) throw error;
-    return await getUserProfile(userId);
-  } catch (error) {
-    console.error("Error deleting log entry:", error);
-    return null;
+    console.error("Error updating theme:", error);
+    throw error;
   }
 };
 
@@ -644,9 +684,4 @@ export const profileStorage = {
 
     return data;
   },
-};
-
-// Export updateTheme as a standalone function
-export const updateTheme = async (userId: string, theme: string, accentColor: string) => {
-  return profileStorage.updateTheme(userId, theme, accentColor);
 };

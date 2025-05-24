@@ -8,7 +8,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { useClerk } from "@clerk/clerk-react";
+import { useAuth } from "@/contexts/AuthContext";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useTheme } from "@/contexts/ThemeContext";
 import { UserProfile } from "@/types/fitness";
@@ -34,7 +34,7 @@ const Header = ({
   isLoading,
   children,
 }: HeaderProps) => {
-  const { signOut } = useClerk();
+  const { signOut, user } = useAuth();
   const { theme, setTheme } = useTheme();
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
 
@@ -47,6 +47,14 @@ const Header = ({
 
   const toggleTheme = () => {
     setTheme(theme === 'dark' ? 'light' : 'dark');
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
   };
 
   return (
@@ -76,7 +84,7 @@ const Header = ({
                 FitTrack
               </h1>
               <p className="text-white/80 text-sm font-medium">
-                Your Personal Fitness Journey
+                Welcome back, {user?.name || user?.email || 'User'}!
               </p>
             </div>
           </div>
@@ -139,7 +147,7 @@ const Header = ({
             {/* Sign-out button */}
             <Button
               className="bg-white/20 dark:bg-gray-700/50 hover:bg-white/30 dark:hover:bg-gray-600/50 text-white font-medium px-4 py-2 rounded-xl shadow-lg backdrop-blur-sm border border-white/20 dark:border-gray-600/50 transition-all duration-200 flex items-center gap-2"
-              onClick={() => signOut()}
+              onClick={handleSignOut}
             >
               <LogOut size={16} />
               <span>Sign Out</span>

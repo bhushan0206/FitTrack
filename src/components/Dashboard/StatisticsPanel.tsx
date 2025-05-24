@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from "react";
 import { format } from "date-fns";
-import { useAuth, useUser } from "@clerk/clerk-react";
+import { useAuth } from "@/contexts/AuthContext";
 import { TrackingCategory, DailyLog, UserProfile } from "@/types/fitness";
 import { useFitnessData } from "@/hooks/useFitnessData";
 import Header from "@/components/Layout/Header";
@@ -13,11 +13,10 @@ import LogEntryForm from "@/components/Dashboard/LogEntryForm";
 import ProfileForm from "@/components/Profile/ProfileForm";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { Plus, Target } from "lucide-react";
+import { Plus, Target, Pencil, Trash2 } from "lucide-react";
 
 const StatisticsPanel = () => {
-  const { userId } = useAuth();
-  const { user } = useUser();
+  const { user } = useAuth();
 
   // State management hooks
   const {
@@ -97,8 +96,8 @@ const StatisticsPanel = () => {
 
   // Create a profile object with fallback values
   const currentProfile = profile || {
-    id: userId || "temp-id",
-    name: user?.fullName || user?.firstName || user?.username || "",
+    id: user?.id || "temp-id",
+    name: user?.name || user?.email || "",
     age: undefined,
     gender: undefined,
     weight: undefined,
@@ -179,6 +178,124 @@ const StatisticsPanel = () => {
                 </div>
               </div>
             </div>
+          </div>
+
+          {/* Categories Management */}
+          <div className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm border-0 shadow-lg rounded-2xl p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                <span className="text-2xl">🏷️</span>
+                My Categories
+              </h3>
+              <Button
+                onClick={() => setShowCategoryForm(true)}
+                className="bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white rounded-xl shadow-lg transition-all duration-200 flex items-center gap-2"
+              >
+                <Plus size={16} />
+                Add Category
+              </Button>
+            </div>
+
+            {categories.length === 0 ? (
+              <div className="text-center py-12">
+                <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-2xl">🏷️</span>
+                </div>
+                <p className="text-gray-600 dark:text-gray-300 font-medium mb-2">
+                  No categories yet
+                </p>
+                <p className="text-gray-500 dark:text-gray-400 text-sm mb-4">
+                  Create your first category to start tracking your fitness goals
+                </p>
+                <Button
+                  onClick={() => setShowCategoryForm(true)}
+                  className="bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white rounded-xl shadow-lg"
+                >
+                  <Plus size={16} className="mr-2" />
+                  Create Category
+                </Button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {categories.map((category) => {
+                  // Calculate today's progress for this category
+                  const todayLogs = selectedDateLogs.filter(log => log.categoryId === category.id);
+                  const todayValue = todayLogs.reduce((sum, log) => sum + log.value, 0);
+                  const progress = (todayValue / category.dailyTarget) * 100;
+                  const isCompleted = progress >= 100;
+
+                  return (
+                    <div
+                      key={category.id}
+                      className="p-4 rounded-xl border-0 bg-gradient-to-r from-white to-gray-50/50 dark:from-gray-700 dark:to-gray-600/50 shadow-md hover:shadow-lg transition-all duration-300"
+                      style={{ borderLeft: `4px solid ${category.color}` }}
+                    >
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <div
+                            className="w-4 h-4 rounded-full"
+                            style={{ backgroundColor: category.color }}
+                          />
+                          <h4 className="font-semibold text-gray-900 dark:text-white">
+                            {category.name}
+                          </h4>
+                        </div>
+                        <div className="flex gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEditCategory(category)}
+                            className="h-8 w-8 p-0 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-lg text-gray-600 dark:text-gray-300"
+                          >
+                            <Pencil size={14} />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeleteCategory(category.id)}
+                            className="h-8 w-8 p-0 text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 hover:text-red-600 dark:hover:text-red-300 rounded-lg"
+                          >
+                            <Trash2 size={14} />
+                          </Button>
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-center text-sm">
+                          <span className="text-gray-600 dark:text-gray-300">
+                            Target: {category.dailyTarget} {category.unit}/day
+                          </span>
+                          {isCompleted && (
+                            <span className="text-green-600 dark:text-green-400 font-bold">
+                              ✓ Done
+                            </span>
+                          )}
+                        </div>
+                        
+                        <div className="flex justify-between items-center text-sm">
+                          <span className="text-gray-600 dark:text-gray-300">
+                            Today: {todayValue} {category.unit}
+                          </span>
+                          <span className="font-semibold text-gray-700 dark:text-gray-300">
+                            {Math.round(progress)}%
+                          </span>
+                        </div>
+
+                        <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
+                          <div
+                            className="h-2 rounded-full transition-all duration-500"
+                            style={{
+                              width: `${Math.min(progress, 100)}%`,
+                              backgroundColor: category.color,
+                            }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* Daily Logs */}

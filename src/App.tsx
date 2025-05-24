@@ -1,72 +1,66 @@
 import { Suspense, useEffect, useState } from "react";
-import { ClerkProvider, SignedIn, SignedOut, useAuth } from "@clerk/clerk-react";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";
 import { Toaster } from "./components/ui/toaster";
 import { supabase } from "./lib/supabase";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import "./styles/theme.css";
 import StatisticsPanel from "./components/Dashboard/StatisticsPanel";
 import SignInPage from "@/components/Auth/SignInPage";
-import { setupAuthSync } from './lib/supabase';
-
-// Add debugging and validation
-console.log("Environment variables check:");
-console.log("Raw VITE_CLERK_PUBLISHABLE_KEY:", import.meta.env.VITE_CLERK_PUBLISHABLE_KEY);
-const clerkPubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
-console.log("Processed clerkPubKey:", clerkPubKey);
-console.log("All env vars:", import.meta.env);
-
-// Clean the key if it contains the variable name
-const cleanClerkKey = clerkPubKey?.includes('=') 
-  ? clerkPubKey.split('=').pop()?.trim() || clerkPubKey
-  : clerkPubKey;
-
-console.log("Cleaned clerkPubKey:", cleanClerkKey);
-
-if (!cleanClerkKey || !cleanClerkKey.startsWith('pk_')) {
-  console.error("Invalid Clerk publishable key:", cleanClerkKey);
-  throw new Error(`Missing or invalid Publishable Key. Expected key starting with 'pk_' but got: ${cleanClerkKey}`);
-}
 
 // Create a separate component for auth-dependent logic
 const AppContent = () => {
-  const { userId } = useAuth();
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
 
-  // Sync Clerk auth with Supabase
+  // Handle navigation based on auth state
   useEffect(() => {
-    setupAuthSync(userId);
-  }, [userId]);
+    if (loading) return;
+
+    // If user is authenticated and on sign-in page, redirect to dashboard
+    if (user && (location.pathname === '/sign-in' || location.pathname === '/')) {
+      console.log('User authenticated, redirecting to dashboard');
+      navigate('/dashboard', { replace: true });
+    }
+    
+    // If user is not authenticated and trying to access protected routes
+    if (!user && location.pathname === '/dashboard') {
+      console.log('User not authenticated, redirecting to sign-in');
+      navigate('/sign-in', { replace: true });
+    }
+  }, [user, loading, location.pathname, navigate]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-black">
+        <div className="flex flex-col items-center gap-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+          <p className="text-gray-600 dark:text-gray-300 font-medium">Loading FitTrack...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full h-screen">
       <Routes>
         <Route
           path="/sign-in"
-          element={
-            <SignedOut>
-              <SignInPage />
-            </SignedOut>
-          }
+          element={!user ? <SignInPage /> : <Navigate to="/dashboard" replace />}
         />
         <Route
           path="/dashboard"
-          element={
-            <SignedIn>
-              <StatisticsPanel />
-            </SignedIn>
-          }
+          element={user ? <StatisticsPanel /> : <Navigate to="/sign-in" replace />}
         />
         <Route
           path="/"
           element={
-            <>
-              <SignedIn>
-                <Navigate to="/dashboard" replace />
-              </SignedIn>
-              <SignedOut>
-                <Navigate to="/sign-in" replace />
-              </SignedOut>
-            </>
+            user ? (
+              <Navigate to="/dashboard" replace />
+            ) : (
+              <Navigate to="/sign-in" replace />
+            )
           }
         />
       </Routes>
@@ -80,29 +74,77 @@ function App() {
   const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
-    // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(() => {
-      setIsInitialized(true);
-    });
+    let mounted = true;
 
-    // Set initialized to true even if no auth event occurs
-    const timer = setTimeout(() => setIsInitialized(true), 1000);
+    const initializeAuth = async () => {
+      try {
+        // Handle potential OAuth callback in URL
+        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        const accessToken = hashParams.get('access_token');
+        const refreshToken = hashParams.get('refresh_token');
+        
+        if (accessToken) {
+          console.log('🔗 OAuth callback detected, setting session...');
+          try {
+            const { data, error } = await supabase.auth.setSession({
+              access_token: accessToken,
+              refresh_token: refreshToken || '',
+            });
+            
+            if (error) {
+              console.error('Error setting session from OAuth callback:', error);
+            } else {
+              console.log('✅ Session set from OAuth callback:', data.user?.email);
+              // Clear the hash from URL
+              window.history.replaceState({}, document.title, window.location.pathname);
+            }
+          } catch (err) {
+            console.error('Failed to process OAuth callback:', err);
+          }
+        }
 
-    return () => {
-      subscription.unsubscribe();
-      clearTimeout(timer);
+        // Check for existing session
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('Error getting initial session:', error);
+        } else if (session) {
+          console.log('Found existing session for:', session.user.email);
+        } else {
+          console.log('No existing session found');
+        }
+
+        if (mounted) {
+          setIsInitialized(true);
+        }
+      } catch (error) {
+        console.error('Error in initializeAuth:', error);
+        if (mounted) {
+          setIsInitialized(true);
+        }
+      }
     };
-  }, []);
 
-  useEffect(() => {
-    // Log when the app starts to help debug multiple instances
-    console.log("FitTrack App initialized");
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log('App - Auth state changed:', {
+          event,
+          hasSession: !!session,
+          userEmail: session?.user?.email
+        });
+        
+        if (mounted) {
+          setIsInitialized(true);
+        }
+      }
+    );
 
-    // Clear any existing auth state on app start if needed
+    initializeAuth();
+
     return () => {
-      console.log("FitTrack App cleanup");
+      mounted = false;
+      subscription.unsubscribe();
     };
   }, []);
 
@@ -111,14 +153,14 @@ function App() {
       <div className="flex items-center justify-center h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-black">
         <div className="flex flex-col items-center gap-4">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
-          <p className="text-gray-600 dark:text-gray-300 font-medium">Loading FitTrack...</p>
+          <p className="text-gray-600 dark:text-gray-300 font-medium">Initializing FitTrack...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <ClerkProvider publishableKey={cleanClerkKey}>
+    <AuthProvider>
       <ThemeProvider>
         <Suspense fallback={
           <div className="flex items-center justify-center h-screen">
@@ -128,7 +170,7 @@ function App() {
           <AppContent />
         </Suspense>
       </ThemeProvider>
-    </ClerkProvider>
+    </AuthProvider>
   );
 }
 
