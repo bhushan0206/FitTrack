@@ -69,12 +69,50 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
         }
 
-        // If no OAuth callback, check for existing session
+        // Check if we have a saved session and try to refresh it
+        const savedToken = localStorage.getItem('supabase-auth-token');
+        if (savedToken) {
+          try {
+            const savedSession = JSON.parse(savedToken);
+            console.log('Found saved session, attempting refresh...');
+            
+            // Try to refresh the session
+            const { data, error } = await supabase.auth.setSession({
+              access_token: savedSession.access_token,
+              refresh_token: savedSession.refresh_token,
+            });
+            
+            if (data.session && !error) {
+              console.log('✅ Session refreshed successfully');
+              if (mounted) {
+                setSession(data.session);
+                setUser(data.user ? transformUser(data.user) : null);
+                localStorage.setItem('supabase-auth-token', JSON.stringify(data.session));
+                await ensureUserProfile(data.user);
+                setIsInitialized(true);
+                setLoading(false);
+              }
+              return;
+            } else {
+              console.log('❌ Session refresh failed, removing saved token');
+              localStorage.removeItem('supabase-auth-token');
+            }
+          } catch (error) {
+            console.error('Error parsing or refreshing saved session:', error);
+            localStorage.removeItem('supabase-auth-token');
+          }
+        }
+
+        // Fallback: Get current session (this will be null if no valid session)
         const { data: { session: initialSession }, error } = await supabase.auth.getSession();
         
         if (error) {
           console.error('Error getting initial session:', error);
           localStorage.removeItem('supabase-auth-token');
+          if (mounted) {
+            setSession(null);
+            setUser(null);
+          }
         } else {
           console.log('Auth context - initial session check:', {
             hasSession: !!initialSession,
@@ -89,11 +127,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             if (initialSession) {
               localStorage.setItem('supabase-auth-token', JSON.stringify(initialSession));
               await ensureUserProfile(initialSession.user);
+              console.log('✅ Valid session found and restored');
             } else {
               localStorage.removeItem('supabase-auth-token');
+              console.log('❌ No valid session found, user needs to sign in');
             }
-            
-            setIsInitialized(true);
           }
         }
       } catch (error) {
@@ -102,11 +140,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           localStorage.removeItem('supabase-auth-token');
           setSession(null);
           setUser(null);
-          setIsInitialized(true);
         }
       } finally {
         if (mounted) {
+          setIsInitialized(true);
           setLoading(false);
+          console.log('Auth initialization completed');
         }
       }
     };
@@ -402,7 +441,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const value = {
     user,
     session,
-    loading: loading || !isInitialized,
+    loading: !isInitialized, // Only show loading until initialization is complete
     signIn,
     signUp,
     signOut,

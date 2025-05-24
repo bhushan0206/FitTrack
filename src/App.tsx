@@ -19,18 +19,23 @@ const AppContent = () => {
     if (!loading) {
       const currentPath = location.pathname;
       
-      // If user is authenticated and on auth page, go to dashboard
-      if (user && (currentPath === '/auth/signin' || currentPath === '/auth/signup' || currentPath === '/sign-in' || currentPath === '/')) {
-        console.log('User authenticated, redirecting to dashboard');
+      // Only redirect if user is on root path or auth pages when authenticated
+      if (user && (currentPath === '/' || currentPath === '/auth/signin' || currentPath === '/auth/signup' || currentPath === '/sign-in')) {
+        console.log('User authenticated, redirecting from auth pages to dashboard');
         navigate('/dashboard', { replace: true });
       }
-      // If user is not authenticated and trying to access dashboard, go to auth
-      else if (!user && (currentPath === '/dashboard' || currentPath === '/')) {
-        console.log('User not authenticated, redirecting to auth');
+      // Only redirect to auth if user is not authenticated AND on a protected route
+      else if (!user && currentPath === '/dashboard') {
+        console.log('User not authenticated, redirecting from dashboard to auth');
+        navigate('/auth/signin', { replace: true });
+      }
+      // Handle root path redirect
+      else if (!user && currentPath === '/') {
+        console.log('User not authenticated on root, redirecting to auth');
         navigate('/auth/signin', { replace: true });
       }
     }
-  }, [user, loading, location.pathname, navigate]);
+  }, [user, loading, navigate]); // Remove location.pathname from dependencies
 
   // Show loading while checking auth
   if (loading) {
@@ -51,7 +56,10 @@ const AppContent = () => {
         <Route path="/sign-in" element={<AuthPage />} />
         <Route path="/auth/signin" element={<AuthPage />} />
         <Route path="/auth/signup" element={<AuthPage />} />
-        <Route path="/dashboard" element={<StatisticsPanel />} />
+        <Route 
+          path="/dashboard" 
+          element={user ? <StatisticsPanel /> : <Navigate to="/auth/signin" replace />} 
+        />
         <Route path="/data-deletion" element={<DataDeletionPage />} />
         <Route path="/" element={<Navigate to={user ? "/dashboard" : "/auth/signin"} replace />} />
         <Route path="*" element={<Navigate to={user ? "/dashboard" : "/auth/signin"} replace />} />
