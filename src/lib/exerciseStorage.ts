@@ -83,47 +83,40 @@ export const exerciseStorage = {
   },
 
   // Exercise Log CRUD operations
-  async getExerciseLogs(date?: string): Promise<ExerciseLog[]> {
+  async getExerciseLogs(): Promise<ExerciseLog[]> {
+    console.log('ExerciseStorage.getExerciseLogs called');
+    
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      
+      if (authError) {
+        console.error('Auth error in getExerciseLogs:', authError);
+        return []; // Return empty array instead of throwing
+      }
+      
       if (!user) {
-        console.log('User not authenticated, returning empty exercise logs');
+        console.log('No user found in getExerciseLogs, returning empty array');
         return [];
       }
 
-      let query = supabase
+      console.log('Getting exercise logs for user:', user.id);
+      
+      const { data, error } = await supabase
         .from('exercise_logs')
         .select('*')
         .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-
-      if (date) {
-        query = query.eq('date', date);
-      }
-
-      const { data, error } = await query;
+        .order('date', { ascending: false });
 
       if (error) {
-        console.error('Error fetching exercise logs:', error);
-        throw error;
+        console.error('Supabase error in getExerciseLogs:', error);
+        return []; // Return empty array instead of throwing
       }
 
-      return data?.map(log => ({
-        id: log.id,
-        exerciseId: log.exercise_id,
-        date: log.date,
-        duration: log.duration,
-        sets: log.sets,
-        reps: log.reps,
-        weight: log.weight,
-        distance: log.distance,
-        calories: log.calories,
-        notes: log.notes,
-        intensity: log.intensity,
-      })) || [];
+      console.log('Exercise logs retrieved:', data);
+      return data || [];
     } catch (error) {
       console.error('Error in getExerciseLogs:', error);
-      return [];
+      return []; // Return empty array instead of throwing
     }
   },
 

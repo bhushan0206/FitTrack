@@ -684,4 +684,78 @@ export const profileStorage = {
 
     return data;
   },
+
+  async getCategories(): Promise<TrackingCategory[]> {
+    console.log('SupabaseStorage.getCategories called');
+    
+    try {
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      
+      if (authError) {
+        console.error('Auth error in getCategories:', authError);
+        throw authError;
+      }
+      
+      if (!user) {
+        console.log('No user found in getCategories, returning empty array');
+        return [];
+      }
+
+      console.log('Getting categories for user:', user.id);
+      
+      const { data, error } = await supabase
+        .from('categories')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: true });
+
+      if (error) {
+        console.error('Supabase error in getCategories:', error);
+        throw error;
+      }
+
+      console.log('Categories retrieved:', data);
+      return data || [];
+    } catch (error) {
+      console.error('Error in getCategories:', error);
+      return []; // Return empty array instead of throwing
+    }
+  },
+
+  async getLogs(): Promise<DailyLog[]> {
+    console.log('SupabaseStorage.getLogs called');
+    
+    try {
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      
+      if (authError) {
+        console.error('Auth error in getLogs:', authError);
+        throw authError;
+      }
+      
+      if (!user) {
+        console.log('No user found in getLogs, returning empty array');
+        return [];
+      }
+
+      console.log('Getting logs for user:', user.id);
+      
+      const { data, error } = await supabase
+        .from('daily_logs')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('date', { ascending: false });
+
+      if (error) {
+        console.error('Supabase error in getLogs:', error);
+        throw error;
+      }
+
+      console.log('Logs retrieved:', data);
+      return data || [];
+    } catch (error) {
+      console.error('Error in getLogs:', error);
+      return []; // Return empty array instead of throwing
+    }
+  },
 };

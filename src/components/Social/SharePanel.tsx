@@ -38,8 +38,9 @@ const SharePanel = () => {
 
   const loadTodayExercises = async () => {
     try {
+      const allExercises = await exerciseStorage.getExerciseLogs();
       const today = format(new Date(), 'yyyy-MM-dd');
-      const todayExercises = await exerciseStorage.getExerciseLogs(today);
+      const todayExercises = allExercises.filter(log => log.date === today);
       setExerciseLogs(todayExercises);
     } catch (error) {
       console.error('Error loading exercises:', error);

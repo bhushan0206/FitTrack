@@ -120,7 +120,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (mounted) {
         setSession(session);
         setUser(session?.user ? transformUser(session.user) : null);
-        setLoading(false);
+        setLoading(false); // Always set loading to false when auth state changes
         setIsInitialized(true);
 
         if (session) {
@@ -131,6 +131,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session?.user) {
           await ensureUserProfile(session.user);
+        }
+        
+        // Log completion for SIGNED_OUT event
+        if (event === 'SIGNED_OUT') {
+          console.log('🔓 Sign out event completed, loading state reset');
         }
       }
     });
@@ -356,12 +361,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signOut = async () => {
-    setLoading(true);
+    console.log('Starting sign out process...');
+    
     try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
+      // Clear state immediately first
+      setUser(null);
+      setSession(null);
+      localStorage.removeItem('supabase-auth-token');
+      
+      console.log('Local state cleared');
+      
+      // Then call Supabase signOut (don't wait for it if it hangs)
+      const signOutPromise = supabase.auth.signOut();
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Sign out timeout')), 5000)
+      );
+      
+      await Promise.race([signOutPromise, timeoutPromise]);
+      console.log('Supabase sign out successful');
+      
+    } catch (error) {
+      console.error('Sign out error (continuing anyway):', error);
     } finally {
+      // Always ensure we're not in loading state
       setLoading(false);
+      setIsInitialized(true);
+      console.log('Sign out completed, loading state reset');
     }
   };
 

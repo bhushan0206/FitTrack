@@ -1,27 +1,25 @@
 import React, { useState } from "react";
 import { format } from "date-fns";
-import { Calendar, ChevronDown, LogOut, User, Moon, Sun } from "lucide-react";
+import { Calendar, User, LogOut, Settings, Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { UserProfile } from "@/types/fitness";
+import { useAuth } from "@/contexts/AuthContext";
+import { useTheme } from "@/contexts/ThemeContext";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import ProfileForm from "@/components/Profile/ProfileForm";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useAuth } from "@/contexts/AuthContext";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
-import { useTheme } from "@/contexts/ThemeContext";
-import { UserProfile } from "@/types/fitness";
-import ProfileForm from "@/components/Profile/ProfileForm";
 
 interface HeaderProps {
   selectedDate: Date;
@@ -45,8 +43,9 @@ const Header = ({
   children,
 }: HeaderProps) => {
   const { user, signOut } = useAuth();
-  const { theme, setTheme } = useTheme();
+  const { theme, toggleTheme } = useTheme();
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
 
   const handleProfileSave = async (profileData: Partial<UserProfile>) => {
     const success = await onProfileUpdate(profileData);
@@ -55,30 +54,29 @@ const Header = ({
     }
   };
 
-  const toggleTheme = () => {
-    setTheme(theme === 'dark' ? 'light' : 'dark');
-  };
-
   const handleSignOut = async () => {
+    if (isSigningOut) return; // Prevent multiple sign out attempts
+
+    setIsSigningOut(true);
     try {
+      console.log('Signing out user...');
       await signOut();
+      console.log('Sign out successful');
     } catch (error) {
-      console.error('Error signing out:', error);
+      console.error('Sign out error:', error);
+    } finally {
+      // Don't set isSigningOut to false here - let the auth state change handle the redirect
+      // setIsSigningOut(false);
     }
   };
 
-  const handleLogoClick = () => {
-    // Reset to main dashboard view by reloading the page
-    window.location.href = '/';
-  };
-
   return (
-    <header className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border-b border-gray-200/50 dark:border-gray-700/50 sticky top-0 z-50 shadow-sm">
+    <header className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-200/50 dark:border-gray-700/50 sticky top-0 z-50 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <button
-            onClick={handleLogoClick}
+            onClick={() => (window.location.href = '/')}
             className="flex items-center gap-3 hover:opacity-80 transition-opacity duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 rounded-lg p-2 -m-2"
           >
             <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
@@ -152,75 +150,65 @@ const Header = ({
             {/* Theme Toggle */}
             <Button
               variant="ghost"
-              className="flex items-center gap-2 text-gray-900 dark:text-white hover:bg-gray-100/50 dark:hover:bg-gray-700/50 rounded-lg px-3 py-2"
+              size="sm"
               onClick={toggleTheme}
+              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
             >
-              {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+              {theme === 'dark' ? (
+                <Sun className="h-5 w-5 text-gray-600 dark:text-gray-300" />
+              ) : (
+                <Moon className="h-5 w-5 text-gray-600 dark:text-gray-300" />
+              )}
             </Button>
 
-            {/* User Dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  className="relative h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 transition-all duration-200 flex-shrink-0"
+            {/* User Menu */}
+            {user && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="flex items-center gap-2 px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                  >
+                    <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center">
+                      <User className="h-4 w-4 text-white" />
+                    </div>
+                    <span className="hidden sm:inline text-gray-700 dark:text-gray-200 font-medium">
+                      {user.name}
+                    </span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  align="end"
+                  className="w-56 bg-white/95 dark:bg-gray-800/95 backdrop-blur-md border-gray-200/50 dark:border-gray-600/50 rounded-xl shadow-lg"
                 >
-                  <Avatar className="h-8 w-8 sm:h-10 sm:w-10">
-                    <AvatarImage src={user?.avatar} alt={user?.name} />
-                    <AvatarFallback className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white text-xs sm:text-sm font-semibold">
-                      {(user?.name || user?.email || 'U').charAt(0).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent 
-                className="w-56 sm:w-64 bg-white/95 dark:bg-gray-800/95 backdrop-blur-md border-gray-200/50 dark:border-gray-600/50 rounded-xl shadow-xl" 
-                align="end" 
-                forceMount
-                sideOffset={8}
-              >
-                <DropdownMenuLabel className="font-normal px-4 py-3">
-                  <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none text-gray-900 dark:text-white">
-                      {profile?.name || user?.name || 'User'}
+                  <div className="px-3 py-2 border-b border-gray-100 dark:border-gray-700">
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">
+                      {user.name}
                     </p>
-                    <p className="text-xs leading-none text-gray-600 dark:text-gray-300 truncate">
-                      {user?.email}
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      {user.email}
                     </p>
                   </div>
-                </DropdownMenuLabel>
-                
-                <DropdownMenuSeparator className="bg-gray-200/50 dark:bg-gray-600/50" />
-                
-                <DropdownMenuItem asChild>
-                  <Dialog>
-                    <DialogTrigger asChild>
-                      <button className="w-full flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100/50 dark:hover:bg-gray-700/50 cursor-pointer rounded-lg mx-1 my-1">
-                        <User className="mr-3 h-4 w-4" />
-                        <span>Profile Settings</span>
-                      </button>
-                    </DialogTrigger>
-                    <DialogContent className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md border-gray-200/50 dark:border-gray-600/50 max-w-2xl rounded-2xl shadow-2xl">
-                      <ProfileForm
-                        profile={profile}
-                        onSave={onProfileUpdate}
-                        isLoading={isLoading}
-                      />
-                    </DialogContent>
-                  </Dialog>
-                </DropdownMenuItem>
 
-                <DropdownMenuSeparator className="bg-gray-200/50 dark:bg-gray-600/50" />
-                
-                <DropdownMenuItem 
-                  onClick={handleSignOut}
-                  className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 focus:bg-red-50 dark:focus:bg-red-900/30 cursor-pointer rounded-lg mx-1 my-1 px-4 py-2"
-                >
-                  <LogOut className="mr-3 h-4 w-4" />
-                  <span className="font-medium">Sign out</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                  <DropdownMenuItem className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg mx-1 my-1">
+                    <Settings className="mr-2 h-4 w-4" />
+                    <span>Settings</span>
+                  </DropdownMenuItem>
+
+                  <DropdownMenuSeparator className="bg-gray-100 dark:bg-gray-700" />
+
+                  <DropdownMenuItem
+                    onClick={handleSignOut}
+                    disabled={isSigningOut}
+                    className="cursor-pointer hover:bg-red-50 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400 rounded-lg mx-1 my-1 focus:bg-red-50 dark:focus:bg-red-900/30"
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>{isSigningOut ? 'Signing out...' : 'Sign out'}</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </div>
         </div>
 

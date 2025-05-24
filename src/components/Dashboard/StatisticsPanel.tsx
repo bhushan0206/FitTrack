@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { TrackingCategory, DailyLog, UserProfile } from "@/types/fitness";
 import { Exercise, ExerciseLog } from '@/types/exercise';
 import { useFitnessData } from "@/hooks/useFitnessData";
+import { exerciseStorage } from "@/lib/exerciseStorage";
 import Header from "@/components/Layout/Header";
 import Footer from "@/components/Layout/Footer";
 import SummaryCards from "@/components/Dashboard/SummaryCards";
@@ -17,7 +18,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Plus, Target, Pencil, Trash2 } from "lucide-react";
-import { exerciseStorage } from "@/lib/exerciseStorage";
 import ExerciseLibrary from "@/components/Exercise/ExerciseLibrary";
 import ExerciseDetails from "@/components/Exercise/ExerciseDetails";
 import ExerciseTracker from "@/components/Exercise/ExerciseTracker";
@@ -55,6 +55,8 @@ const StatisticsPanel = () => {
   const [showExerciseTracker, setShowExerciseTracker] = useState(false);
   const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
   const [showSocialHub, setShowSocialHub] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Load exercises and exercise logs
   useEffect(() => {
@@ -71,14 +73,18 @@ const StatisticsPanel = () => {
         console.log('Loading exercise data for user:', user.id);
         const [exerciseList, logs] = await Promise.all([
           exerciseStorage.getExercises(),
-          exerciseStorage.getExerciseLogs(format(selectedDate, 'yyyy-MM-dd'))
+          exerciseStorage.getExerciseLogs()
         ]);
         
         console.log('Loaded exercises:', exerciseList.length);
         console.log('Loaded exercise logs:', logs.length);
         
+        // Filter logs for selected date
+        const selectedDateString = format(selectedDate, 'yyyy-MM-dd');
+        const filteredLogs = logs.filter(log => log.date === selectedDateString);
+        
         setExercises(exerciseList);
-        setExerciseLogs(logs);
+        setExerciseLogs(filteredLogs);
       } catch (error) {
         console.error('Error loading exercise data:', error);
         setExercises([]);
@@ -88,6 +94,97 @@ const StatisticsPanel = () => {
 
     loadExerciseData();
   }, [selectedDate, user]); // Add user dependency
+
+  // User effect for loading data
+  useEffect(() => {
+    console.log('StatisticsPanel useEffect - User:', user);
+    
+    if (user) {
+      console.log('User found, loading data...');
+      loadData();
+    } else {
+      console.log('No user found, redirecting to auth');
+      // Don't redirect here, let App.tsx handle it
+      setLoading(false);
+    }
+  }, [user]);
+
+  const loadData = async () => {
+    if (!user) {
+      console.log('LoadData called but no user, stopping');
+      setLoading(false);
+      return;
+    }
+
+    console.log('Starting to load data for user:', user.id);
+    setLoading(true);
+    
+    try {
+      // Since we're using useFitnessData hook, we don't need to load data here
+      // The hook handles all the data loading
+      console.log('Data loading handled by useFitnessData hook');
+    } catch (error) {
+      console.error('Error loading data:', error);
+      setError('Failed to load data. Please try refreshing the page.');
+    } finally {
+      console.log('Setting loading to false');
+      setLoading(false);
+    }
+  };
+
+  // Add timeout fallback for loading state
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      if (loading && user) {
+        console.log('Loading timeout reached, forcing loading to false');
+        setLoading(false);
+        setError('Loading took too long. Please refresh the page.');
+      }
+    }, 10000); // 10 second timeout
+
+    return () => clearTimeout(timeout);
+  }, [loading, user]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-300 text-lg font-medium">
+            Loading your fitness data...
+          </p>
+          <p className="text-gray-500 dark:text-gray-400 text-sm mt-2">
+            This may take a moment
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center">
+        <div className="text-center max-w-md mx-auto p-8">
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <span className="text-2xl">⚠️</span>
+          </div>
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+            Something went wrong
+          </h2>
+          <p className="text-gray-600 dark:text-gray-300 mb-4">{error}</p>
+          <Button 
+            onClick={() => {
+              setError(null);
+              loadData();
+            }}
+            className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white"
+          >
+            Try Again
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   // Computed values
   const selectedDateString = format(selectedDate, "yyyy-MM-dd");
@@ -170,8 +267,10 @@ const StatisticsPanel = () => {
       
       // Refresh data only if user is authenticated
       if (user) {
-        const logs = await exerciseStorage.getExerciseLogs(format(selectedDate, 'yyyy-MM-dd'));
-        setExerciseLogs(logs);
+        const logs = await exerciseStorage.getExerciseLogs();
+        const selectedDateString = format(selectedDate, 'yyyy-MM-dd');
+        const filteredLogs = logs.filter(log => log.date === selectedDateString);
+        setExerciseLogs(filteredLogs);
       }
     } catch (error) {
       console.error('Error completing exercise:', error);
@@ -192,17 +291,6 @@ const StatisticsPanel = () => {
     categories: [],
     logs: [],
   };
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-black flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500 mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-gray-300 font-medium">Loading your fitness data...</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-black">
