@@ -176,10 +176,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signInWithGoogle = async () => {
     setLoading(true);
     try {
+      // Get the correct redirect URL based on environment
+      const getRedirectUrl = () => {
+        if (typeof window !== 'undefined') {
+          // In production, use the current origin
+          if (window.location.hostname !== 'localhost') {
+            return window.location.origin;
+          }
+          // In development, use the correct dev port
+          return 'http://localhost:5173';
+        }
+        return 'http://localhost:5173';
+      };
+
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/dashboard`
+          redirectTo: getRedirectUrl()
         }
       });
 

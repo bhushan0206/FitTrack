@@ -100,10 +100,23 @@ const SignInPage = () => {
       
       console.log('🚀 Initiating Google OAuth...');
       
+      // Get the correct redirect URL based on environment
+      const getRedirectUrl = () => {
+        if (typeof window !== 'undefined') {
+          // In production, use the current origin
+          if (window.location.hostname !== 'localhost') {
+            return window.location.origin;
+          }
+          // In development, use localhost
+          return 'http://localhost:5173';
+        }
+        return 'http://localhost:5173';
+      };
+      
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}`,
+          redirectTo: getRedirectUrl(),
           queryParams: {
             access_type: 'offline',
             prompt: 'select_account',
