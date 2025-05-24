@@ -1,7 +1,8 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { format } from "date-fns";
 import { useAuth } from "@/contexts/AuthContext";
 import { TrackingCategory, DailyLog, UserProfile } from "@/types/fitness";
+import { Exercise, ExerciseLog } from '@/types/exercise';
 import { useFitnessData } from "@/hooks/useFitnessData";
 import Header from "@/components/Layout/Header";
 import Footer from "@/components/Layout/Footer";
@@ -10,10 +11,16 @@ import ProgressChart from "@/components/Dashboard/ProgressChart";
 import DailyLogList from "@/components/Dashboard/DailyLogList";
 import CategoryForm from "@/components/Dashboard/CategoryForm";
 import LogEntryForm from "@/components/Dashboard/LogEntryForm";
+import CategoryManager from "@/components/Dashboard/CategoryManager";
 import ProfileForm from "@/components/Profile/ProfileForm";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Plus, Target, Pencil, Trash2 } from "lucide-react";
+import { exerciseStorage } from "@/lib/exerciseStorage";
+import ExerciseLibrary from "@/components/Exercise/ExerciseLibrary";
+import ExerciseDetails from "@/components/Exercise/ExerciseDetails";
+import ExerciseTracker from "@/components/Exercise/ExerciseTracker";
 
 const StatisticsPanel = () => {
   const { user } = useAuth();
@@ -40,6 +47,45 @@ const StatisticsPanel = () => {
   const [showLogForm, setShowLogForm] = useState(false);
   const [editingCategory, setEditingCategory] = useState<TrackingCategory | null>(null);
   const [editingLog, setEditingLog] = useState<DailyLog | null>(null);
+  const [exercises, setExercises] = useState<Exercise[]>([]);
+  const [exerciseLogs, setExerciseLogs] = useState<ExerciseLog[]>([]);
+  const [showExerciseLibrary, setShowExerciseLibrary] = useState(false);
+  const [showExerciseDetails, setShowExerciseDetails] = useState(false);
+  const [showExerciseTracker, setShowExerciseTracker] = useState(false);
+  const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
+
+  // Load exercises and exercise logs
+  useEffect(() => {
+    const loadExerciseData = async () => {
+      // Only load exercise data if user is authenticated
+      if (!user) {
+        console.log('User not authenticated, skipping exercise data load');
+        setExercises([]);
+        setExerciseLogs([]);
+        return;
+      }
+
+      try {
+        console.log('Loading exercise data for user:', user.id);
+        const [exerciseList, logs] = await Promise.all([
+          exerciseStorage.getExercises(),
+          exerciseStorage.getExerciseLogs(format(selectedDate, 'yyyy-MM-dd'))
+        ]);
+        
+        console.log('Loaded exercises:', exerciseList.length);
+        console.log('Loaded exercise logs:', logs.length);
+        
+        setExercises(exerciseList);
+        setExerciseLogs(logs);
+      } catch (error) {
+        console.error('Error loading exercise data:', error);
+        setExercises([]);
+        setExerciseLogs([]);
+      }
+    };
+
+    loadExerciseData();
+  }, [selectedDate, user]); // Add user dependency
 
   // Computed values
   const selectedDateString = format(selectedDate, "yyyy-MM-dd");
@@ -94,6 +140,44 @@ const StatisticsPanel = () => {
     setEditingLog(null);
   };
 
+  const handleDateChange = (date: Date) => {
+    setSelectedDate(date);
+  };
+
+  // Exercise handlers
+  const handleStartExercise = (exercise: Exercise) => {
+    setSelectedExercise(exercise);
+    setShowExerciseLibrary(false);
+    setShowExerciseTracker(true);
+  };
+
+  const handleViewExerciseDetails = (exercise: Exercise) => {
+    setSelectedExercise(exercise);
+    setShowExerciseLibrary(false);
+    setShowExerciseDetails(true);
+  };
+
+  const handleCompleteExercise = async (exerciseLog: ExerciseLog) => {
+    try {
+      console.log('Exercise completed:', exerciseLog);
+      
+      // Optimistically update the UI
+      setExerciseLogs(prev => [...prev, exerciseLog]);
+      setShowExerciseTracker(false);
+      setSelectedExercise(null);
+      
+      // Refresh data only if user is authenticated
+      if (user) {
+        const logs = await exerciseStorage.getExerciseLogs(format(selectedDate, 'yyyy-MM-dd'));
+        setExerciseLogs(logs);
+      }
+    } catch (error) {
+      console.error('Error completing exercise:', error);
+      // Remove the optimistically added log if there's an error
+      setExerciseLogs(prev => prev.filter(log => log.id !== exerciseLog.id));
+    }
+  };
+
   // Create a profile object with fallback values
   const currentProfile = profile || {
     id: user?.id || "temp-id",
@@ -119,16 +203,10 @@ const StatisticsPanel = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-black relative overflow-hidden flex flex-col">
-      {/* Background decoration */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-purple-200 to-indigo-200 dark:from-purple-800/30 dark:to-indigo-800/30 rounded-full opacity-30 animate-pulse"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-br from-blue-200 to-purple-200 dark:from-blue-800/30 dark:to-purple-800/30 rounded-full opacity-30 animate-pulse" style={{ animationDelay: '1s' }}></div>
-      </div>
-
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-black">
       <Header
         selectedDate={selectedDate}
-        onDateChange={setSelectedDate}
+        onDateChange={handleDateChange}
         datePickerOpen={datePickerOpen}
         onDatePickerToggle={setDatePickerOpen}
         profile={currentProfile}
@@ -138,208 +216,327 @@ const StatisticsPanel = () => {
         <ProfileForm />
       </Header>
 
-      {/* Main Content */}
-      <main className="flex-1 relative z-10 px-4 sm:px-6 lg:px-8 py-8">
-        <div className="max-w-7xl mx-auto space-y-8">
-          {/* Summary Cards */}
-          <SummaryCards
-            logs={selectedDateLogs}
-            categories={categories}
-            selectedDate={selectedDate}
-          />
-
-          {/* Charts and Analytics */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <ProgressChart logs={logs} categories={categories} />
-            
-            {/* Quick Actions */}
-            <div className="space-y-6">
-              <div className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm border-0 shadow-lg rounded-2xl p-6">
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                  <Target className="h-5 w-5" />
-                  Quick Actions
-                </h3>
-                <div className="space-y-3">
-                  <Button
-                    onClick={() => setShowCategoryForm(true)}
-                    className="w-full bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white rounded-xl shadow-lg transition-all duration-200 flex items-center justify-center gap-2"
-                  >
-                    <Plus size={18} />
-                    Add Category
-                  </Button>
-                  <Button
-                    onClick={() => setShowLogForm(true)}
-                    disabled={categories.length === 0}
-                    className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white rounded-xl shadow-lg transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <Plus size={18} />
-                    Log Entry
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Categories Management */}
-          <div className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm border-0 shadow-lg rounded-2xl p-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                <span className="text-2xl">🏷️</span>
-                My Categories
-              </h3>
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Exercise Library */}
+        {showExerciseLibrary && (
+          <div className="space-y-6 mb-8">
+            <div className="flex items-center justify-between">
               <Button
-                onClick={() => setShowCategoryForm(true)}
-                className="bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white rounded-xl shadow-lg transition-all duration-200 flex items-center gap-2"
+                variant="outline"
+                onClick={() => setShowExerciseLibrary(false)}
+                className="mb-4"
               >
-                <Plus size={16} />
-                Add Category
+                ← Back to Dashboard
               </Button>
             </div>
+            <ExerciseLibrary
+              onStartExercise={handleStartExercise}
+              onViewExerciseDetails={handleViewExerciseDetails}
+            />
+          </div>
+        )}
 
-            {categories.length === 0 ? (
-              <div className="text-center py-12">
-                <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <span className="text-2xl">🏷️</span>
-                </div>
-                <p className="text-gray-600 dark:text-gray-300 font-medium mb-2">
-                  No categories yet
-                </p>
-                <p className="text-gray-500 dark:text-gray-400 text-sm mb-4">
-                  Create your first category to start tracking your fitness goals
-                </p>
-                <Button
-                  onClick={() => setShowCategoryForm(true)}
-                  className="bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white rounded-xl shadow-lg"
-                >
-                  <Plus size={16} className="mr-2" />
-                  Create Category
-                </Button>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {categories.map((category) => {
-                  // Calculate today's progress for this category
-                  const todayLogs = selectedDateLogs.filter(log => log.categoryId === category.id);
-                  const todayValue = todayLogs.reduce((sum, log) => sum + log.value, 0);
-                  const progress = (todayValue / category.dailyTarget) * 100;
-                  const isCompleted = progress >= 100;
+        {/* Exercise Details */}
+        {showExerciseDetails && selectedExercise && (
+          <div className="space-y-6 mb-8">
+            <div className="flex items-center justify-between">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowExerciseDetails(false);
+                  setShowExerciseLibrary(true);
+                }}
+                className="mb-4"
+              >
+                ← Back to Library
+              </Button>
+            </div>
+            <ExerciseDetails
+              exercise={selectedExercise}
+              onStart={handleStartExercise}
+              onClose={() => {
+                setShowExerciseDetails(false);
+                setShowExerciseLibrary(true);
+              }}
+            />
+          </div>
+        )}
 
-                  return (
-                    <div
-                      key={category.id}
-                      className="p-4 rounded-xl border-0 bg-gradient-to-r from-white to-gray-50/50 dark:from-gray-700 dark:to-gray-600/50 shadow-md hover:shadow-lg transition-all duration-300"
-                      style={{ borderLeft: `4px solid ${category.color}` }}
+        {/* Exercise Tracker */}
+        {showExerciseTracker && selectedExercise && (
+          <div className="space-y-6 mb-8">
+            <div className="flex items-center justify-between">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowExerciseTracker(false);
+                  setShowExerciseLibrary(true);
+                }}
+                className="mb-4"
+              >
+                ← Back to Library
+              </Button>
+            </div>
+            <ExerciseTracker
+              exercise={selectedExercise}
+              onComplete={handleCompleteExercise}
+              onCancel={() => {
+                setShowExerciseTracker(false);
+                setShowExerciseLibrary(true);
+              }}
+              selectedDate={format(selectedDate, 'yyyy-MM-dd')}
+            />
+          </div>
+        )}
+
+        {/* Main Dashboard - Reorganized for better UX */}
+        {!showExerciseLibrary && !showExerciseDetails && !showExerciseTracker && (
+          <>
+            {/* Quick Actions Section - High Priority */}
+            <div className="mb-8">
+              <Card className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white border-0 shadow-xl">
+                <CardHeader>
+                  <CardTitle className="text-2xl font-bold flex items-center gap-3">
+                    <span className="text-3xl">🚀</span>
+                    Quick Actions
+                  </CardTitle>
+                  <p className="text-indigo-100">Start tracking your fitness journey</p>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <Button
+                      onClick={() => setShowExerciseLibrary(true)}
+                      className="bg-white/20 hover:bg-white/30 text-white border-white/30 h-20 flex flex-col gap-2 backdrop-blur-sm"
+                      variant="outline"
+                      disabled={!user}
                     >
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="flex items-center gap-2">
-                          <div
-                            className="w-4 h-4 rounded-full"
-                            style={{ backgroundColor: category.color }}
-                          />
-                          <h4 className="font-semibold text-gray-900 dark:text-white">
-                            {category.name}
-                          </h4>
+                      <span className="text-2xl">💪</span>
+                      <span className="font-semibold">Start Exercise</span>
+                    </Button>
+                    <Button
+                      onClick={() => setShowLogForm(true)}
+                      className="bg-white/20 hover:bg-white/30 text-white border-white/30 h-20 flex flex-col gap-2 backdrop-blur-sm"
+                      variant="outline"
+                      disabled={!user}
+                    >
+                      <span className="text-2xl">📝</span>
+                      <span className="font-semibold">Log Activity</span>
+                    </Button>
+                    <Button
+                      onClick={() => setShowCategoryForm(true)}
+                      className="bg-white/20 hover:bg-white/30 text-white border-white/30 h-20 flex flex-col gap-2 backdrop-blur-sm"
+                      variant="outline"
+                      disabled={!user}
+                    >
+                      <span className="text-2xl">🏷️</span>
+                      <span className="font-semibold">Add Category</span>
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Today's Overview - Summary Cards */}
+            <div className="mb-8">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                  <span className="text-3xl">📊</span>
+                  Today's Overview
+                </h2>
+                <p className="text-gray-600 dark:text-gray-400">
+                  {format(selectedDate, "EEEE, MMMM d, yyyy")}
+                </p>
+              </div>
+              <SummaryCards
+                logs={logs}
+                categories={categories}
+                selectedDate={selectedDate}
+              />
+            </div>
+
+            {/* Exercise Activity Section */}
+            <div className="mb-8">
+              <Card className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm border-0 shadow-lg">
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <CardTitle className="text-xl font-bold flex items-center gap-2">
+                    <span className="text-2xl">💪</span>
+                    Exercise Activity
+                  </CardTitle>
+                  <Button
+                    onClick={() => setShowExerciseLibrary(true)}
+                    className="bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white"
+                    disabled={!user}
+                  >
+                    Browse All Exercises
+                  </Button>
+                </CardHeader>
+                <CardContent>
+                  {!user ? (
+                    <div className="text-center py-8">
+                      <div className="w-20 h-20 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <span className="text-3xl">🔒</span>
+                      </div>
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                        Authentication Required
+                      </h3>
+                      <p className="text-gray-600 dark:text-gray-300 mb-6">
+                        Please sign in to access exercise tracking features.
+                      </p>
+                    </div>
+                  ) : exerciseLogs.length === 0 ? (
+                    <div className="text-center py-8">
+                      <div className="w-20 h-20 bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-900/30 dark:to-pink-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <span className="text-3xl">🏃‍♂️</span>
+                      </div>
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                        Ready to get moving?
+                      </h3>
+                      <p className="text-gray-600 dark:text-gray-300 mb-6">
+                        No exercises logged for today. Start your fitness journey now!
+                      </p>
+                      <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                        <Button
+                          onClick={() => setShowExerciseLibrary(true)}
+                          className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white px-6 py-3"
+                        >
+                          <span className="mr-2">🔍</span>
+                          Browse Exercises
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => setShowLogForm(true)}
+                          className="px-6 py-3"
+                        >
+                          <span className="mr-2">📝</span>
+                          Quick Log
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="text-center p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl border border-blue-100 dark:border-blue-800">
+                          <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">
+                            {exerciseLogs.length}
+                          </p>
+                          <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
+                            Exercises Completed
+                          </p>
                         </div>
-                        <div className="flex gap-1">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleEditCategory(category)}
-                            className="h-8 w-8 p-0 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-lg text-gray-600 dark:text-gray-300"
-                          >
-                            <Pencil size={14} />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDeleteCategory(category.id)}
-                            className="h-8 w-8 p-0 text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 hover:text-red-600 dark:hover:text-red-300 rounded-lg"
-                          >
-                            <Trash2 size={14} />
-                          </Button>
+                        <div className="text-center p-4 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-xl border border-green-100 dark:border-green-800">
+                          <p className="text-3xl font-bold text-green-600 dark:text-green-400">
+                            {exerciseLogs.reduce((sum, log) => sum + log.duration, 0)}
+                          </p>
+                          <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
+                            Total Minutes
+                          </p>
+                        </div>
+                        <div className="text-center p-4 bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-900/20 dark:to-red-900/20 rounded-xl border border-orange-100 dark:border-orange-800">
+                          <p className="text-3xl font-bold text-orange-600 dark:text-orange-400">
+                            {exerciseLogs.reduce((sum, log) => sum + (log.calories || 0), 0)}
+                          </p>
+                          <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
+                            Calories Burned
+                          </p>
                         </div>
                       </div>
-
-                      <div className="space-y-2">
-                        <div className="flex justify-between items-center text-sm">
-                          <span className="text-gray-600 dark:text-gray-300">
-                            Target: {category.dailyTarget} {category.unit}/day
-                          </span>
-                          {isCompleted && (
-                            <span className="text-green-600 dark:text-green-400 font-bold">
-                              ✓ Done
-                            </span>
-                          )}
-                        </div>
-                        
-                        <div className="flex justify-between items-center text-sm">
-                          <span className="text-gray-600 dark:text-gray-300">
-                            Today: {todayValue} {category.unit}
-                          </span>
-                          <span className="font-semibold text-gray-700 dark:text-gray-300">
-                            {Math.round(progress)}%
-                          </span>
-                        </div>
-
-                        <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
-                          <div
-                            className="h-2 rounded-full transition-all duration-500"
-                            style={{
-                              width: `${Math.min(progress, 100)}%`,
-                              backgroundColor: category.color,
-                            }}
-                          />
+                      
+                      {/* Recent Exercise Logs */}
+                      <div className="mt-6">
+                        <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
+                          Recent Exercises
+                        </h4>
+                        <div className="space-y-2">
+                          {exerciseLogs.slice(0, 3).map((log, index) => (
+                            <div key={index} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                              <div>
+                                <p className="font-medium text-gray-900 dark:text-white">
+                                  Exercise #{index + 1}
+                                </p>
+                                <p className="text-sm text-gray-600 dark:text-gray-300">
+                                  {log.duration} min • {log.calories || 0} cal
+                                </p>
+                              </div>
+                              <div className="text-right">
+                                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                  {log.intensity || 'Moderate'}
+                                </p>
+                              </div>
+                            </div>
+                          ))}
                         </div>
                       </div>
                     </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
 
-          {/* Daily Logs */}
-          <DailyLogList
-            logs={selectedDateLogs}
-            categories={categories}
-            onEdit={handleEditLog}
-            onDelete={handleDeleteLog}
-            onAdd={() => setShowLogForm(true)}
-            selectedDate={selectedDate}
-          />
-        </div>
+            {/* Analytics Section */}
+            <div className="mb-8">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                  <span className="text-3xl">📈</span>
+                  Analytics & Management
+                </h2>
+              </div>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <ProgressChart logs={logs} categories={categories} />
+                <CategoryManager
+                  categories={categories}
+                  onCategoryUpdate={() => {}}
+                  onEdit={handleEditCategory}
+                  onDelete={handleDeleteCategory}
+                  onAdd={() => setShowCategoryForm(true)}
+                />
+              </div>
+            </div>
+
+            {/* Daily Activity Log Section */}
+            <div className="mb-8">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                  <span className="text-3xl">📋</span>
+                  Daily Activity Log
+                </h2>
+              </div>
+              <DailyLogList
+                logs={selectedDateLogs}
+                categories={categories}
+                onEdit={handleEditLog}
+                onDelete={handleDeleteLog}
+                onAdd={() => setShowLogForm(true)}
+                selectedDate={selectedDate}
+              />
+            </div>
+
+            {/* Dialogs */}
+            <Dialog open={showCategoryForm} onOpenChange={setShowCategoryForm}>
+              <DialogContent className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md border-gray-200/50 dark:border-gray-600/50 max-w-md rounded-2xl shadow-2xl">
+                <CategoryForm
+                  onSave={handleSaveCategory}
+                  category={editingCategory || undefined}
+                  onCancel={handleCancelCategoryForm}
+                />
+              </DialogContent>
+            </Dialog>
+
+            <Dialog open={showLogForm} onOpenChange={setShowLogForm}>
+              <DialogContent className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md border-gray-200/50 dark:border-gray-600/50 max-w-2xl rounded-2xl shadow-2xl">
+                <LogEntryForm
+                  categories={categories}
+                  onSave={handleSaveLog}
+                  log={editingLog || undefined}
+                  onCancel={handleCancelLogForm}
+                  selectedDate={selectedDateString}
+                />
+              </DialogContent>
+            </Dialog>
+          </>
+        )}
       </main>
 
-      {/* Category Form Dialog */}
-      <Dialog open={showCategoryForm} onOpenChange={setShowCategoryForm}>
-        <DialogContent className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md border-gray-200/50 dark:border-gray-600/50 max-w-2xl rounded-2xl shadow-2xl">
-          <CategoryForm
-            category={editingCategory}
-            onSave={handleSaveCategory}
-            onCancel={handleCancelCategoryForm}
-          />
-        </DialogContent>
-      </Dialog>
-
-      {/* Log Entry Form Dialog */}
-      <Dialog open={showLogForm} onOpenChange={setShowLogForm}>
-        <DialogContent className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md border-gray-200/50 dark:border-gray-600/50 max-w-2xl rounded-2xl shadow-2xl">
-          <LogEntryForm
-            categories={categories}
-            log={editingLog}
-            selectedDate={selectedDateString}
-            onSave={handleSaveLog}
-            onCancel={handleCancelLogForm}
-          />
-        </DialogContent>
-      </Dialog>
-
       <Footer />
-      
-      {/* Toast container - positioned properly */}
-      <div className="fixed top-0 right-0 z-[100] p-4">
-        {/* This ensures toasts appear in the correct position */}
-      </div>
     </div>
   );
 };

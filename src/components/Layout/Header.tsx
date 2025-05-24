@@ -8,10 +8,20 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/contexts/AuthContext";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { useTheme } from "@/contexts/ThemeContext";
 import { UserProfile } from "@/types/fitness";
+import ProfileForm from "@/components/Profile/ProfileForm";
 
 interface HeaderProps {
   selectedDate: Date;
@@ -58,58 +68,44 @@ const Header = ({
   };
 
   return (
-    <header className="w-full bg-gradient-to-r from-indigo-600 via-purple-600 to-blue-600 dark:from-gray-800 dark:via-gray-900 dark:to-black shadow-xl border-b border-white/10 dark:border-gray-700/30 backdrop-blur-sm">
-      <div className="max-w-7xl mx-auto px-6 py-6">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          {/* Logo and title */}
-          <div className="flex items-center gap-4">
-            <div className="relative">
-              <div className="w-12 h-12 bg-white/90 backdrop-blur-sm rounded-xl flex items-center justify-center shadow-lg border border-white/20">
-                <svg
-                  width="28"
-                  height="28"
-                  viewBox="0 0 32 32"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <rect x="6" y="14" width="20" height="4" rx="2" fill="#4F46E5" />
-                  <rect x="2" y="10" width="8" height="12" rx="4" fill="#4F46E5" />
-                  <rect x="22" y="10" width="8" height="12" rx="4" fill="#4F46E5" />
+    <header className="relative z-20 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md border-b border-gray-200/50 dark:border-gray-600/50 sticky top-0">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16 sm:h-20">
+          {/* Logo and Welcome */}
+          <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
+            <div className="flex-shrink-0">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center">
+                <svg width="20" height="20" className="sm:w-6 sm:h-6" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="6" y="14" width="20" height="4" rx="2" fill="white" />
+                  <rect x="2" y="10" width="8" height="12" rx="4" fill="white" />
+                  <rect x="22" y="10" width="8" height="12" rx="4" fill="white" />
                 </svg>
               </div>
-              <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-400 rounded-full border-2 border-white animate-pulse"></div>
             </div>
-            <div>
-              <h1 className="text-2xl lg:text-3xl font-bold text-white tracking-tight">
+            
+            <div className="min-w-0 flex-1">
+              <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 dark:text-white truncate">
                 FitTrack
               </h1>
-              <p className="text-white/80 text-sm font-medium">
-                Welcome back, {user?.name || user?.email || 'User'}!
+              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 truncate">
+                Welcome back, {profile?.name || user?.name || 'User'}!
               </p>
             </div>
           </div>
 
-          {/* Controls */}
-          <div className="flex items-center gap-3">
-            {/* Date picker */}
+          {/* Center Section - Date Picker */}
+          <div className="hidden md:flex items-center justify-center flex-1 max-w-xs">
             <Popover open={datePickerOpen} onOpenChange={onDatePickerToggle}>
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
-                  className="flex items-center gap-3 min-w-[220px] justify-start bg-white/10 dark:bg-gray-800/50 border-white/20 dark:border-gray-600/50 text-white backdrop-blur-sm hover:bg-white/20 dark:hover:bg-gray-700/50 transition-all duration-200"
+                  className="w-full bg-white/90 dark:bg-gray-700/90 border-gray-200/50 dark:border-gray-600/50 hover:bg-gray-50 dark:hover:bg-gray-600 rounded-xl font-medium text-gray-900 dark:text-white"
                 >
-                  <Calendar className="h-4 w-4" />
-                  <span className="flex-1 text-left font-medium">
-                    {format(selectedDate, "MMMM d, yyyy")}
-                  </span>
-                  <ChevronDown className="h-4 w-4 opacity-70" />
+                  <Calendar className="mr-2 h-4 w-4" />
+                  {format(selectedDate, "PPP")}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent
-                className="w-auto p-0 z-50 bg-white/95 dark:bg-gray-800/95 backdrop-blur-md border border-gray-200/50 dark:border-gray-600/50 rounded-xl shadow-2xl"
-                align="end"
-                sideOffset={12}
-              >
+              <PopoverContent className="w-auto p-0 bg-white/95 dark:bg-gray-800/95 backdrop-blur-md border-gray-200/50 dark:border-gray-600/50 rounded-xl shadow-xl" align="center">
                 <CalendarComponent
                   mode="single"
                   selected={selectedDate}
@@ -120,38 +116,124 @@ const Header = ({
                     }
                   }}
                   initialFocus
-                  className="rounded-xl dark:text-white"
+                  className="rounded-xl"
                 />
               </PopoverContent>
             </Popover>
+          </div>
 
-            {/* Dark mode toggle */}
+          {/* Right Section - User Menu */}
+          <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+            {/* Mobile Date Picker */}
+            <div className="md:hidden">
+              <Popover open={datePickerOpen} onOpenChange={onDatePickerToggle}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="bg-white/90 dark:bg-gray-700/90 border-gray-200/50 dark:border-gray-600/50 hover:bg-gray-50 dark:hover:bg-gray-600 rounded-lg text-gray-900 dark:text-white px-2"
+                  >
+                    <Calendar className="h-4 w-4" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0 bg-white/95 dark:bg-gray-800/95 backdrop-blur-md border-gray-200/50 dark:border-gray-600/50 rounded-xl shadow-xl" align="end">
+                  <CalendarComponent
+                    mode="single"
+                    selected={selectedDate}
+                    onSelect={(date) => {
+                      if (date) {
+                        onDateChange(date);
+                        onDatePickerToggle(false);
+                      }
+                    }}
+                    initialFocus
+                    className="rounded-xl"
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            {/* Theme Toggle */}
             <Button
               variant="ghost"
-              className="flex items-center gap-2 text-white hover:bg-white/10 dark:hover:bg-gray-700/50 hover:text-white transition-all duration-200 px-3 py-2 rounded-xl"
+              className="flex items-center gap-2 text-gray-900 dark:text-white hover:bg-gray-100/50 dark:hover:bg-gray-700/50 rounded-lg px-3 py-2"
               onClick={toggleTheme}
             >
               {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
             </Button>
 
-            {/* Profile button */}
-            <Button
-              variant="ghost"
-              className="flex items-center gap-2 text-white hover:bg-white/10 dark:hover:bg-gray-700/50 hover:text-white transition-all duration-200 px-4 py-2 rounded-xl"
-              onClick={() => setProfileDialogOpen(true)}
-            >
-              <User className="h-5 w-5" />
-              <span className="hidden sm:inline font-medium">Profile</span>
-            </Button>
+            {/* User Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className="relative h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 transition-all duration-200 flex-shrink-0"
+                >
+                  <Avatar className="h-8 w-8 sm:h-10 sm:w-10">
+                    <AvatarImage src={user?.avatar} alt={user?.name} />
+                    <AvatarFallback className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white text-xs sm:text-sm font-semibold">
+                      {(user?.name || user?.email || 'U').charAt(0).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent 
+                className="w-56 sm:w-64 bg-white/95 dark:bg-gray-800/95 backdrop-blur-md border-gray-200/50 dark:border-gray-600/50 rounded-xl shadow-xl" 
+                align="end" 
+                forceMount
+                sideOffset={8}
+              >
+                <DropdownMenuLabel className="font-normal px-4 py-3">
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium leading-none text-gray-900 dark:text-white">
+                      {profile?.name || user?.name || 'User'}
+                    </p>
+                    <p className="text-xs leading-none text-gray-600 dark:text-gray-300 truncate">
+                      {user?.email}
+                    </p>
+                  </div>
+                </DropdownMenuLabel>
+                
+                <DropdownMenuSeparator className="bg-gray-200/50 dark:bg-gray-600/50" />
+                
+                <DropdownMenuItem asChild>
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <button className="w-full flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100/50 dark:hover:bg-gray-700/50 cursor-pointer rounded-lg mx-1 my-1">
+                        <User className="mr-3 h-4 w-4" />
+                        <span>Profile Settings</span>
+                      </button>
+                    </DialogTrigger>
+                    <DialogContent className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md border-gray-200/50 dark:border-gray-600/50 max-w-2xl rounded-2xl shadow-2xl">
+                      <ProfileForm
+                        profile={profile}
+                        onSave={onProfileUpdate}
+                        isLoading={isLoading}
+                      />
+                    </DialogContent>
+                  </Dialog>
+                </DropdownMenuItem>
 
-            {/* Sign-out button */}
-            <Button
-              className="bg-white/20 dark:bg-gray-700/50 hover:bg-white/30 dark:hover:bg-gray-600/50 text-white font-medium px-4 py-2 rounded-xl shadow-lg backdrop-blur-sm border border-white/20 dark:border-gray-600/50 transition-all duration-200 flex items-center gap-2"
-              onClick={handleSignOut}
-            >
-              <LogOut size={16} />
-              <span>Sign Out</span>
-            </Button>
+                <DropdownMenuSeparator className="bg-gray-200/50 dark:bg-gray-600/50" />
+                
+                <DropdownMenuItem 
+                  onClick={handleSignOut}
+                  className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 focus:bg-red-50 dark:focus:bg-red-900/30 cursor-pointer rounded-lg mx-1 my-1 px-4 py-2"
+                >
+                  <LogOut className="mr-3 h-4 w-4" />
+                  <span className="font-medium">Sign out</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+
+        {/* Mobile Date Display */}
+        <div className="md:hidden pb-3 pt-1">
+          <div className="text-center">
+            <p className="text-sm font-medium text-gray-900 dark:text-white">
+              {format(selectedDate, "EEEE, MMMM d, yyyy")}
+            </p>
           </div>
         </div>
       </div>
