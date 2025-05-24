@@ -38,7 +38,11 @@ const DailyLogList = ({
           </span>
         </CardTitle>
         <Button
-          onClick={onAdd}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onAdd();
+          }}
           className="bg-gradient-to-r from-indigo-500 to-purple-600 dark:from-indigo-600 dark:to-purple-700 hover:from-indigo-600 hover:to-purple-700 dark:hover:from-indigo-700 dark:hover:to-purple-800 text-white font-medium px-6 py-2 rounded-xl shadow-lg transition-all duration-200 flex items-center gap-2"
         >
           <Plus size={18} />
@@ -88,7 +92,11 @@ const DailyLogList = ({
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => onEdit(log)}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          onEdit(log);
+                        }}
                         className="h-9 w-9 p-0 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-lg text-gray-600 dark:text-gray-300"
                       >
                         <Pencil size={16} />
@@ -96,7 +104,11 @@ const DailyLogList = ({
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => onDelete(log.id)}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          onDelete(log.id);
+                        }}
                         className="h-9 w-9 p-0 text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 hover:text-red-600 dark:hover:text-red-300 rounded-lg"
                       >
                         <Trash2 size={16} />

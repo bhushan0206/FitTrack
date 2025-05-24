@@ -9,7 +9,8 @@ interface CategoryManagerProps {
   onCategoryUpdate: () => void;
   onEdit?: (category: TrackingCategory) => void;
   onDelete?: (categoryId: string) => void;
-  onAdd?: () => void;
+  onAdd?: (e?: React.MouseEvent) => void;
+  existingCategories?: TrackingCategory[];
 }
 
 const CategoryManager = ({ 
@@ -28,7 +29,12 @@ const CategoryManager = ({
         </CardTitle>
         {onAdd && (
           <Button
-            onClick={onAdd}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              console.log('CategoryManager Add button clicked');
+              onAdd(e);
+            }}
             size="sm"
             className="bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white"
           >

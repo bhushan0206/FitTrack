@@ -223,7 +223,11 @@ const StatisticsPanel = () => {
             <div className="flex items-center justify-between">
               <Button
                 variant="outline"
-                onClick={() => setShowExerciseLibrary(false)}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setShowExerciseLibrary(false);
+                }}
                 className="mb-4"
               >
                 ← Back to Dashboard
@@ -242,7 +246,9 @@ const StatisticsPanel = () => {
             <div className="flex items-center justify-between">
               <Button
                 variant="outline"
-                onClick={() => {
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
                   setShowExerciseDetails(false);
                   setShowExerciseLibrary(true);
                 }}
@@ -268,7 +274,9 @@ const StatisticsPanel = () => {
             <div className="flex items-center justify-between">
               <Button
                 variant="outline"
-                onClick={() => {
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
                   setShowExerciseTracker(false);
                   setShowExerciseLibrary(true);
                 }}
@@ -305,7 +313,11 @@ const StatisticsPanel = () => {
                 <CardContent>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <Button
-                      onClick={() => setShowExerciseLibrary(true)}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setShowExerciseLibrary(true);
+                      }}
                       className="bg-white/20 hover:bg-white/30 text-white border-white/30 h-20 flex flex-col gap-2 backdrop-blur-sm"
                       variant="outline"
                       disabled={!user}
@@ -314,7 +326,11 @@ const StatisticsPanel = () => {
                       <span className="font-semibold">Start Exercise</span>
                     </Button>
                     <Button
-                      onClick={() => setShowLogForm(true)}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setShowLogForm(true);
+                      }}
                       className="bg-white/20 hover:bg-white/30 text-white border-white/30 h-20 flex flex-col gap-2 backdrop-blur-sm"
                       variant="outline"
                       disabled={!user}
@@ -323,7 +339,12 @@ const StatisticsPanel = () => {
                       <span className="font-semibold">Log Activity</span>
                     </Button>
                     <Button
-                      onClick={() => setShowCategoryForm(true)}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('Add Category button clicked on mobile');
+                        setShowCategoryForm(true);
+                      }}
                       className="bg-white/20 hover:bg-white/30 text-white border-white/30 h-20 flex flex-col gap-2 backdrop-blur-sm"
                       variant="outline"
                       disabled={!user}
@@ -363,7 +384,11 @@ const StatisticsPanel = () => {
                     Exercise Activity
                   </CardTitle>
                   <Button
-                    onClick={() => setShowExerciseLibrary(true)}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setShowExerciseLibrary(true);
+                    }}
                     className="bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white"
                     disabled={!user}
                   >
@@ -396,7 +421,11 @@ const StatisticsPanel = () => {
                       </p>
                       <div className="flex flex-col sm:flex-row gap-3 justify-center">
                         <Button
-                          onClick={() => setShowExerciseLibrary(true)}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setShowExerciseLibrary(true);
+                          }}
                           className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white px-6 py-3"
                         >
                           <span className="mr-2">🔍</span>
@@ -404,7 +433,11 @@ const StatisticsPanel = () => {
                         </Button>
                         <Button
                           variant="outline"
-                          onClick={() => setShowLogForm(true)}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setShowLogForm(true);
+                          }}
                           className="px-6 py-3"
                         >
                           <span className="mr-2">📝</span>
@@ -491,7 +524,14 @@ const StatisticsPanel = () => {
                   onCategoryUpdate={() => {}}
                   onEdit={handleEditCategory}
                   onDelete={handleDeleteCategory}
-                  onAdd={() => setShowCategoryForm(true)}
+                  onAdd={(e) => {
+                    if (e) {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }
+                    console.log('Category Manager Add button clicked');
+                    setShowCategoryForm(true);
+                  }}
                 />
               </div>
             </div>
@@ -516,11 +556,15 @@ const StatisticsPanel = () => {
 
             {/* Dialogs */}
             <Dialog open={showCategoryForm} onOpenChange={setShowCategoryForm}>
-              <DialogContent className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md border-gray-200/50 dark:border-gray-600/50 max-w-md rounded-2xl shadow-2xl">
+              <DialogContent className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md border-gray-200/50 dark:border-gray-600/50 max-w-md rounded-2xl shadow-2xl sm:max-w-md">
                 <CategoryForm
                   onSave={handleSaveCategory}
                   category={editingCategory || undefined}
-                  onCancel={handleCancelCategoryForm}
+                  existingCategories={categories}
+                  onCancel={() => {
+                    console.log('Category form cancelled');
+                    handleCancelCategoryForm();
+                  }}
                 />
               </DialogContent>
             </Dialog>
