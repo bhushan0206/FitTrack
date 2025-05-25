@@ -24,7 +24,7 @@ import ExerciseTracker from "@/components/Exercise/ExerciseTracker";
 import SocialHub from "@/components/Social/SocialHub";
 
 const StatisticsPanel = () => {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
 
   // State management hooks
   const {

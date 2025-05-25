@@ -33,29 +33,108 @@ export const useFitnessData = () => {
 
       try {
         setIsLoading(true);
+        console.log('useFitnessData: Starting data load for user:', user.id);
         
-        // Try to get existing profile
-        let userProfile = await getUserProfile();
+        // For Google users, try with user ID first to avoid timeout
+        let userProfile: UserProfile | null = null;
         
-        // If no profile exists, initialize one
+        try {
+          // Try to get profile with user ID to bypass auth issues
+          userProfile = await getUserProfile(user.id);
+        } catch (error) {
+          console.warn('Direct profile fetch failed, trying fallback:', error);
+          
+          // Fallback: try without user ID
+          try {
+            userProfile = await getUserProfile();
+          } catch (fallbackError) {
+            console.warn('Fallback profile fetch also failed:', fallbackError);
+            // Create empty profile for new users
+            userProfile = {
+              id: user.id,
+              name: user.name || user.email?.split('@')[0] || 'User',
+              categories: [],
+              logs: [],
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString()
+            };
+          }
+        }
+        
+        // If still no profile, try to initialize one
         if (!userProfile) {
-          userProfile = await initializeUserProfile(user.name);
+          console.log('No profile found, attempting to initialize...');
+          try {
+            userProfile = await initializeUserProfile(user.name);
+          } catch (initError) {
+            console.warn('Profile initialization failed:', initError);
+            // Create minimal profile
+            userProfile = {
+              id: user.id,
+              name: user.name || user.email?.split('@')[0] || 'User',
+              categories: [],
+              logs: [],
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString()
+            };
+          }
         }
 
         if (userProfile) {
           setProfile(userProfile);
           setCategories(userProfile.categories || []);
           setLogs(userProfile.logs || []);
+          console.log('useFitnessData: Profile loaded successfully');
         }
       } catch (error) {
         console.error("Error loading user data:", error);
+        
+        // Set empty defaults to prevent infinite loading
+        const fallbackProfile: UserProfile = {
+          id: user.id,
+          name: user.name || user.email?.split('@')[0] || 'User',
+          categories: [],
+          logs: [],
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+        setProfile(fallbackProfile);
+        setCategories([]);
+        setLogs([]);
       } finally {
         setIsLoading(false);
       }
     };
 
-    loadUserData();
-  }, [user, authLoading]);
+    // Add delay only for the initial load to let auth settle
+    if (user && !authLoading && !profile) {
+      const timeoutId = setTimeout(loadUserData, 100);
+      return () => clearTimeout(timeoutId);
+    }
+  }, [user?.id, authLoading]); // Only depend on user ID and auth loading
+
+  // Force load after timeout for any users still stuck
+  useEffect(() => {
+    if (user && isLoading && !profile) {
+      const forceTimeout = setTimeout(() => {
+        console.log('Force creating profile for stuck user:', user.id);
+        const forceProfile: UserProfile = {
+          id: user.id,
+          name: user.name || user.email?.split('@')[0] || 'User',
+          categories: [],
+          logs: [],
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+        setProfile(forceProfile);
+        setCategories([]);
+        setLogs([]);
+        setIsLoading(false);
+      }, 8000);
+
+      return () => clearTimeout(forceTimeout);
+    }
+  }, [user, isLoading, profile]);
 
   // Category management
   const handleAddCategory = async (category: TrackingCategory): Promise<boolean> => {
@@ -232,7 +311,7 @@ export const useFitnessData = () => {
     profile,
     categories,
     logs,
-    isLoading: isLoading || authLoading,
+    isLoading: (isLoading || authLoading) && !profile,
     handleAddCategory,
     handleUpdateCategory,
     handleDeleteCategory,

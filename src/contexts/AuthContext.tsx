@@ -27,45 +27,62 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [isInitialized, setIsInitialized] = useState(false);
+  const oauthCallbackProcessed = useRef(false);
 
   useEffect(() => {
     let mounted = true;
-    let sessionCheckInterval: NodeJS.Timeout;
 
     const initializeAuth = async () => {
       try {
         console.log('🔄 Initializing auth...');
         
-        // First, check for OAuth callback in URL
+        // Check for OAuth callback in URL - only process once
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
         const accessToken = hashParams.get('access_token');
         const refreshToken = hashParams.get('refresh_token');
         
-        if (accessToken) {
-          console.log('🔗 OAuth callback detected, setting session...');
+        if (accessToken && !oauthCallbackProcessed.current) {
+          console.log('🔗 OAuth callback detected, processing...');
+          oauthCallbackProcessed.current = true;
+          
           try {
+            // Clear the hash immediately to prevent reprocessing
+            window.history.replaceState({}, document.title, window.location.pathname);
+            
             const { data, error } = await supabase.auth.setSession({
               access_token: accessToken,
               refresh_token: refreshToken || '',
             });
             
             if (error) {
-              console.error('Error setting session from OAuth callback:', error);
-            } else {
-              console.log('✅ Session set from OAuth callback:', data.user?.email);
-              if (mounted) {
-                setSession(data.session);
-                setUser(data.user ? transformUser(data.user) : null);
-                localStorage.setItem('supabase-auth-token', JSON.stringify(data.session));
-                setIsInitialized(true);
-                setLoading(false);
-              }
-              // Clear the hash from URL
-              window.history.replaceState({}, document.title, window.location.pathname);
+              console.error('❌ Error setting session from OAuth callback:', error);
+              throw error;
+            }
+            
+            if (data.session && data.user && mounted) {
+              console.log('✅ OAuth session set successfully:', data.user.email);
+              setSession(data.session);
+              setUser(transformUser(data.user));
+              
+              // Ensure profile exists but don't wait for it to complete loading
+              ensureUserProfile(data.user).finally(() => {
+                if (mounted) {
+                  console.log('✅ OAuth initialization complete');
+                  setIsInitialized(true);
+                  setLoading(false);
+                }
+              });
               return;
             }
           } catch (err) {
-            console.error('Failed to process OAuth callback:', err);
+            console.error('❌ Failed to process OAuth callback:', err);
+            if (mounted) {
+              setSession(null);
+              setUser(null);
+              setIsInitialized(true);
+              setLoading(false);
+            }
+            return;
           }
         }
 
@@ -107,7 +124,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const { data: { session: initialSession }, error } = await supabase.auth.getSession();
         
         if (error) {
-          console.error('Error getting initial session:', error);
+          console.error('❌ Error getting initial session:', error);
           localStorage.removeItem('supabase-auth-token');
           if (mounted) {
             setSession(null);
@@ -135,7 +152,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
         }
       } catch (error) {
-        console.error('Error in initializeAuth:', error);
+        console.error('❌ Error in initializeAuth:', error);
         if (mounted) {
           localStorage.removeItem('supabase-auth-token');
           setSession(null);
@@ -154,9 +171,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('🔄 Auth state changed:', event, session?.user?.id);
+      console.log('🔄 Auth state changed:', event, session?.user?.email);
       
       if (mounted) {
+        // Always update session and user state immediately
         setSession(session);
         setUser(session?.user ? transformUser(session.user) : null);
         setLoading(false); // Always set loading to false when auth state changes
@@ -164,12 +182,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         if (session) {
           localStorage.setItem('supabase-auth-token', JSON.stringify(session));
-        } else {
+          
+          // Ensure profile exists but don't wait for it
+          ensureUserProfile(session.user);
+          
+          // Mark as ready immediately for OAuth users
+          setIsInitialized(true);
+          setLoading(false);
+        } 
+        else if (event === 'SIGNED_OUT') {
+          console.log('🚪 User signed out');
           localStorage.removeItem('supabase-auth-token');
+          setIsInitialized(true);
+          setLoading(false);
         }
-
-        if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session?.user) {
-          await ensureUserProfile(session.user);
+        else if (event === 'TOKEN_REFRESHED' && session) {
+          console.log('🔄 Token refreshed');
+          localStorage.setItem('supabase-auth-token', JSON.stringify(session));
+          ensureUserProfile(session.user);
+          setIsInitialized(true);
+          setLoading(false);
+        }
+        else if (event !== 'INITIAL_SESSION') {
+          // For any other events, just mark as initialized
+          setIsInitialized(true);
+          setLoading(false);
         }
         
         // Log completion for SIGNED_OUT event
@@ -182,38 +219,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Initialize auth
     initializeAuth();
 
-    // Reduce frequency of session checks to prevent loops
-    sessionCheckInterval = setInterval(async () => {
-      if (!mounted || !isInitialized || loading) return;
-      
-      try {
-        const { data: { session: currentSession } } = await supabase.auth.getSession();
-        
-        // Only update if session actually changed
-        if (currentSession?.access_token !== session?.access_token) {
-          console.log('🔄 Session changed during periodic check');
-          setSession(currentSession);
-          setUser(currentSession?.user ? transformUser(currentSession.user) : null);
-          
-          if (currentSession) {
-            localStorage.setItem('supabase-auth-token', JSON.stringify(currentSession));
-          } else {
-            localStorage.removeItem('supabase-auth-token');
-          }
-        }
-      } catch (error) {
-        console.error('Error during periodic session check:', error);
-      }
-    }, 60000); // Check every 60 seconds instead of 10
-
     return () => {
       mounted = false;
       subscription.unsubscribe();
-      if (sessionCheckInterval) {
-        clearInterval(sessionCheckInterval);
-      }
     };
-  }, []); // Remove all dependencies to prevent loops
+  }, []); // Remove dependencies to prevent loops
+
+  // Add a safety timeout to force loading to false
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      if (loading) {
+        console.log('⚠️ Auth loading timeout - forcing completion');
+        setLoading(false);
+        setIsInitialized(true);
+      }
+    }, 5000); // 5 second timeout
+
+    return () => clearTimeout(timeout);
+  }, [loading]);
 
   // Helper function to ensure user profile exists
   const ensureUserProfile = async (user: any) => {
@@ -277,6 +300,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     } catch (error) {
       console.error('Error in ensureUserProfile:', error);
+      // Don't throw error - we don't want to block auth completion
     }
   };
 
@@ -357,45 +381,64 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signInWithGoogle = async () => {
-    setLoading(true);
     try {
-      // Always use the current window location origin
-      const redirectUrl = window.location.origin;
-      console.log('AuthContext - Using redirect URL:', redirectUrl);
+      // Reset OAuth callback flag before starting new OAuth flow
+      oauthCallbackProcessed.current = false;
+      
+      // Get the current URL without any hash
+      const baseUrl = `${window.location.protocol}//${window.location.host}${window.location.pathname}`;
+      console.log('AuthContext - Using redirect URL:', baseUrl);
 
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: redirectUrl
+          redirectTo: baseUrl,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          }
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Google OAuth error:', error);
+        throw error;
+      }
+      
+      console.log('✅ Google OAuth initiated');
       return data;
-    } finally {
-      setLoading(false);
+    } catch (error) {
+      console.error('❌ Error in signInWithGoogle:', error);
+      throw error;
     }
   };
 
   const signInWithFacebook = async () => {
-    setLoading(true);
     try {
-      // Always use the current window location origin
-      const redirectUrl = window.location.origin;
-      console.log('AuthContext - Using redirect URL:', redirectUrl);
+      // Reset OAuth callback flag before starting new OAuth flow
+      oauthCallbackProcessed.current = false;
+      
+      const baseUrl = `${window.location.protocol}//${window.location.host}${window.location.pathname}`;
+      console.log('AuthContext - Using redirect URL:', baseUrl);
 
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'facebook',
         options: {
-          redirectTo: redirectUrl,
+          redirectTo: baseUrl,
           scopes: 'email'
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Facebook OAuth error:', error);
+        throw error;
+      }
+      
+      console.log('✅ Facebook OAuth initiated');
       return data;
-    } finally {
-      setLoading(false);
+    } catch (error) {
+      console.error('❌ Error in signInWithFacebook:', error);
+      throw error;
     }
   };
 

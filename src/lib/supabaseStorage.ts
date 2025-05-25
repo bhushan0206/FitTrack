@@ -9,13 +9,41 @@ export const generateId = (): string => {
   );
 };
 
-// Helper function to get current user ID
+// Helper function to get current user ID with better error handling
 const getCurrentUserId = async (): Promise<string> => {
-  const { data: { user }, error } = await supabase.auth.getUser();
-  if (error || !user) {
-    throw new Error("User not authenticated");
+  try {
+    // First try to get from session
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    
+    if (sessionError) {
+      console.error('Session error in getCurrentUserId:', sessionError);
+    }
+    
+    if (session?.user?.id) {
+      console.log('getCurrentUserId: Got user ID from session:', session.user.id);
+      return session.user.id;
+    }
+    
+    // Fallback to getUser()
+    console.log('getCurrentUserId: No session, trying getUser()...');
+    const { data: { user }, error } = await supabase.auth.getUser();
+    
+    if (error) {
+      console.error('Auth error in getCurrentUserId:', error);
+      throw new Error(`Authentication error: ${error.message}`);
+    }
+    
+    if (!user) {
+      console.error('No user found in getCurrentUserId');
+      throw new Error("User not authenticated");
+    }
+    
+    console.log('getCurrentUserId successful for user:', user.id);
+    return user.id;
+  } catch (error) {
+    console.error('Error in getCurrentUserId:', error);
+    throw error;
   }
-  return user.id;
 };
 
 // Add a new category
@@ -422,37 +450,92 @@ export const updateUserProfile = async (
   }
 };
 
-// Get user profile from Supabase
+// Get user profile from Supabase with better error handling
 export const getUserProfile = async (userId?: string): Promise<UserProfile | null> => {
   try {
-    const currentUserId = userId || await getCurrentUserId();
+    let currentUserId;
+    
+    if (userId) {
+      currentUserId = userId;
+      console.log('getUserProfile: Using provided user ID:', currentUserId);
+    } else {
+      // Try to get user ID with shorter timeout for Google users
+      try {
+        const timeoutPromise = new Promise<never>((_, reject) => 
+          setTimeout(() => reject(new Error('User ID fetch timeout')), 3000) // Reduced timeout
+        );
+        
+        const userIdPromise = getCurrentUserId();
+        currentUserId = await Promise.race([userIdPromise, timeoutPromise]);
+      } catch (timeoutError) {
+        console.error('getCurrentUserId timed out, checking localStorage...');
+        
+        // Try to get user ID from stored session
+        try {
+          const storedSession = localStorage.getItem('supabase-auth-token');
+          if (storedSession) {
+            const session = JSON.parse(storedSession);
+            if (session?.user?.id) {
+              console.log('getUserProfile: Using stored session user ID:', session.user.id);
+              currentUserId = session.user.id;
+            }
+          }
+        } catch (storageError) {
+          console.error('Error reading from localStorage:', storageError);
+        }
+        
+        if (!currentUserId) {
+          console.error('Could not get user ID from any source');
+          return null;
+        }
+      }
+    }
 
-    // Get user profile info
-    const { data: profile, error: profileError } = await supabase
+    console.log('getUserProfile: Fetching for user:', currentUserId);
+
+    // Get data with shorter timeout
+    const profilePromise = supabase
       .from("profiles")
       .select("*")
       .eq("id", currentUserId)
       .maybeSingle();
+
+    const categoriesPromise = supabase
+      .from("categories")
+      .select("*")
+      .eq("user_id", currentUserId);
+
+    const logsPromise = supabase
+      .from("logs")
+      .select("*")
+      .eq("user_id", currentUserId);
+
+    // Shorter timeout for database operations
+    const allDataPromise = Promise.all([profilePromise, categoriesPromise, logsPromise]);
+    const timeoutPromise = new Promise<never>((_, reject) => 
+      setTimeout(() => reject(new Error('Database operation timeout')), 5000) // Reduced timeout
+    );
+
+    const [
+      { data: profile, error: profileError },
+      { data: categories, error: categoriesError },
+      { data: logs, error: logsError }
+    ] = await Promise.race([allDataPromise, timeoutPromise]);
 
     if (profileError && profileError.code !== 'PGRST116') {
       console.error('Error fetching profile:', profileError);
       throw profileError;
     }
 
-    // Get categories and logs separately
-    const { data: categories, error: categoriesError } = await supabase
-      .from("categories")
-      .select("*")
-      .eq("user_id", currentUserId);
+    if (categoriesError) {
+      console.error('Error fetching categories:', categoriesError);
+      throw categoriesError;
+    }
 
-    if (categoriesError) throw categoriesError;
-
-    const { data: logs, error: logsError } = await supabase
-      .from("logs")
-      .select("*")
-      .eq("user_id", currentUserId);
-
-    if (logsError) throw logsError;
+    if (logsError) {
+      console.error('Error fetching logs:', logsError);
+      throw logsError;
+    }
 
     // Transform data to match frontend types
     const transformedCategories = (categories || []).map((cat) => ({
@@ -472,7 +555,7 @@ export const getUserProfile = async (userId?: string): Promise<UserProfile | nul
       notes: log.notes,
     }));
 
-    return {
+    const result: UserProfile = {
       id: currentUserId,
       name: profile?.name || "User",
       age: profile?.age,
@@ -487,6 +570,9 @@ export const getUserProfile = async (userId?: string): Promise<UserProfile | nul
       createdAt: profile?.created_at,
       updatedAt: profile?.updated_at,
     };
+
+    console.log('getUserProfile: Successfully loaded profile for user:', currentUserId);
+    return result;
   } catch (error) {
     console.error("Error getting user profile:", error);
     return null;

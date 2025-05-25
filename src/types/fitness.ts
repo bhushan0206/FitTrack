@@ -49,6 +49,15 @@ export interface UserProfile {
   updatedAt?: string;
 }
 
+export interface ExerciseType {
+  id: string;
+  name: string;
+  category: 'cardio' | 'strength' | 'flexibility' | 'sports';
+  description?: string;
+  defaultDuration?: number;
+  caloriesPerMinute?: number;
+}
+
 // Database types for Supabase
 export interface DatabaseProfile {
   id: string;
