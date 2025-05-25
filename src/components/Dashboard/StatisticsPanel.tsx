@@ -12,19 +12,22 @@ import ProgressChart from "@/components/Dashboard/ProgressChart";
 import DailyLogList from "@/components/Dashboard/DailyLogList";
 import CategoryForm from "@/components/Dashboard/CategoryForm";
 import LogEntryForm from "@/components/Dashboard/LogEntryForm";
-import CategoryManager from "@/components/Dashboard/CategoryManager";
+import CategoryManager from './CategoryManager';
 import ProfileForm from "@/components/Profile/ProfileForm";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { Plus, Target, Pencil, Trash2 } from "lucide-react";
+import { Plus, Target, Pencil, Trash2, ArrowLeft, Dumbbell } from "lucide-react";
 import ExerciseLibrary from "@/components/Exercise/ExerciseLibrary";
 import ExerciseDetails from "@/components/Exercise/ExerciseDetails";
 import ExerciseTracker from "@/components/Exercise/ExerciseTracker";
 import SocialHub from "@/components/Social/SocialHub";
+import { useNotifications } from '@/hooks/useNotifications';
+import { socialStorage } from '@/lib/socialStorage';
 
 const StatisticsPanel = () => {
   const { user, signOut } = useAuth();
+  const { totalUnread, refreshCounts } = useNotifications();
 
   // State management hooks
   const {
@@ -55,6 +58,7 @@ const StatisticsPanel = () => {
   const [showExerciseTracker, setShowExerciseTracker] = useState(false);
   const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
   const [showSocialHub, setShowSocialHub] = useState(false);
+  const [showCategoryManager, setShowCategoryManager] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -144,6 +148,19 @@ const StatisticsPanel = () => {
 
     return () => clearTimeout(timeout);
   }, [loading, user]);
+
+  // Add real-time subscription to refresh notification counts
+  useEffect(() => {
+    // Subscribe to message updates to refresh notification counts
+    const subscription = socialStorage.subscribeToMessages(() => {
+      // Refresh notification counts when any message is received
+      refreshCounts();
+    });
+
+    return () => {
+      subscription?.unsubscribe?.();
+    };
+  }, [refreshCounts]);
 
   if (loading) {
     return (
@@ -279,6 +296,19 @@ const StatisticsPanel = () => {
     }
   };
 
+  // Create the onCategoryUpdate function outside the render to be more explicit
+  const handleCategoryUpdate = async (category: TrackingCategory): Promise<boolean> => {
+    console.log('Category updated:', category);
+    try {
+      // Refresh the dashboard data after category update
+      await loadData();
+      return true; // Return true to indicate success
+    } catch (error) {
+      console.error('Error refreshing data after category update:', error);
+      return false; // Return false to indicate failure
+    }
+  };
+
   // Create a profile object with fallback values
   const currentProfile = profile || {
     id: user?.id || "temp-id",
@@ -293,7 +323,7 @@ const StatisticsPanel = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-black">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
       <Header
         selectedDate={selectedDate}
         onDateChange={handleDateChange}
@@ -408,59 +438,39 @@ const StatisticsPanel = () => {
         )}
 
         {/* Main Dashboard - Reorganized for better UX */}
-        {!showExerciseLibrary && !showExerciseDetails && !showExerciseTracker && !showSocialHub && (
+        {!showExerciseLibrary && !showExerciseDetails && !showExerciseTracker && !showSocialHub && !showCategoryManager && (
           <>
-            {/* Quick Actions Section - High Priority */}
-            <div className="mb-6"> {/* Reduced mb-8 to mb-6 */}
-              <Card className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white border-0 shadow-xl">
+            {/* Quick Actions Section */}
+            <div className="mb-6">
+              <Card className="bg-gradient-to-r from-indigo-500 to-purple-600 dark:from-indigo-600 dark:to-purple-700 text-white border-0 shadow-xl">
                 <CardHeader>
-                  <CardTitle className="text-2xl font-bold flex items-center gap-3">
-                    <span className="text-3xl">🚀</span>
-                    Quick Actions
-                  </CardTitle>
-                  <p className="text-indigo-100">Start tracking your fitness journey</p>
+                  <CardTitle className="text-xl font-bold text-white">Quick Actions</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <Button
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        setShowExerciseLibrary(true);
-                      }}
-                      className="bg-white/20 hover:bg-white/30 text-white border-white/30 h-20 flex flex-col gap-2 backdrop-blur-sm"
+                      onClick={() => setShowExerciseTracker(true)}
+                      className="bg-white/20 hover:bg-white/30 dark:bg-white/10 dark:hover:bg-white/20 text-white border-white/30 dark:border-white/20 h-20 flex flex-col gap-2 backdrop-blur-sm"
                       variant="outline"
-                      disabled={!user}
                     >
                       <span className="text-2xl">💪</span>
-                      <span className="font-semibold">Start Exercise</span>
+                      <span className="font-semibold">Track Exercise</span>
                     </Button>
                     <Button
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        setShowLogForm(true);
-                      }}
-                      className="bg-white/20 hover:bg-white/30 text-white border-white/30 h-20 flex flex-col gap-2 backdrop-blur-sm"
+                      onClick={() => setShowExerciseLibrary(true)}
+                      className="bg-white/20 hover:bg-white/30 dark:bg-white/10 dark:hover:bg-white/20 text-white border-white/30 dark:border-white/20 h-20 flex flex-col gap-2 backdrop-blur-sm"
                       variant="outline"
-                      disabled={!user}
                     >
-                      <span className="text-2xl">📝</span>
-                      <span className="font-semibold">Log Activity</span>
+                      <span className="text-2xl">📚</span>
+                      <span className="font-semibold">Exercise Library</span>
                     </Button>
                     <Button
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        console.log('Add Category button clicked on mobile');
-                        setShowCategoryForm(true);
-                      }}
-                      className="bg-white/20 hover:bg-white/30 text-white border-white/30 h-20 flex flex-col gap-2 backdrop-blur-sm"
+                      onClick={() => setShowCategoryManager(true)}
+                      className="bg-white/20 hover:bg-white/30 dark:bg-white/10 dark:hover:bg-white/20 text-white border-white/30 dark:border-white/20 h-20 flex flex-col gap-2 backdrop-blur-sm"
                       variant="outline"
-                      disabled={!user}
                     >
-                      <span className="text-2xl">🎯</span>
-                      <span className="font-semibold">Add Category</span>
+                      <Dumbbell className="w-7 h-7" />
+                      <span className="font-semibold">Manage Categories</span>
                     </Button>
                     <Button
                       onClick={(e) => {
@@ -468,11 +478,16 @@ const StatisticsPanel = () => {
                         e.stopPropagation();
                         setShowSocialHub(true);
                       }}
-                      className="bg-white/20 hover:bg-white/30 text-white border-white/30 h-20 flex flex-col gap-2 backdrop-blur-sm"
+                      className="bg-white/20 hover:bg-white/30 dark:bg-white/10 dark:hover:bg-white/20 text-white border-white/30 dark:border-white/20 h-20 flex flex-col gap-2 backdrop-blur-sm relative"
                       variant="outline"
                       disabled={!user}
                     >
-                      <span className="text-2xl">👥</span>
+                      <span className="text-2xl relative">
+                        👥
+                        {totalUnread > 0 && (
+                          <span className="absolute -top-1 -right-2 w-3 h-3 bg-red-500 rounded-full border-2 border-white animate-pulse"></span>
+                        )}
+                      </span>
                       <span className="font-semibold">Social Hub</span>
                     </Button>
                   </div>
@@ -527,9 +542,12 @@ const StatisticsPanel = () => {
                 <div>
                   <CategoryManager
                     categories={categories}
-                    onCategoryUpdate={() => {}}
+                    onCategoryUpdate={handleCategoryUpdate}
                     onEdit={handleEditCategory}
-                    onDelete={handleDeleteCategory}
+                    onDelete={async (categoryId: string) => {
+                      await handleDeleteCategory(categoryId);
+                      // Do not return anything (void)
+                    }}
                     onAdd={(e) => {
                       if (e) {
                         e.preventDefault();
@@ -696,6 +714,26 @@ const StatisticsPanel = () => {
               </DialogContent>
             </Dialog>
           </>
+        )}
+
+        {/* Category Manager */}
+        {showCategoryManager && (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <Button
+                onClick={() => setShowCategoryManager(false)}
+                variant="outline"
+                className="flex items-center gap-2"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                Back to Dashboard
+              </Button>
+            </div>
+            <CategoryManager 
+              categories={categories}
+              onCategoryUpdate={handleCategoryUpdate} // Use the explicitly defined function
+            />
+          </div>
         )}
       </main>
 

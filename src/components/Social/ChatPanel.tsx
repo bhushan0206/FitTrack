@@ -8,6 +8,7 @@ import { Message, WorkoutShare, ProgressShare } from '@/types/social';
 import { socialStorage } from '@/lib/socialStorage';
 import { useAuth } from '@/contexts/AuthContext';
 import { format } from 'date-fns';
+import { useNotifications } from '@/hooks/useNotifications';
 
 interface ChatPanelProps {
   friendId: string;
@@ -17,6 +18,7 @@ interface ChatPanelProps {
 
 const ChatPanel = ({ friendId, friendName, onBack }: ChatPanelProps) => {
   const { user } = useAuth();
+  const { markMessagesAsRead, refreshCounts } = useNotifications();
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(false);
@@ -24,7 +26,17 @@ const ChatPanel = ({ friendId, friendName, onBack }: ChatPanelProps) => {
 
   useEffect(() => {
     loadMessages();
-    markMessagesAsRead();
+    
+    // Mark messages as read when opening chat
+    const markAsRead = async () => {
+      try {
+        await markMessagesAsRead(friendId);
+      } catch (error) {
+        console.error('Error marking messages as read:', error);
+      }
+    };
+    
+    markAsRead();
 
     // Subscribe to real-time messages
     const subscription = socialStorage.subscribeToMessages((message) => {
@@ -33,13 +45,20 @@ const ChatPanel = ({ friendId, friendName, onBack }: ChatPanelProps) => {
         (message.sender_id === user?.id && message.receiver_id === friendId)
       ) {
         setMessages(prev => [...prev, message]);
+        
+        // If it's an incoming message, mark it as read immediately since chat is open
+        if (message.sender_id === friendId && message.receiver_id === user?.id) {
+          setTimeout(async () => {
+            await markMessagesAsRead(friendId);
+          }, 500);
+        }
       }
     });
 
     return () => {
       subscription.unsubscribe();
     };
-  }, [friendId, user?.id]);
+  }, [friendId, user?.id, markMessagesAsRead]);
 
   useEffect(() => {
     scrollToBottom();
@@ -48,10 +67,6 @@ const ChatPanel = ({ friendId, friendName, onBack }: ChatPanelProps) => {
   const loadMessages = async () => {
     const messagesList = await socialStorage.getMessages(friendId);
     setMessages(messagesList);
-  };
-
-  const markMessagesAsRead = async () => {
-    await socialStorage.markMessagesAsRead(friendId);
   };
 
   const scrollToBottom = () => {

@@ -18,18 +18,53 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     const initialTheme = savedTheme || systemTheme;
 
     setTheme(initialTheme);
-    document.documentElement.classList.toggle('dark', initialTheme === 'dark');
+    applyTheme(initialTheme);
   }, []);
+
+  const applyTheme = (newTheme: 'light' | 'dark') => {
+    const root = document.documentElement;
+    
+    // Remove existing theme classes
+    root.classList.remove('light', 'dark');
+    
+    // Add new theme class
+    root.classList.add(newTheme);
+    
+    // Set data attribute for better CSS targeting
+    root.setAttribute('data-theme', newTheme);
+    
+    // Set meta theme-color for mobile browsers
+    const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+    if (metaThemeColor) {
+      metaThemeColor.setAttribute('content', newTheme === 'dark' ? '#0f172a' : '#ffffff');
+    } else {
+      const meta = document.createElement('meta');
+      meta.name = 'theme-color';
+      meta.content = newTheme === 'dark' ? '#0f172a' : '#ffffff';
+      document.head.appendChild(meta);
+    }
+    
+    // Force repaint to ensure changes take effect in Chrome
+    root.style.display = 'none';
+    root.offsetHeight; // Trigger reflow
+    root.style.display = '';
+  };
 
   const toggleTheme = () => {
     const newTheme = theme === 'light' ? 'dark' : 'light';
     setTheme(newTheme);
     localStorage.setItem('theme', newTheme);
-    document.documentElement.classList.toggle('dark', newTheme === 'dark');
+    applyTheme(newTheme);
+  };
+
+  const handleSetTheme = (newTheme: 'light' | 'dark') => {
+    setTheme(newTheme);
+    localStorage.setItem('theme', newTheme);
+    applyTheme(newTheme);
   };
 
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme, setTheme }}>
+    <ThemeContext.Provider value={{ theme, toggleTheme, setTheme: handleSetTheme }}>
       {children}
     </ThemeContext.Provider>
   );

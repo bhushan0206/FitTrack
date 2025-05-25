@@ -1,10 +1,12 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { format } from "date-fns";
-import { Calendar, User, LogOut, Settings, Moon, Sun } from "lucide-react";
+import { Calendar, User, LogOut, Moon, Sun, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { UserProfile } from "@/types/fitness";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
+import { useNotifications } from '@/hooks/useNotifications';
+import { socialStorage } from '@/lib/socialStorage';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,7 +14,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import ProfileForm from "@/components/Profile/ProfileForm";
 import {
@@ -20,6 +21,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import clsx from "clsx";
 
 interface HeaderProps {
   selectedDate: Date;
@@ -44,8 +46,22 @@ const Header = ({
 }: HeaderProps) => {
   const { user, signOut } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const { totalUnread, refreshCounts } = useNotifications();
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
+
+  // Add real-time subscription to refresh notification counts
+  useEffect(() => {
+    // Subscribe to message updates to refresh notification counts
+    const subscription = socialStorage.subscribeToMessages(() => {
+      // Refresh notification counts when any message is received
+      refreshCounts();
+    });
+
+    return () => {
+      subscription?.unsubscribe?.();
+    };
+  }, [refreshCounts]);
 
   const handleProfileSave = async (profileData: Partial<UserProfile>) => {
     const success = await onProfileUpdate(profileData);
@@ -70,154 +86,168 @@ const Header = ({
     }
   };
 
+  const formatDate = (date: Date) => {
+    return date.toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
+  const changeDate = (days: number) => {
+    const newDate = new Date(selectedDate);
+    newDate.setDate(selectedDate.getDate() + days);
+    onDateChange(newDate);
+  };
+
   return (
     <header className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-200/50 dark:border-gray-700/50 sticky top-0 z-50 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <button
-            onClick={() => (window.location.href = '/')}
-            className="flex items-center gap-3 hover:opacity-80 transition-opacity duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 rounded-lg p-2 -m-2"
-          >
-            <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-              <span className="text-white font-bold text-lg">F</span>
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center">
+              <span className="text-white font-bold text-sm">FT</span>
             </div>
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+            <h1 className="text-xl font-bold text-gray-900 dark:text-white">
               FitTrack
             </h1>
-          </button>
+          </div>
 
           {/* Center Section - Date Picker */}
-          <div className="hidden md:flex items-center justify-center flex-1 max-w-xs">
-            <Popover open={datePickerOpen} onOpenChange={onDatePickerToggle}>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className="w-full bg-white/90 dark:bg-gray-700/90 border-gray-200/50 dark:border-gray-600/50 hover:bg-gray-50 dark:hover:bg-gray-600 rounded-xl font-medium text-gray-900 dark:text-white"
-                >
-                  <Calendar className="mr-2 h-4 w-4" />
-                  {format(selectedDate, "PPP")}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0 bg-white/95 dark:bg-gray-800/95 backdrop-blur-md border-gray-200/50 dark:border-gray-600/50 rounded-xl shadow-xl" align="center">
-                <CalendarComponent
-                  mode="single"
-                  selected={selectedDate}
-                  onSelect={(date) => {
-                    if (date) {
-                      onDateChange(date);
-                      onDatePickerToggle(false);
-                    }
-                  }}
-                  initialFocus
-                  className="rounded-xl"
-                />
-              </PopoverContent>
-            </Popover>
+          <div className="flex items-center gap-2 bg-white/50 dark:bg-gray-800/50 rounded-lg px-4 py-2 border border-gray-200 dark:border-gray-700">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => changeDate(-1)}
+              className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+            >
+              ←
+            </Button>
+            <div className="flex items-center gap-2 min-w-0">
+              <Calendar className="w-4 h-4 text-indigo-600 dark:text-indigo-400 flex-shrink-0" />
+              <span className="text-sm font-medium text-gray-900 dark:text-white whitespace-nowrap">
+                {formatDate(selectedDate)}
+              </span>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => changeDate(1)}
+              className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+            >
+              →
+            </Button>
           </div>
 
           {/* Right Section - User Menu */}
           <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
-            {/* Mobile Date Picker */}
-            <div className="md:hidden">
-              <Popover open={datePickerOpen} onOpenChange={onDatePickerToggle}>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="bg-white/90 dark:bg-gray-700/90 border-gray-200/50 dark:border-gray-600/50 hover:bg-gray-50 dark:hover:bg-gray-600 rounded-lg text-gray-900 dark:text-white px-2"
-                  >
-                    <Calendar className="h-4 w-4" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0 bg-white/95 dark:bg-gray-800/95 backdrop-blur-md border-gray-200/50 dark:border-gray-600/50 rounded-xl shadow-xl" align="end">
-                  <CalendarComponent
-                    mode="single"
-                    selected={selectedDate}
-                    onSelect={(date) => {
-                      if (date) {
-                        onDateChange(date);
-                        onDatePickerToggle(false);
-                      }
-                    }}
-                    initialFocus
-                    className="rounded-xl"
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-
             {/* Theme Toggle */}
             <Button
               variant="ghost"
               size="sm"
               onClick={toggleTheme}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+              className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
             >
-              {theme === 'dark' ? (
-                <Sun className="h-5 w-5 text-gray-600 dark:text-gray-300" />
-              ) : (
-                <Moon className="h-5 w-5 text-gray-600 dark:text-gray-300" />
-              )}
+              {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             </Button>
 
-            {/* User Menu */}
-            {user && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="flex items-center gap-2 px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-                  >
-                    <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center">
-                      <User className="h-4 w-4 text-white" />
-                    </div>
-                    <span className="hidden sm:inline text-gray-700 dark:text-gray-200 font-medium">
-                      {user.name}
-                    </span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent
-                  align="end"
-                  className="w-56 bg-white/95 dark:bg-gray-800/95 backdrop-blur-md border-gray-200/50 dark:border-gray-600/50 rounded-xl shadow-lg"
+            {/* Notification Bell */}
+            <div className="relative">
+              <Button variant="ghost" size="sm" className="relative">
+                <Bell className="w-4 h-4 text-gray-600 dark:text-gray-300" />
+                {totalUnread > 0 && (
+                  <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-white dark:border-gray-900 animate-pulse"></span>
+                )}
+              </Button>
+            </div>
+
+            {/* User Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="flex items-center gap-2 text-gray-900 dark:text-gray-100 hover:text-gray-700 dark:hover:text-white"
+                  style={{
+                    color: theme === 'dark' ? '#f3f4f6' : '#111827',
+                    backgroundColor: 'transparent'
+                  }}
                 >
-                  <div className="px-3 py-2 border-b border-gray-100 dark:border-gray-700">
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">
-                      {user.name}
-                    </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      {user.email}
-                    </p>
+                  <div className="w-6 h-6 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full flex items-center justify-center">
+                    <User className="w-3 h-3 text-white" />
                   </div>
-
-                  <DropdownMenuItem className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg mx-1 my-1">
-                    <Settings className="mr-2 h-4 w-4" />
-                    <span>Settings</span>
-                  </DropdownMenuItem>
-
-                  <DropdownMenuSeparator className="bg-gray-100 dark:bg-gray-700" />
-
-                  <DropdownMenuItem
-                    onClick={handleSignOut}
-                    disabled={isSigningOut}
-                    className="cursor-pointer hover:bg-red-50 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400 rounded-lg mx-1 my-1 focus:bg-red-50 dark:focus:bg-red-900/30"
+                  <span
+                    className="text-sm font-medium hidden sm:block"
+                    style={{
+                      color: theme === 'dark' ? '#f3f4f6' : '#111827'
+                    }}
                   >
-                    <LogOut className="mr-2 h-4 w-4" />
-                    <span>{isSigningOut ? 'Signing out...' : 'Sign out'}</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
-          </div>
-        </div>
-
-        {/* Mobile Date Display */}
-        <div className="md:hidden pb-3 pt-1">
-          <div className="text-center">
-            <p className="text-sm font-medium text-gray-900 dark:text-white">
-              {format(selectedDate, "EEEE, MMMM d, yyyy")}
-            </p>
+                    {user?.name || user?.email?.split('@')[0] || 'User'}
+                  </span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent 
+                align="end" 
+                className="w-56 border-0 shadow-xl"
+                style={{
+                  backgroundColor: theme === 'dark' ? '#1f2937' : '#ffffff',
+                  color: theme === 'dark' ? '#f9fafb' : '#111827',
+                  border: `1px solid ${theme === 'dark' ? '#374151' : '#e5e7eb'}`,
+                  borderRadius: '12px',
+                  padding: '8px'
+                }}
+              >
+                <DropdownMenuItem 
+                  onClick={() => setProfileDialogOpen(true)}
+                  className="rounded-lg cursor-pointer focus:outline-none"
+                  style={{
+                    color: theme === 'dark' ? '#f9fafb' : '#111827',
+                    backgroundColor: 'transparent',
+                    padding: '12px 16px',
+                    margin: '2px 0'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = theme === 'dark' ? '#374151' : '#f3f4f6';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                  }}
+                >
+                  <User className="w-4 h-4 mr-3" style={{ color: theme === 'dark' ? '#f9fafb' : '#111827' }} />
+                  <span style={{ color: theme === 'dark' ? '#f9fafb' : '#111827' }}>Profile</span>
+                </DropdownMenuItem>
+                
+                <div 
+                  style={{
+                    height: '1px',
+                    backgroundColor: theme === 'dark' ? '#374151' : '#e5e7eb',
+                    margin: '8px 0'
+                  }}
+                />
+                
+                <DropdownMenuItem 
+                  onClick={handleSignOut}
+                  className="rounded-lg cursor-pointer focus:outline-none"
+                  style={{
+                    color: '#dc2626',
+                    backgroundColor: 'transparent',
+                    padding: '12px 16px',
+                    margin: '2px 0'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = theme === 'dark' ? '#7f1d1d' : '#fef2f2';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                  }}
+                >
+                  <LogOut className="w-4 h-4 mr-3" style={{ color: '#dc2626' }} />
+                  <span style={{ color: '#dc2626' }}>Sign Out</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </div>
@@ -225,7 +255,7 @@ const Header = ({
       {/* Profile dialog */}
       <Dialog open={profileDialogOpen} onOpenChange={setProfileDialogOpen}>
         <DialogContent className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md border-gray-200/50 dark:border-gray-600/50 max-w-4xl rounded-2xl shadow-2xl">
-          {children && 
+          {children &&
             React.cloneElement(children as React.ReactElement, {
               profile,
               onSave: handleProfileSave,

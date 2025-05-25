@@ -547,14 +547,19 @@ export const socialStorage = {
             .eq('id', message.sender_id)
             .single();
           
-          callback({
+          // Ensure message has an ID
+          const messageWithProfile = {
             ...message,
+            id: message.id || `msg-${Date.now()}-${Math.random()}`,
             sender_profile: senderProfile
-          });
+          };
+          
+          console.log('Calling callback with message:', messageWithProfile);
+          callback(messageWithProfile);
         }
       )
       .subscribe((status) => {
-        console.log('Subscription status:', status);
+        console.log('Message subscription status:', status);
       });
   },
 

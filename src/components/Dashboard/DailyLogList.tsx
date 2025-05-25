@@ -26,6 +26,24 @@ const DailyLogList = ({
     return categories.find((category) => category.id === id);
   };
 
+  // Consolidate logs by categoryId
+  const consolidatedLogs = Object.values(
+    logs.reduce<Record<string, DailyLog>>((acc, log) => {
+      if (!acc[log.categoryId]) {
+        acc[log.categoryId] = { ...log };
+      } else {
+        acc[log.categoryId].value += log.value;
+        // Merge notes, separated by newline if both exist
+        if (log.notes) {
+          acc[log.categoryId].notes = acc[log.categoryId].notes
+            ? acc[log.categoryId].notes + "\n" + log.notes
+            : log.notes;
+        }
+      }
+      return acc;
+    }, {})
+  );
+
   return (
     <Card className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm border-0 shadow-lg">
       <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-6 py-6">
@@ -51,7 +69,7 @@ const DailyLogList = ({
         </Button>
       </CardHeader>
       <CardContent className="px-6 pb-6">
-        {logs.length === 0 ? (
+        {consolidatedLogs.length === 0 ? (
           <div className="text-center py-8">
             <p className="text-gray-600 dark:text-gray-300 font-medium mb-2">
               No logs for this date
@@ -62,7 +80,7 @@ const DailyLogList = ({
           </div>
         ) : (
           <div className="space-y-4">
-            {logs.map((log) => {
+            {consolidatedLogs.map((log) => {
               const category = getCategoryById(log.categoryId);
               if (!category) return null;
 
@@ -70,7 +88,7 @@ const DailyLogList = ({
 
               return (
                 <div
-                  key={log.id}
+                  key={log.categoryId}
                   className="p-5 rounded-2xl border-0 bg-gradient-to-r from-white to-gray-50/50 dark:from-gray-700 dark:to-gray-600/50 shadow-md hover:shadow-lg transition-all duration-300"
                   style={{
                     borderLeft: `5px solid ${category?.color || "#3b82f6"}`,
@@ -105,7 +123,7 @@ const DailyLogList = ({
                         onClick={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
-                          onDelete(log.id);
+                          onDelete(log.categoryId);
                         }}
                         className="h-9 w-9 p-0 text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 hover:text-red-600 dark:hover:text-red-300 rounded-lg"
                       >
@@ -134,7 +152,7 @@ const DailyLogList = ({
                   </div>
 
                   {log.notes && (
-                    <p className="mt-3 text-gray-600 dark:text-gray-300 text-sm bg-gray-50 dark:bg-gray-600/50 p-3 rounded-lg border-l-3 border-gray-200 dark:border-gray-500">
+                    <p className="mt-3 text-gray-600 dark:text-gray-300 text-sm bg-gray-50 dark:bg-gray-600/50 p-3 rounded-lg border-l-3 border-gray-200 dark:border-gray-500 whitespace-pre-line">
                       {log.notes}
                     </p>
                   )}

@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Users, UserPlus, Mail, Check, X, MessageCircle } from 'lucide-react';
 import { Friend } from '@/types/social';
 import { socialStorage } from '@/lib/socialStorage';
+import { useNotifications } from '@/hooks/useNotifications';
 
 interface FriendsPanelProps {
   onOpenChat: (friendId: string, friendName: string) => void;
@@ -20,6 +21,7 @@ const FriendsPanel = ({ onOpenChat }: FriendsPanelProps) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const { unreadByFriend, markMessagesAsRead } = useNotifications(); // Remove any reference to 'notifications'
 
   useEffect(() => {
     loadFriends();
@@ -89,6 +91,21 @@ const FriendsPanel = ({ onOpenChat }: FriendsPanelProps) => {
       console.error('Error in handleAcceptRequest:', error);
       setError('An unexpected error occurred. Please try again.');
       setTimeout(() => setError(''), 3000);
+    }
+  };
+
+  // When opening chat, mark messages as read for that friend
+  const handleOpenChatWithFriend = async (friendId: string, friendName: string) => {
+    try {
+      // Mark messages as read first
+      await markMessagesAsRead(friendId);
+      
+      // Open the chat immediately - don't wait
+      onOpenChat(friendId, friendName);
+    } catch (error) {
+      console.error('Error marking messages as read:', error);
+      // Still open chat even if marking as read fails
+      onOpenChat(friendId, friendName);
     }
   };
 
@@ -182,8 +199,13 @@ const FriendsPanel = ({ onOpenChat }: FriendsPanelProps) => {
               {friends.map((friend) => (
                 <div key={friend.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-gradient-to-r from-blue-400 to-indigo-400 rounded-full flex items-center justify-center text-white font-bold">
-                      {friend.friend_profile?.name?.charAt(0) || '?'}
+                    <div className="relative w-10 h-10">
+                      <div className="w-10 h-10 bg-gradient-to-r from-blue-400 to-indigo-400 rounded-full flex items-center justify-center text-white font-bold">
+                        {friend.friend_profile?.name?.charAt(0) || '?'}
+                      </div>
+                      {unreadByFriend[friend.friend_id] > 0 && (
+                        <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-white"></span>
+                      )}
                     </div>
                     <div>
                       <p className="font-medium text-gray-900 dark:text-white">
@@ -197,7 +219,7 @@ const FriendsPanel = ({ onOpenChat }: FriendsPanelProps) => {
                   <Button 
                     size="sm" 
                     variant="outline"
-                    onClick={() => onOpenChat(friend.friend_id, friend.friend_profile?.name || 'Friend')}
+                    onClick={() => handleOpenChatWithFriend(friend.friend_id, friend.friend_profile?.name || 'Friend')}
                     className="flex items-center gap-2"
                   >
                     <MessageCircle className="w-4 h-4" />

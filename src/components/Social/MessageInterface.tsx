@@ -13,7 +13,7 @@ interface MessageInterfaceProps {
 }
 
 const MessageInterface = ({ conversation, onBack }: MessageInterfaceProps) => {
-  const { loadUnreadCount } = useNotifications();
+  const { refreshCounts } = useNotifications(); // Fix: use refreshCounts instead of loadUnreadCount
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(true);
@@ -44,7 +44,7 @@ const MessageInterface = ({ conversation, onBack }: MessageInterfaceProps) => {
         try {
           await socialStorage.markMessagesAsRead(conversation.participant_id);
           // Reload unread count after marking as read
-          loadUnreadCount();
+          refreshCounts(); // Fix: use refreshCounts instead of loadUnreadCount
         } catch (error) {
           console.warn('Failed to mark messages as read:', error);
         }
@@ -85,7 +85,7 @@ const MessageInterface = ({ conversation, onBack }: MessageInterfaceProps) => {
         }
       };
     }
-  }, [conversation, user, loadUnreadCount]);
+  }, [conversation, user, refreshCounts]); // Fix: use refreshCounts in dependency array
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {

@@ -8,7 +8,7 @@ import { useNotifications } from '@/hooks/useNotifications';
 
 const SocialPage = () => {
   const { user } = useAuth();
-  const { notifications, markNotificationsAsSeen } = useNotifications();
+  const { totalUnread, markNotificationsAsSeen } = useNotifications(); // Fix: destructure directly
   const [friends, setFriends] = useState<Friend[]>([]);
   const [selectedConversation, setSelectedConversation] = useState<any>(null);
   const [currentView, setCurrentView] = useState<"friends" | "messages">("friends");
@@ -47,10 +47,10 @@ const SocialPage = () => {
 
   // Mark notifications as seen when entering social page
   useEffect(() => {
-    if (notifications.hasNewMessage) {
+    if (totalUnread > 0) { // Fix: use totalUnread directly
       markNotificationsAsSeen();
     }
-  }, [notifications.hasNewMessage, markNotificationsAsSeen]);
+  }, [totalUnread, markNotificationsAsSeen]); // Fix: use totalUnread
 
   return (
     <div className="flex flex-col h-full">
@@ -60,11 +60,11 @@ const SocialPage = () => {
           <h1 className="text-xl font-bold text-gray-900 dark:text-white">
             Social
           </h1>
-          {notifications.unreadCount > 0 && (
+          {totalUnread > 0 && ( // Fix: use totalUnread directly
             <div className="flex items-center gap-2 bg-blue-50 dark:bg-blue-900/30 px-3 py-1 rounded-full">
               <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
               <span className="text-sm text-blue-600 dark:text-blue-400 font-medium">
-                {notifications.unreadCount} new message{notifications.unreadCount !== 1 ? 's' : ''}
+                {totalUnread} new message{totalUnread !== 1 ? 's' : ''} // Fix: use totalUnread
               </span>
             </div>
           )}

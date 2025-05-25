@@ -1,101 +1,180 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { socialStorage } from '@/lib/socialStorage';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface NotificationState {
-  unreadCount: number;
-  hasNewMessage: boolean;
-  lastMessageSender?: string;
+  totalUnread: number;
+  unreadByFriend: Record<string, number>;
+  newMessageToast: {
+    show: boolean;
+    senderName: string;
+    content: string;
+    id: string;
+  } | null;
 }
 
 export const useNotifications = () => {
   const { user } = useAuth();
   const [notifications, setNotifications] = useState<NotificationState>({
-    unreadCount: 0,
-    hasNewMessage: false
+    totalUnread: 0,
+    unreadByFriend: {},
+    newMessageToast: null,
   });
 
-  // Request notification permission
-  const requestNotificationPermission = async () => {
-    if ('Notification' in window && Notification.permission === 'default') {
-      await Notification.requestPermission();
-    }
-  };
-
-  // Show browser notification
-  const showBrowserNotification = (title: string, body: string, icon?: string) => {
-    if ('Notification' in window && Notification.permission === 'granted') {
-      new Notification(title, {
-        body,
-        icon: icon || '/logo.png',
-        badge: '/logo.png',
-        tag: 'fittrack-message'
+  // Load unread counts from database
+  const loadUnreadCounts = useCallback(async () => {
+    if (!user) {
+      setNotifications({
+        totalUnread: 0,
+        unreadByFriend: {},
+        newMessageToast: null,
       });
+      return;
     }
-  };
 
-  // Load initial unread count
-  const loadUnreadCount = async () => {
-    if (!user) return;
-    
     try {
-      const count = await socialStorage.getUnreadMessageCount();
+      const totalCount = await socialStorage.getUnreadMessageCount();
+      
+      // Get unread counts by friend
+      const friends = await socialStorage.getFriends();
+      const unreadByFriend: Record<string, number> = {};
+      
+      for (const friend of friends) {
+        const messages = await socialStorage.getMessages(friend.friend_id);
+        const unreadCount = messages.filter(
+          msg => msg.receiver_id === user.id && !msg.read
+        ).length;
+        if (unreadCount > 0) {
+          unreadByFriend[friend.friend_id] = unreadCount;
+        }
+      }
+
       setNotifications(prev => ({
         ...prev,
-        unreadCount: count
+        totalUnread: totalCount,
+        unreadByFriend,
       }));
     } catch (error) {
-      console.error('Error loading unread count:', error);
-    }
-  };
-
-  // Mark notifications as seen
-  const markNotificationsAsSeen = () => {
-    setNotifications(prev => ({
-      ...prev,
-      hasNewMessage: false
-    }));
-  };
-
-  useEffect(() => {
-    if (user) {
-      // Request permission on mount
-      requestNotificationPermission();
-      
-      // Load initial unread count
-      loadUnreadCount();
-
-      // Subscribe to new messages
-      const subscription = socialStorage.subscribeToMessages((message) => {
-        // Only show notifications for messages received by current user
-        if (message.receiver_id === user.id) {
-          const senderName = message.sender_profile?.name || 'Someone';
-          
-          setNotifications(prev => ({
-            unreadCount: prev.unreadCount + 1,
-            hasNewMessage: true,
-            lastMessageSender: senderName
-          }));
-
-          // Show browser notification
-          showBrowserNotification(
-            `New message from ${senderName}`,
-            message.content,
-            message.sender_profile?.avatar_url
-          );
-        }
-      });
-
-      return () => {
-        subscription.unsubscribe();
-      };
+      console.error('Error loading unread counts:', error);
     }
   }, [user]);
 
+  // Set up real-time subscription
+  useEffect(() => {
+    if (!user) return;
+
+    // Load initial counts
+    loadUnreadCounts();
+
+    // Subscribe to new messages
+    const subscription = socialStorage.subscribeToMessages((message) => {
+      console.log('useNotifications: Received real-time message:', message);
+      
+      // Only show notifications for messages TO the current user
+      if (message.receiver_id === user.id) {
+        const senderName = message.sender_profile?.name || 'Someone';
+        const messageId = message.id || `msg-${Date.now()}`;
+        
+        console.log('useNotifications: Creating notification for message from:', senderName);
+        
+        // Update unread counts
+        setNotifications(prev => {
+          const newUnreadByFriend = { ...prev.unreadByFriend };
+          newUnreadByFriend[message.sender_id] = (newUnreadByFriend[message.sender_id] || 0) + 1;
+          
+          const newTotalUnread = prev.totalUnread + 1;
+          
+          return {
+            ...prev,
+            totalUnread: newTotalUnread,
+            unreadByFriend: newUnreadByFriend,
+            newMessageToast: {
+              show: true,
+              senderName,
+              content: message.content,
+              id: messageId,
+            },
+          };
+        });
+
+        // Auto-close toast after 5 seconds - store the messageId in closure
+        setTimeout(() => {
+          setNotifications(prev => {
+            // Only close if it's the same message
+            if (prev.newMessageToast?.id === messageId) {
+              console.log('useNotifications: Auto-closing toast for message:', messageId);
+              return {
+                ...prev,
+                newMessageToast: null,
+              };
+            }
+            return prev;
+          });
+        }, 5000);
+      }
+    });
+
+    return () => {
+      subscription?.unsubscribe?.();
+    };
+  }, [user, loadUnreadCounts]);
+
+  // Mark messages as read for a specific friend
+  const markMessagesAsRead = useCallback(async (friendId: string) => {
+    if (!user) return;
+
+    try {
+      // Update local state immediately BEFORE the database call
+      setNotifications(prev => {
+        const newUnreadByFriend = { ...prev.unreadByFriend };
+        const wasUnread = newUnreadByFriend[friendId] || 0;
+        delete newUnreadByFriend[friendId];
+        
+        const newTotalUnread = Math.max(0, prev.totalUnread - wasUnread);
+        
+        console.log('markMessagesAsRead: Updating local state:', {
+          friendId,
+          wasUnread,
+          newTotalUnread,
+          newUnreadByFriend
+        });
+        
+        return {
+          ...prev,
+          totalUnread: newTotalUnread,
+          unreadByFriend: newUnreadByFriend,
+        };
+      });
+
+      // Then update the database
+      await socialStorage.markMessagesAsRead(friendId);
+      
+      console.log('markMessagesAsRead: Database updated for friend:', friendId);
+    } catch (error) {
+      console.error('Error marking messages as read:', error);
+      // On error, reload the counts to restore correct state
+      loadUnreadCounts();
+    }
+  }, [user, loadUnreadCounts]);
+
+  const closeToast = useCallback(() => {
+    setNotifications(prev => ({
+      ...prev,
+      newMessageToast: null,
+    }));
+  }, []);
+
+  const refreshCounts = useCallback(async () => {
+    await loadUnreadCounts();
+  }, [loadUnreadCounts]);
+
   return {
-    notifications,
-    loadUnreadCount,
-    markNotificationsAsSeen,
-    requestNotificationPermission
+    totalUnread: notifications.totalUnread,
+    unreadByFriend: notifications.unreadByFriend,
+    newMessageToast: notifications.newMessageToast,
+    markMessagesAsRead,
+    closeToast,
+    refreshCounts,
+    markNotificationsAsSeen: closeToast,
   };
 };

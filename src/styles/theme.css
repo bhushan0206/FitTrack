@@ -1,63 +1,444 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+/* Base styles */
+* {
+  box-sizing: border-box;
+}
+
+html {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+/* Light mode (default) */
 :root {
-  --background-primary: #ffffff;
-  --text-primary: #000000;
-  --border: #e0e0e0;
-  --primary: #0070f3;
-  --primary-foreground: #ffffff;
-  --secondary: #606060;
-  --secondary-foreground: #ffffff;
-  --muted: #f0f0f0;
-  --muted-foreground: #606060;
-  --accent: #eaeaea;
-  --accent-foreground: #0f0f0f;
-  --card: #ffffff;
-  --card-foreground: #000000;
+  --background: 0 0% 100%;
+  --foreground: 222.2 84% 4.9%;
+  --card: 0 0% 100%;
+  --card-foreground: 222.2 84% 4.9%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 222.2 84% 4.9%;
+  --primary: 221.2 83.2% 53.3%;
+  --primary-foreground: 210 40% 98%;
+  --secondary: 210 40% 96%;
+  --secondary-foreground: 222.2 84% 4.9%;
+  --muted: 210 40% 96%;
+  --muted-foreground: 215.4 16.3% 46.9%;
+  --accent: 210 40% 96%;
+  --accent-foreground: 222.2 84% 4.9%;
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 210 40% 98%;
+  --border: 214.3 31.8% 91.4%;
+  --input: 214.3 31.8% 91.4%;
+  --ring: 221.2 83.2% 53.3%;
+  --radius: 0.75rem;
 }
 
+/* Dark mode */
 .dark {
-  --background-primary: #000000;
-  --text-primary: #ffffff;
-  --border: #404040;
-  --primary: #66b3ff;
-  --primary-foreground: #000000;
-  --secondary: #a0aec0;
-  --secondary-foreground: #000000;
-  --muted: #262626;
-  --muted-foreground: #a0aec0;
-  --accent: #262626;
-  --accent-foreground: #ffffff;
-  --card: #1a1a1a;
-  --card-foreground: #ffffff;
+  --background: 0 0% 3.9%;
+  --foreground: 0 0% 98%;
+  --card: 0 0% 3.9%;
+  --card-foreground: 0 0% 98%;
+  --popover: 0 0% 3.9%;
+  --popover-foreground: 0 0% 98%;
+  --primary: 0 0% 98%;
+  --primary-foreground: 0 0% 9%;
+  --secondary: 0 0% 14.9%;
+  --secondary-foreground: 0 0% 98%;
+  --muted: 0 0% 14.9%;
+  --muted-foreground: 0 0% 63.9%;
+  --accent: 0 0% 14.9%;
+  --accent-foreground: 0 0% 98%;
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 0 0% 14.9%;
+  --input: 0 0% 14.9%;
+  --ring: 0 0% 83.1%;
 }
 
-body {
-  background-color: var(--background-primary);
-  color: var(--text-primary);
-  transition: background-color 0.3s ease, color 0.3s ease;
+/* Ensure dark mode styles are applied correctly */
+.dark {
+  color-scheme: dark;
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
 }
 
-/* Add this class to cards/containers in your app */
-.card {
-  background-color: var(--card-background);
-  border: 1px solid var(--border-color);
+.dark * {
+  border-color: hsl(var(--border));
 }
 
-.theme-toggle {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 2.5rem;
-  height: 2.5rem;
-  padding: 0.5rem;
-  border-radius: 0.5rem;
-  background: var(--background-secondary);
-  color: var(--text-primary);
-  border: 1px solid var(--border);
-  cursor: pointer;
-  transition: all 0.2s ease;
+/* Fix specific dark mode issues in Chrome */
+.dark input,
+.dark textarea,
+.dark select {
+  background-color: hsl(var(--input)) !important;
+  color: hsl(var(--foreground)) !important;
+  border-color: hsl(var(--border)) !important;
 }
 
-.theme-toggle:hover {
-  background: var(--background-primary);
-  border-color: var(--primary);
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: hsl(var(--muted-foreground)) !important;
+}
+
+/* Fix Chrome's autofill dark mode issues */
+.dark input:-webkit-autofill,
+.dark input:-webkit-autofill:hover,
+.dark input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px hsl(var(--input)) inset !important;
+  -webkit-text-fill-color: hsl(var(--foreground)) !important;
+  caret-color: hsl(var(--foreground)) !important;
+}
+
+/* Fix scrollbars in dark mode */
+.dark ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: hsl(var(--background));
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted));
+  border-radius: 4px;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground));
+}
+
+/* Ensure proper contrast for cards and components */
+.dark .bg-white {
+  background-color: hsl(var(--card)) !important;
+}
+
+.dark .bg-gray-50 {
+  background-color: hsl(var(--muted)) !important;
+}
+
+.dark .bg-gray-100 {
+  background-color: hsl(var(--secondary)) !important;
+}
+
+.dark .text-gray-900 {
+  color: hsl(var(--foreground)) !important;
+}
+
+.dark .text-gray-600 {
+  color: hsl(var(--muted-foreground)) !important;
+}
+
+.dark .border-gray-200 {
+  border-color: hsl(var(--border)) !important;
+}
+
+.dark .border-gray-300 {
+  border-color: hsl(var(--border)) !important;
+}
+
+/* Animation for notifications */
+@keyframes slide-in-right {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 0.3s ease-out;
+}
+
+/* Fix gradient backgrounds in dark mode */
+.dark .bg-gradient-to-br {
+  background: linear-gradient(135deg, #0f172a, #1e293b, #374151) !important;
+}
+
+.dark .bg-gradient-to-r {
+  background: linear-gradient(90deg, #4f46e5, #7c3aed) !important;
+}
+
+/* Dark mode specific gradient for cards */
+.dark .from-indigo-500 {
+  --tw-gradient-from: #6366f1 !important;
+}
+
+.dark .to-purple-600 {
+  --tw-gradient-to: #9333ea !important;
+}
+
+/* Ensure better dark mode backgrounds for main areas */
+.dark .min-h-screen {
+  background: linear-gradient(135deg, #0f172a, #1e293b, #374151) !important;
+}
+
+/* Fix card backgrounds in dark mode to be more distinct */
+.dark .bg-white\/70 {
+  background-color: rgba(30, 41, 59, 0.8) !important;
+}
+
+.dark .bg-gray-800\/70 {
+  background-color: rgba(15, 23, 42, 0.8) !important;
+}
+
+/* Ensure buttons have proper contrast */
+.dark button {
+  background-color: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  border-color: hsl(var(--border));
+}
+
+.dark button:hover {
+  background-color: hsl(var(--primary) / 0.9);
+}
+
+/* Ensure buttons have proper contrast in dark mode */
+.dark .bg-white\/20 {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.dark .hover\:bg-white\/30:hover {
+  background-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+.dark .border-white\/30 {
+  border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+.dark .border-white\/20 {
+  border-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+/* Fix quick action button text visibility */
+.dark .text-white {
+  color: rgba(255, 255, 255, 0.95) !important;
+}
+
+/* Improve backdrop blur effect in dark mode */
+.dark .backdrop-blur-sm {
+  backdrop-filter: blur(4px) !important;
+  -webkit-backdrop-filter: blur(4px) !important;
+}
+
+/* Fix dropdown and modal backgrounds */
+.dark [role="dialog"],
+.dark [role="menu"],
+.dark [role="listbox"] {
+  background-color: hsl(var(--popover)) !important;
+  border-color: hsl(var(--border)) !important;
+  color: hsl(var(--popover-foreground)) !important;
+}
+
+/* Fix user dropdown background and text in dark mode */
+.dark .dropdown-menu-content,
+.dark .DropdownMenuContent,
+.dark [role="menu"],
+.dark .bg-white[role="menu"],
+.dark .bg-white[role="listbox"] {
+  background-color: hsl(var(--popover)) !important;
+  color: hsl(var(--popover-foreground)) !important;
+}
+
+.dark .dropdown-menu-content .text-gray-900,
+.dark .DropdownMenuContent .text-gray-900,
+.dark [role="menu"] .text-gray-900,
+.dark [role="listbox"] .text-gray-900 {
+  color: hsl(var(--popover-foreground)) !important;
+}
+
+/* Fix outline/ghost/secondary button text color in dark mode */
+.dark button.bg-transparent,
+.dark button[variant="outline"],
+.dark button[variant="ghost"],
+.dark .btn-outline,
+.dark .btn-ghost,
+.dark .btn-secondary,
+.dark button.variant-outline,
+.dark button.variant-ghost,
+.dark .border,
+.dark .border-gray-200,
+.dark .border-gray-300,
+.dark .border-white,
+.dark .border-slate-200,
+.dark .border-slate-300,
+.dark .border-neutral-200,
+.dark .border-neutral-300,
+.dark .border-zinc-200,
+.dark .border-zinc-300,
+.dark .border-gray-100,
+.dark .border-gray-50,
+.dark .border-indigo-100,
+.dark .border-indigo-200 {
+  color: #e5e7eb !important; /* Tailwind gray-200 */
+  border-color: hsl(var(--border)) !important;
+  background-color: transparent !important;
+}
+
+/* Specifically target .btn-outline and .btn-ghost for shadcn/ui */
+.dark .btn-outline,
+.dark .btn-ghost,
+.dark button[variant="outline"],
+.dark button[variant="ghost"] {
+  color: #e5e7eb !important;
+  background-color: transparent !important;
+  border-color: hsl(var(--border)) !important;
+}
+
+/* Fix for .dark .border if needed */
+.dark .border,
+.dark .border-gray-200,
+.dark .border-gray-300 {
+  border-color: hsl(var(--border)) !important;
+}
+
+/* User dropdown menu and username color fix */
+.user-dropdown-menu {
+  --dropdown-bg: #fff;
+  --dropdown-fg: #111;
+  background-color: var(--dropdown-bg) !important;
+  color: var(--dropdown-fg) !important;
+}
+.user-dropdown-username {
+  color: #222 !important;
+}
+.user-dropdown-item {
+  color: #222 !important;
+}
+.dark .user-dropdown-menu {
+  --dropdown-bg: #18181b;
+  --dropdown-fg: #f3f4f6;
+  background-color: var(--dropdown-bg) !important;
+  color: var(--dropdown-fg) !important;
+}
+.dark .user-dropdown-username {
+  color: #f3f4f6 !important;
+}
+.dark .user-dropdown-item {
+  color: #f3f4f6 !important;
+}
+.dark .user-dropdown-item.text-red-600 {
+  color: #f87171 !important;
+}
+
+/* Stronger fix for user dropdown in dark mode */
+.dark .user-dropdown-menu,
+.dark .DropdownMenuContent,
+.dark .dropdown-menu-content,
+.dark [role="menu"] {
+  background-color: #18181b !important;
+  color: #f3f4f6 !important;
+  border-color: #27272a !important;
+  box-shadow: 0 4px 32px 0 #000a !important;
+}
+
+.dark .user-dropdown-menu .user-dropdown-username,
+.dark .DropdownMenuContent .user-dropdown-username,
+.dark .dropdown-menu-content .user-dropdown-username {
+  color: #f3f4f6 !important;
+}
+
+.dark .user-dropdown-menu .user-dropdown-item,
+.dark .DropdownMenuContent .user-dropdown-item,
+.dark .dropdown-menu-content .user-dropdown-item {
+  color: #f3f4f6 !important;
+}
+
+.dark .user-dropdown-menu .user-dropdown-item.text-red-600,
+.dark .DropdownMenuContent .user-dropdown-item.text-red-600,
+.dark .dropdown-menu-content .user-dropdown-item.text-red-600 {
+  color: #f87171 !important;
+}
+
+/* Fix hover/focus for dropdown items in dark mode */
+.dark .user-dropdown-menu .user-dropdown-item:hover,
+.dark .DropdownMenuContent .user-dropdown-item:hover,
+.dark .dropdown-menu-content .user-dropdown-item:hover {
+  background-color: #27272a !important;
+  color: #fff !important;
+}
+
+/* Remove all previous dropdown styling attempts and replace with comprehensive solution */
+
+/* Global Radix UI dropdown overrides for dark mode */
+.dark [data-radix-dropdown-menu-content] {
+  background-color: #1f2937 !important;
+  border: 1px solid #374151 !important;
+  border-radius: 12px !important;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
+}
+
+.dark [data-radix-dropdown-menu-item] {
+  color: #f9fafb !important;
+  border-radius: 8px !important;
+}
+
+.dark [data-radix-dropdown-menu-item]:hover,
+.dark [data-radix-dropdown-menu-item][data-highlighted] {
+  background-color: #374151 !important;
+  color: #ffffff !important;
+  outline: none !important;
+}
+
+.dark [data-radix-dropdown-menu-separator] {
+  background-color: #374151 !important;
+  height: 1px !important;
+  margin: 8px 0 !important;
+}
+
+/* Override any text colors inside dropdowns */
+.dark [data-radix-dropdown-menu-content] * {
+  color: #f9fafb !important;
+}
+
+.dark [data-radix-dropdown-menu-content] svg {
+  color: #f9fafb !important;
+}
+
+/* Specific override for red text (Sign Out) */
+.dark [data-radix-dropdown-menu-content] .text-red-600,
+.dark [data-radix-dropdown-menu-content] [style*="color: rgb(220, 38, 38)"],
+.dark [data-radix-dropdown-menu-content] [style*="color: #dc2626"] {
+  color: #dc2626 !important;
+}
+
+/* Light mode dropdown styling */
+[data-radix-dropdown-menu-content] {
+  background-color: #ffffff !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 12px !important;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
+}
+
+[data-radix-dropdown-menu-item] {
+  color: #111827 !important;
+  border-radius: 8px !important;
+}
+
+[data-radix-dropdown-menu-item]:hover,
+[data-radix-dropdown-menu-item][data-highlighted] {
+  background-color: #f3f4f6 !important;
+  color: #111827 !important;
+  outline: none !important;
+}
+
+/* Force visibility of dropdown trigger text */
+.dark button[data-radix-dropdown-menu-trigger] {
+  color: #f3f4f6 !important;
+}
+
+.dark button[data-radix-dropdown-menu-trigger] span {
+  color: #f3f4f6 !important;
+}
+
+button[data-radix-dropdown-menu-trigger] {
+  color: #111827 !important;
+}
+
+button[data-radix-dropdown-menu-trigger] span {
+  color: #111827 !important;
 }
