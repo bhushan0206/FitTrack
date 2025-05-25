@@ -1,144 +1,113 @@
 import React, { useState } from "react";
 import { TrackingCategory } from "@/types/fitness";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Dumbbell, Pencil, Trash2 } from "lucide-react";
-import CategoryList from "./CategoryList";
-import CategoryForm from "./CategoryForm";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Plus, Edit, Trash2 } from "lucide-react";
 
 interface CategoryManagerProps {
   categories: TrackingCategory[];
   onEdit: (category: TrackingCategory) => void;
-  onDelete: (categoryId: string) => Promise<boolean>; // Change return type to Promise<boolean>
+  onDelete: (categoryId: string) => Promise<boolean>;
+  onAdd?: () => void;
 }
 
-const CategoryManager = ({ 
-  categories, 
+const CategoryManager: React.FC<CategoryManagerProps> = ({
+  categories,
   onEdit,
   onDelete,
-}: CategoryManagerProps) => {
-  const [showForm, setShowForm] = useState(false);
-  const [editingCategory, setEditingCategory] = useState<TrackingCategory | null>(null);
-
-  const handleAdd = () => {
-    setEditingCategory(null);
-    setShowForm(true);
-  };
+  onAdd,
+}) => {
+  const [deleting, setDeleting] = useState<string | null>(null);
 
   const handleEdit = (category: TrackingCategory) => {
-    setEditingCategory(category);
-    setShowForm(true);
+    onEdit(category);
   };
 
   const handleDelete = async (categoryId: string) => {
-    // You should implement the actual delete logic here, e.g. call a prop or context
-    if (window.confirm("Are you sure you want to delete this category?")) {
-      // Fake category object for update callback
-      await onDelete(categoryId);
+    setDeleting(categoryId);
+    try {
+      const success = await onDelete(categoryId);
+      if (!success) {
+        console.error("Failed to delete category");
+      }
+    } catch (error) {
+      console.error("Error deleting category:", error);
+    } finally {
+      setDeleting(null);
     }
-  };
-
-  const handleFormSave = async (category: TrackingCategory) => {
-    await onEdit(category);
-    setShowForm(false);
-    setEditingCategory(null);
-  };
-
-  const handleFormCancel = () => {
-    setShowForm(false);
-    setEditingCategory(null);
   };
 
   return (
     <Card className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm border-0 shadow-lg">
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="text-xl font-bold flex items-center gap-2">
-          <Dumbbell className="w-6 h-6 text-purple-600" />
           Manage Categories
         </CardTitle>
-        <Button
-          onClick={handleAdd}
-          size="sm"
-          className="bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Add Category
-        </Button>
+        {onAdd && (
+          <Button
+            onClick={onAdd}
+            size="sm"
+            className="bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Add Category
+          </Button>
+        )}
       </CardHeader>
       <CardContent>
-        {showForm && (
-          <div className="mb-6">
-            <CategoryForm
-              category={editingCategory || undefined}
-              onSave={handleFormSave}
-              onCancel={handleFormCancel}
-              existingCategories={categories}
-            />
+        {categories.length === 0 ? (
+          <div className="text-center py-8">
+            <p className="text-gray-600 dark:text-gray-300">No categories yet</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Create your first category to start tracking!
+            </p>
           </div>
-        )}
-        <div className="flex flex-col gap-4">
-          {categories.length === 0 && (
-            <div className="text-center py-12">
-              <div className="w-16 h-16 bg-gradient-to-br from-purple-100 to-indigo-100 dark:from-purple-800/30 dark:to-indigo-800/30 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl">🏋️</span>
-              </div>
-              <p className="text-gray-600 dark:text-gray-300 font-medium mb-2">
-                No categories yet
-              </p>
-              <p className="text-gray-500 dark:text-gray-400 text-sm">
-                Create your first category to start tracking!
-              </p>
-            </div>
-          )}
-          {categories.map((category) => (
-            <div
-              key={category.id}
-              className="flex items-center justify-between gap-4 p-4 rounded-xl border-0 bg-gradient-to-br from-white to-gray-50/70 dark:from-gray-700 dark:to-gray-800/70 shadow-md hover:shadow-lg transition-all duration-300"
-              style={{
-                borderLeft: `6px solid ${category.color}`,
-                minWidth: 0,
-                wordBreak: "break-word",
-              }}
-            >
-              <div className="flex items-center gap-3 min-w-0 flex-1">
-                <div
-                  className="w-5 h-5 rounded-full shadow-sm flex-shrink-0"
-                  style={{ backgroundColor: category.color }}
-                />
-                <div className="flex flex-col min-w-0">
-                  <h3 className="font-bold text-gray-900 dark:text-white text-base truncate">
-                    {category.name}
-                  </h3>
-                  <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
-                    <span>
-                      Target: <span className="font-semibold text-gray-800 dark:text-white">{category.dailyTarget} {category.unit}</span>
-                    </span>
-                    <span className="hidden sm:inline">|</span>
-                    <span className="truncate">Measured in {category.unit}</span>
+        ) : (
+          <div className="space-y-3">
+            {categories.map((category) => (
+              <div
+                key={category.id}
+                className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className="w-4 h-4 rounded-full"
+                    style={{ backgroundColor: category.color }}
+                  />
+                  <div>
+                    <p className="font-medium text-gray-900 dark:text-white">
+                      {category.name}
+                    </p>
+                    <p className="text-sm text-gray-600 dark:text-gray-300">
+                      Target: {category.dailyTarget} {category.unit}
+                    </p>
                   </div>
                 </div>
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleEdit(category)}
+                  >
+                    <Edit className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleDelete(category.id)}
+                    disabled={deleting === category.id}
+                  >
+                    {deleting === category.id ? (
+                      <div className="w-4 h-4 animate-spin border-2 border-current border-t-transparent rounded-full" />
+                    ) : (
+                      <Trash2 className="w-4 h-4" />
+                    )}
+                  </Button>
+                </div>
               </div>
-              <div className="flex gap-2 flex-shrink-0">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleEdit(category)}
-                  className="h-8 w-8 p-0 hover:bg-gray-100 dark:hover:bg-gray-600"
-                >
-                  <Pencil className="w-4 h-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleDelete(category.id)}
-                  className="h-8 w-8 p-0 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </CardContent>
     </Card>
   );

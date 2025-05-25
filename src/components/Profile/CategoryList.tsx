@@ -1,18 +1,25 @@
-import { useState } from "react";
+import React, { useState } from "react";
+import { TrackingCategory, UserProfile } from "@/types/fitness";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Edit, Trash2, Plus } from "lucide-react";
-import { TrackingCategory, UserProfile } from "@/types/fitness";
 import { deleteCategory } from "@/lib/supabaseStorage";
 import { useToast } from "@/components/ui/use-toast";
 import CategoryForm from "./CategoryForm";
 
-interface CategoryListProps {
-  profile: UserProfile;
-  onUpdate: () => void;
+export interface CategoryListProps {
+  categories: TrackingCategory[];
+  onEdit: (category: TrackingCategory) => void;
+  onDelete: (categoryId: string) => void;
+  onAdd: () => void;
 }
 
-const CategoryList = ({ profile, onUpdate }: CategoryListProps) => {
+const CategoryList: React.FC<CategoryListProps> = ({
+  categories,
+  onEdit,
+  onDelete,
+  onAdd,
+}) => {
   const [isAddingCategory, setIsAddingCategory] = useState(false);
   const [editingCategory, setEditingCategory] =
     useState<TrackingCategory | null>(null);
@@ -23,7 +30,7 @@ const CategoryList = ({ profile, onUpdate }: CategoryListProps) => {
     try {
       setIsDeleting(categoryId);
       await deleteCategory(categoryId); // Remove userId parameter
-      onUpdate();
+      onDelete(categoryId); // Notify parent component about the deletion
       toast({
         title: "Success",
         description: "Category deleted successfully",
@@ -57,19 +64,71 @@ const CategoryList = ({ profile, onUpdate }: CategoryListProps) => {
   const handleCategorySaved = () => {
     setIsAddingCategory(false);
     setEditingCategory(null);
-    onUpdate();
+    // Add any necessary logic here or remove this function call
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold">Categories</h2>
-        <Button onClick={handleAddCategory} className="flex items-center gap-2">
-          <Plus size={16} />
-          Add Category
-        </Button>
-      </div>
-
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <CardTitle>Categories</CardTitle>
+          <Button onClick={handleAddCategory} size="sm">
+            <Plus className="w-4 h-4 mr-2" />
+            Add Category
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent>
+        {categories && categories.length > 0 ? (
+          <div className="space-y-3">
+            {categories.map((category) => (
+              <div
+                key={category.id}
+                className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className="w-4 h-4 rounded-full"
+                    style={{ backgroundColor: category.color }}
+                  />
+                  <div>
+                    <p className="font-medium text-gray-900 dark:text-white">
+                      {category.name}
+                    </p>
+                    <p className="text-sm text-gray-600 dark:text-gray-300">
+                      Target: {category.dailyTarget} {category.unit}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleEditCategory(category)}
+                  >
+                    <Edit className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleDeleteCategory(category.id)}
+                    disabled={isDeleting === category.id}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-8">
+            <p className="text-gray-600 dark:text-gray-300">No categories yet</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Create your first category to start tracking!
+            </p>
+          </div>
+        )}
+      </CardContent>
       {isAddingCategory && (
         <CategoryForm
           onClose={handleCategoryFormClose}
@@ -77,56 +136,7 @@ const CategoryList = ({ profile, onUpdate }: CategoryListProps) => {
           category={editingCategory}
         />
       )}
-
-      {profile.categories && profile.categories.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {profile.categories.map((category) => (
-            <Card key={category.id} className="dark:bg-gray-800">
-              <CardHeader className="pb-2">
-                <div className="flex justify-between items-center">
-                  <CardTitle className="text-lg">
-                    <span
-                      className="inline-block w-3 h-3 rounded-full mr-2"
-                      style={{ backgroundColor: category.color || "#3b82f6" }}
-                    ></span>
-                    {category.name}
-                  </CardTitle>
-                  <div className="flex gap-1">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleEditCategory(category)}
-                    >
-                      <Edit size={16} />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDeleteCategory(category.id)}
-                      disabled={isDeleting === category.id}
-                    >
-                      <Trash2 size={16} />
-                    </Button>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  Target: {category.dailyTarget} {category.unit} per day
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Type: {category.exerciseType || "other"}
-                </p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      ) : (
-        <div className="text-center py-8 text-muted-foreground">
-          <p>No categories yet. Add your first category to start tracking!</p>
-        </div>
-      )}
-    </div>
+    </Card>
   );
 };
 

@@ -11,17 +11,19 @@ interface DailyLogListProps {
   onEdit: (log: DailyLog) => void;
   onDelete: (logId: string) => void;
   onAdd: () => void;
+  onUpdate?: (log: DailyLog) => void; // Add this optional prop
   selectedDate: Date;
 }
 
-const DailyLogList = ({
+const DailyLogList: React.FC<DailyLogListProps> = ({
   logs,
   categories,
   onEdit,
   onDelete,
   onAdd,
+  onUpdate, // Add this parameter
   selectedDate,
-}: DailyLogListProps) => {
+}) => {
   const getCategoryById = (id: string) => {
     return categories.find((category) => category.id === id);
   };
@@ -43,6 +45,14 @@ const DailyLogList = ({
       return acc;
     }, {})
   );
+
+  const handleUpdateLog = (log: DailyLog) => {
+    if (onUpdate) {
+      onUpdate(log); // Use onUpdate if provided
+    } else {
+      onEdit(log); // Fallback to onEdit
+    }
+  };
 
   return (
     <Card className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm border-0 shadow-lg">
@@ -111,7 +121,7 @@ const DailyLogList = ({
                         onClick={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
-                          onEdit(log);
+                          handleUpdateLog(log);
                         }}
                         className="h-9 w-9 p-0 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-lg text-gray-600 dark:text-gray-300"
                       >

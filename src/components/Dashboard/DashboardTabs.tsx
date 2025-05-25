@@ -1,6 +1,7 @@
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import React, { useState } from "react";
 import { TrackingCategory, DailyLog, UserProfile } from "@/types/fitness";
-import CategoryList from "./CategoryList";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import CategoryList from "@/components/Profile/CategoryList";
 import DailyLogList from "./DailyLogList";
 import ProgressChart from "./ProgressChart";
 import SummaryCards from "./SummaryCards";

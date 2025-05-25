@@ -1,6 +1,7 @@
 import React from "react";
-import { useNotifications } from '@/hooks/useNotifications';
+import { Button } from '@/components/ui/button';
 import { Calendar, BarChart3, Users } from "lucide-react";
+import { useNotifications } from '@/hooks/useNotifications';
 
 interface SidebarProps {
   activeTab: string;
@@ -8,7 +9,7 @@ interface SidebarProps {
 }
 
 const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
-  const { notifications } = useNotifications();
+  const { totalUnread } = useNotifications(); // Fix: Remove 'notifications' reference
 
   return (
     <div className="w-64 bg-gradient-to-b from-indigo-900 to-purple-900 text-white min-h-screen flex flex-col">
@@ -57,10 +58,10 @@ const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
             >
               <Users size={20} />
               <span className="font-medium">Social</span>
-              {notifications.unreadCount > 0 && (
+              {totalUnread > 0 && (
                 <div className="ml-auto">
                   <div className="bg-red-500 text-white text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center">
-                    {notifications.unreadCount > 99 ? '99+' : notifications.unreadCount}
+                    {totalUnread > 99 ? '99+' : totalUnread}
                   </div>
                 </div>
               )}
