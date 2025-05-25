@@ -2,7 +2,7 @@ import React from "react";
 import { TrackingCategory } from "@/types/fitness";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Pencil, Trash2, Plus } from "lucide-react";
+import { Pencil, Trash2, Plus, Target } from "lucide-react";
 
 interface CategoryManagerProps {
   categories: TrackingCategory[];
@@ -24,7 +24,7 @@ const CategoryManager = ({
     <Card className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm border-0 shadow-lg">
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="text-xl font-bold flex items-center gap-2">
-          <span className="text-2xl">🏷️</span>
+          <Target className="w-6 h-6 text-purple-600" />
           Categories
         </CardTitle>
         {onAdd && (

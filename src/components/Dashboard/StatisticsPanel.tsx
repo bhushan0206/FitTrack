@@ -306,7 +306,7 @@ const StatisticsPanel = () => {
         <ProfileForm />
       </Header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6"> {/* Reduced py-8 to py-6 */}
         {/* Social Hub */}
         {showSocialHub && (
           <div className="space-y-6 mb-8">
@@ -411,7 +411,7 @@ const StatisticsPanel = () => {
         {!showExerciseLibrary && !showExerciseDetails && !showExerciseTracker && !showSocialHub && (
           <>
             {/* Quick Actions Section - High Priority */}
-            <div className="mb-8">
+            <div className="mb-6"> {/* Reduced mb-8 to mb-6 */}
               <Card className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white border-0 shadow-xl">
                 <CardHeader>
                   <CardTitle className="text-2xl font-bold flex items-center gap-3">
@@ -481,8 +481,8 @@ const StatisticsPanel = () => {
             </div>
 
             {/* Today's Overview - Summary Cards */}
-            <div className="mb-8">
-              <div className="flex items-center justify-between mb-6">
+            <div className="mb-6"> {/* Reduced mb-8 to mb-6 */}
+              <div className="flex items-center justify-between mb-4"> {/* Reduced mb-6 to mb-4 */}
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
                   <span className="text-3xl">📊</span>
                   Today's Overview
@@ -514,21 +514,45 @@ const StatisticsPanel = () => {
               />
             </div>
 
+            {/* Analytics Section */}
+            <div className="mb-6">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                <div className="lg:col-span-2">
+                  <ProgressChart 
+                    logs={logs} 
+                    categories={categories} 
+                    exerciseLogs={exerciseLogs}
+                  />
+                </div>
+                <div>
+                  <CategoryManager
+                    categories={categories}
+                    onCategoryUpdate={() => {}}
+                    onEdit={handleEditCategory}
+                    onDelete={handleDeleteCategory}
+                    onAdd={(e) => {
+                      if (e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                      }
+                      setShowCategoryForm(true);
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+
             {/* Exercise Activity Section */}
-            <div className="mb-8">
+            <div className="mb-6">
               <Card className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm border-0 shadow-lg">
-                <CardHeader className="flex flex-row items-center justify-between">
-                  <CardTitle className="text-xl font-bold flex items-center gap-2">
-                    <span className="text-2xl">💪</span>
+                <CardHeader className="flex flex-row items-center justify-between py-3">
+                  <CardTitle className="text-lg font-bold flex items-center gap-2">
+                    <span className="text-xl">💪</span>
                     Exercise Activity
                   </CardTitle>
                   <Button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      setShowExerciseLibrary(true);
-                    }}
-                    className="bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white"
+                    onClick={() => setShowExerciseLibrary(true)}
+                    className="bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white px-3 py-1 text-sm"
                     disabled={!user}
                   >
                     Browse All Exercises
@@ -536,107 +560,96 @@ const StatisticsPanel = () => {
                 </CardHeader>
                 <CardContent>
                   {!user ? (
-                    <div className="text-center py-8">
-                      <div className="w-20 h-20 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <span className="text-3xl">🔒</span>
+                    <div className="text-center py-4">
+                      <div className="w-12 h-12 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 rounded-full flex items-center justify-center mx-auto mb-2">
+                        <span className="text-xl">🔒</span>
                       </div>
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                      <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-1">
                         Authentication Required
                       </h3>
-                      <p className="text-gray-600 dark:text-gray-300 mb-6">
+                      <p className="text-gray-600 dark:text-gray-300 mb-2 text-sm">
                         Please sign in to access exercise tracking features.
                       </p>
                     </div>
                   ) : exerciseLogs.length === 0 ? (
-                    <div className="text-center py-8">
-                      <div className="w-20 h-20 bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-900/30 dark:to-pink-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <span className="text-3xl">🏃‍♂️</span>
+                    <div className="text-center py-4">
+                      <div className="w-12 h-12 bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-900/30 dark:to-pink-900/30 rounded-full flex items-center justify-center mx-auto mb-2">
+                        <span className="text-xl">🏃‍♂️</span>
                       </div>
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                      <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-1">
                         Ready to get moving?
                       </h3>
-                      <p className="text-gray-600 dark:text-gray-300 mb-6">
+                      <p className="text-gray-600 dark:text-gray-300 mb-3 text-sm">
                         No exercises logged for today. Start your fitness journey now!
                       </p>
-                      <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                      <div className="flex flex-col sm:flex-row gap-2 justify-center">
                         <Button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            setShowExerciseLibrary(true);
-                          }}
-                          className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white px-6 py-3"
+                          onClick={() => setShowExerciseLibrary(true)}
+                          className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white px-4 py-2 text-sm"
                         >
-                          <span className="mr-2">🔍</span>
+                          <span className="mr-1">🔍</span>
                           Browse Exercises
                         </Button>
                         <Button
                           variant="outline"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            setShowLogForm(true);
-                          }}
-                          className="px-6 py-3"
+                          onClick={() => setShowLogForm(true)}
+                          className="px-4 py-2 text-sm"
                         >
-                          <span className="mr-2">📝</span>
+                          <span className="mr-1">📝</span>
                           Quick Log
                         </Button>
                       </div>
                     </div>
                   ) : (
-                    <div className="space-y-4">
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div className="text-center p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl border border-blue-100 dark:border-blue-800">
-                          <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div className="text-center p-3 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl border border-blue-100 dark:border-blue-800">
+                          <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
                             {exerciseLogs.length}
                           </p>
-                          <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
+                          <p className="text-xs font-medium text-gray-600 dark:text-gray-300">
                             Exercises Completed
                           </p>
                         </div>
-                        <div className="text-center p-4 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-xl border border-green-100 dark:border-green-800">
-                          <p className="text-3xl font-bold text-green-600 dark:text-green-400">
+                        <div className="text-center p-3 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-xl border border-green-100 dark:border-green-800">
+                          <p className="text-2xl font-bold text-green-600 dark:text-green-400">
                             {exerciseLogs.reduce((sum, log) => sum + log.duration, 0)}
                           </p>
-                          <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
+                          <p className="text-xs font-medium text-gray-600 dark:text-gray-300">
                             Total Minutes
                           </p>
                         </div>
-                        <div className="text-center p-4 bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-900/20 dark:to-red-900/20 rounded-xl border border-orange-100 dark:border-orange-800">
-                          <p className="text-3xl font-bold text-orange-600 dark:text-orange-400">
+                        <div className="text-center p-3 bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-900/20 dark:to-red-900/20 rounded-xl border border-orange-100 dark:border-orange-800">
+                          <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">
                             {exerciseLogs.reduce((sum, log) => sum + (log.calories || 0), 0)}
                           </p>
-                          <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
+                          <p className="text-xs font-medium text-gray-600 dark:text-gray-300">
                             Calories Burned
                           </p>
                         </div>
                       </div>
-                      
-                      {/* Recent Exercise Logs */}
-                      <div className="mt-6">
-                        <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
-                          Recent Exercises
+                      {/* Recent Exercise Logs - show only 1 by default */}
+                      <div className="mt-3">
+                        <h4 className="text-base font-semibold text-gray-900 dark:text-white mb-2">
+                          Recent Exercise
                         </h4>
-                        <div className="space-y-2">
-                          {exerciseLogs.slice(0, 3).map((log, index) => (
-                            <div key={index} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                              <div>
-                                <p className="font-medium text-gray-900 dark:text-white">
-                                  Exercise #{index + 1}
-                                </p>
-                                <p className="text-sm text-gray-600 dark:text-gray-300">
-                                  {log.duration} min • {log.calories || 0} cal
-                                </p>
-                              </div>
-                              <div className="text-right">
-                                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                  {log.intensity || 'Moderate'}
-                                </p>
-                              </div>
+                        {exerciseLogs.slice(0, 1).map((log, index) => (
+                          <div key={index} className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                            <div>
+                              <p className="font-medium text-gray-900 dark:text-white text-sm">
+                                Exercise #{index + 1}
+                              </p>
+                              <p className="text-xs text-gray-600 dark:text-gray-300">
+                                {log.duration} min • {log.calories || 0} cal
+                              </p>
                             </div>
-                          ))}
-                        </div>
+                            <div className="text-right">
+                              <p className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                                {log.intensity || 'Moderate'}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   )}
@@ -644,45 +657,8 @@ const StatisticsPanel = () => {
               </Card>
             </div>
 
-            {/* Analytics Section */}
-            <div className="mb-8">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                  <span className="text-3xl">📈</span>
-                  Analytics & Management
-                </h2>
-              </div>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <ProgressChart 
-                  logs={logs} 
-                  categories={categories} 
-                  exerciseLogs={exerciseLogs}
-                />
-                <CategoryManager
-                  categories={categories}
-                  onCategoryUpdate={() => {}}
-                  onEdit={handleEditCategory}
-                  onDelete={handleDeleteCategory}
-                  onAdd={(e) => {
-                    if (e) {
-                      e.preventDefault();
-                      e.stopPropagation();
-                    }
-                    console.log('Category Manager Add button clicked');
-                    setShowCategoryForm(true);
-                  }}
-                />
-              </div>
-            </div>
-
             {/* Daily Activity Log Section */}
-            <div className="mb-8">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                  <span className="text-3xl">📋</span>
-                  Daily Activity Log
-                </h2>
-              </div>
+            <div className="mb-6">
               <DailyLogList
                 logs={selectedDateLogs}
                 categories={categories}

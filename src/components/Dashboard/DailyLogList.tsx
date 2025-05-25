@@ -2,7 +2,7 @@ import React from "react";
 import { DailyLog, TrackingCategory } from "@/types/fitness";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Pencil, Trash2, Plus } from "lucide-react";
+import { Pencil, Trash2, Plus, ClipboardList } from "lucide-react";
 import { format } from "date-fns";
 
 interface DailyLogListProps {
@@ -29,7 +29,8 @@ const DailyLogList = ({
   return (
     <Card className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm border-0 shadow-lg">
       <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-6 py-6">
-        <CardTitle className="text-gray-900 dark:text-white text-xl font-bold">
+        <CardTitle className="text-gray-900 dark:text-white text-xl font-bold flex items-center gap-2">
+          <ClipboardList className="w-6 h-6 text-indigo-600" />
           <span className="hidden sm:inline">
             Daily Logs - {format(selectedDate, "MMMM d, yyyy")}
           </span>
@@ -51,10 +52,7 @@ const DailyLogList = ({
       </CardHeader>
       <CardContent className="px-6 pb-6">
         {logs.length === 0 ? (
-          <div className="text-center py-12">
-            <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
-              <span className="text-2xl">📊</span>
-            </div>
+          <div className="text-center py-8">
             <p className="text-gray-600 dark:text-gray-300 font-medium mb-2">
               No logs for this date
             </p>
