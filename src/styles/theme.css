@@ -442,3 +442,31 @@ button[data-radix-dropdown-menu-trigger] {
 button[data-radix-dropdown-menu-trigger] span {
   color: #111827 !important;
 }
+
+/* Force tab text colors to be readable */
+[data-radix-tabs-trigger] {
+  color: black !important;
+}
+
+.dark [data-radix-tabs-trigger] {
+  color: white !important;
+}
+
+[data-radix-tabs-trigger][data-state="active"] {
+  color: black !important;
+  background-color: white !important;
+}
+
+.dark [data-radix-tabs-trigger][data-state="active"] {
+  color: white !important;
+  background-color: rgb(55, 65, 81) !important;
+}
+
+/* Fix Radix Tabs inactive tab text color for both light and dark mode */
+[data-radix-tabs-trigger][data-state="inactive"] {
+  color: #222 !important; /* dark gray for light mode */
+}
+
+.dark [data-radix-tabs-trigger][data-state="inactive"] {
+  color: #e5e7eb !important; /* Tailwind gray-200 for dark mode */
+}

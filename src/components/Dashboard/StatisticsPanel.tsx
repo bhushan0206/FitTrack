@@ -17,13 +17,17 @@ import ProfileForm from "@/components/Profile/ProfileForm";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { Plus, Target, Pencil, Trash2, ArrowLeft, Dumbbell } from "lucide-react";
+import { Plus, FolderPlus, Users, Sparkles } from "lucide-react";
 import ExerciseLibrary from "@/components/Exercise/ExerciseLibrary";
 import ExerciseDetails from "@/components/Exercise/ExerciseDetails";
 import ExerciseTracker from "@/components/Exercise/ExerciseTracker";
 import SocialHub from "@/components/Social/SocialHub";
 import { useNotifications } from '@/hooks/useNotifications';
 import { socialStorage } from '@/lib/socialStorage';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import AIChat from '../AI/AIChat';
+
+type TabValue = "overview" | "categories" | "social" | "ai";
 
 const StatisticsPanel = () => {
   const { user, signOut } = useAuth();
@@ -59,6 +63,7 @@ const StatisticsPanel = () => {
   const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
   const [showSocialHub, setShowSocialHub] = useState(false);
   const [showCategoryManager, setShowCategoryManager] = useState(false);
+  const [activeTab, setActiveTab] = useState<TabValue>("overview");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -326,418 +331,150 @@ const StatisticsPanel = () => {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
       <Header
         selectedDate={selectedDate}
-        onDateChange={handleDateChange}
+        onDateChange={setSelectedDate}
         datePickerOpen={datePickerOpen}
         onDatePickerToggle={setDatePickerOpen}
         profile={currentProfile}
         onProfileUpdate={handleUpdateProfile}
         isLoading={isLoading}
+        onAIChatClick={() => setActiveTab("ai")}
       >
         <ProfileForm />
       </Header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6"> {/* Reduced py-8 to py-6 */}
-        {/* Social Hub */}
-        {showSocialHub && (
-          <div className="space-y-6 mb-8">
-            <div className="flex items-center justify-between">
-              <Button
-                variant="outline"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setShowSocialHub(false);
-                }}
-                className="mb-4"
-              >
-                ← Back to Dashboard
-              </Button>
-            </div>
-            <SocialHub />
-          </div>
-        )}
-
-        {/* Exercise Library */}
-        {showExerciseLibrary && (
-          <div className="space-y-6 mb-8">
-            <div className="flex items-center justify-between">
-              <Button
-                variant="outline"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setShowExerciseLibrary(false);
-                }}
-                className="mb-4"
-              >
-                ← Back to Dashboard
-              </Button>
-            </div>
-            <ExerciseLibrary
-              onStartExercise={handleStartExercise}
-              onViewExerciseDetails={handleViewExerciseDetails}
-            />
-          </div>
-        )}
-
-        {/* Exercise Details */}
-        {showExerciseDetails && selectedExercise && (
-          <div className="space-y-6 mb-8">
-            <div className="flex items-center justify-between">
-              <Button
-                variant="outline"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setShowExerciseDetails(false);
-                  setShowExerciseLibrary(true);
-                }}
-                className="mb-4"
-              >
-                ← Back to Library
-              </Button>
-            </div>
-            <ExerciseDetails
-              exercise={selectedExercise}
-              onStart={handleStartExercise}
-              onClose={() => {
-                setShowExerciseDetails(false);
-                setShowExerciseLibrary(true);
-              }}
-            />
-          </div>
-        )}
-
-        {/* Exercise Tracker */}
-        {showExerciseTracker && selectedExercise && (
-          <div className="space-y-6 mb-8">
-            <div className="flex items-center justify-between">
-              <Button
-                variant="outline"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setShowExerciseTracker(false);
-                  setShowExerciseLibrary(true);
-                }}
-                className="mb-4"
-              >
-                ← Back to Library
-              </Button>
-            </div>
-            <ExerciseTracker
-              exercise={selectedExercise}
-              onComplete={handleCompleteExercise}
-              onCancel={() => {
-                setShowExerciseTracker(false);
-                setShowExerciseLibrary(true);
-              }}
-              selectedDate={format(selectedDate, 'yyyy-MM-dd')}
-            />
-          </div>
-        )}
-
-        {/* Main Dashboard - Reorganized for better UX */}
-        {!showExerciseLibrary && !showExerciseDetails && !showExerciseTracker && !showSocialHub && !showCategoryManager && (
-          <>
-            {/* Quick Actions Section */}
-            <div className="mb-6">
-              <Card className="bg-gradient-to-r from-indigo-500 to-purple-600 dark:from-indigo-600 dark:to-purple-700 text-white border-0 shadow-xl">
-                <CardHeader>
-                  <CardTitle className="text-xl font-bold text-white">Quick Actions</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <Button
-                      onClick={() => setShowExerciseTracker(true)}
-                      className="bg-white/20 hover:bg-white/30 dark:bg-white/10 dark:hover:bg-white/20 text-white border-white/30 dark:border-white/20 h-20 flex flex-col gap-2 backdrop-blur-sm"
-                      variant="outline"
-                    >
-                      <span className="text-2xl">💪</span>
-                      <span className="font-semibold">Track Exercise</span>
-                    </Button>
-                    <Button
-                      onClick={() => setShowExerciseLibrary(true)}
-                      className="bg-white/20 hover:bg-white/30 dark:bg-white/10 dark:hover:bg-white/20 text-white border-white/30 dark:border-white/20 h-20 flex flex-col gap-2 backdrop-blur-sm"
-                      variant="outline"
-                    >
-                      <span className="text-2xl">📚</span>
-                      <span className="font-semibold">Exercise Library</span>
-                    </Button>
-                    <Button
-                      onClick={() => setShowCategoryManager(true)}
-                      className="bg-white/20 hover:bg-white/30 dark:bg-white/10 dark:hover:bg-white/20 text-white border-white/30 dark:border-white/20 h-20 flex flex-col gap-2 backdrop-blur-sm"
-                      variant="outline"
-                    >
-                      <Dumbbell className="w-7 h-7" />
-                      <span className="font-semibold">Manage Categories</span>
-                    </Button>
-                    <Button
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        setShowSocialHub(true);
-                      }}
-                      className="bg-white/20 hover:bg-white/30 dark:bg-white/10 dark:hover:bg-white/20 text-white border-white/30 dark:border-white/20 h-20 flex flex-col gap-2 backdrop-blur-sm relative"
-                      variant="outline"
-                      disabled={!user}
-                    >
-                      <span className="text-2xl relative">
-                        👥
-                        {totalUnread > 0 && (
-                          <span className="absolute -top-1 -right-2 w-3 h-3 bg-red-500 rounded-full border-2 border-white animate-pulse"></span>
-                        )}
-                      </span>
-                      <span className="font-semibold">Social Hub</span>
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Today's Overview - Summary Cards */}
-            <div className="mb-6"> {/* Reduced mb-8 to mb-6 */}
-              <div className="flex items-center justify-between mb-4"> {/* Reduced mb-6 to mb-4 */}
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                  <span className="text-3xl">📊</span>
-                  Today's Overview
-                </h2>
-                <div className="flex items-center gap-4">
-                  <p className="text-gray-600 dark:text-gray-400">
-                    {format(selectedDate, "EEEE, MMMM d, yyyy")}
-                  </p>
-                  <Button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      setShowSocialHub(true);
-                    }}
-                    variant="outline"
-                    size="sm"
-                    className="flex items-center gap-2"
-                    disabled={!user}
-                  >
-                    <span className="text-lg">👥</span>
-                    Social
-                  </Button>
-                </div>
-              </div>
-              <SummaryCards
-                logs={logs}
-                categories={categories}
-                selectedDate={selectedDate}
-              />
-            </div>
-
-            {/* Analytics Section */}
-            <div className="mb-6">
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                <div className="lg:col-span-2">
-                  <ProgressChart 
-                    logs={logs} 
-                    categories={categories} 
-                    exerciseLogs={exerciseLogs}
-                  />
-                </div>
-                <div>
-                  <CategoryManager
-                    categories={categories}
-                    onCategoryUpdate={handleCategoryUpdate}
-                    onEdit={handleEditCategory}
-                    onDelete={async (categoryId: string) => {
-                      await handleDeleteCategory(categoryId);
-                      // Do not return anything (void)
-                    }}
-                    onAdd={(e) => {
-                      if (e) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                      }
-                      setShowCategoryForm(true);
-                    }}
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Exercise Activity Section */}
-            <div className="mb-6">
-              <Card className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm border-0 shadow-lg">
-                <CardHeader className="flex flex-row items-center justify-between py-3">
-                  <CardTitle className="text-lg font-bold flex items-center gap-2">
-                    <span className="text-xl">💪</span>
-                    Exercise Activity
-                  </CardTitle>
-                  <Button
-                    onClick={() => setShowExerciseLibrary(true)}
-                    className="bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white px-3 py-1 text-sm"
-                    disabled={!user}
-                  >
-                    Browse All Exercises
-                  </Button>
-                </CardHeader>
-                <CardContent>
-                  {!user ? (
-                    <div className="text-center py-4">
-                      <div className="w-12 h-12 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 rounded-full flex items-center justify-center mx-auto mb-2">
-                        <span className="text-xl">🔒</span>
-                      </div>
-                      <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-1">
-                        Authentication Required
-                      </h3>
-                      <p className="text-gray-600 dark:text-gray-300 mb-2 text-sm">
-                        Please sign in to access exercise tracking features.
-                      </p>
-                    </div>
-                  ) : exerciseLogs.length === 0 ? (
-                    <div className="text-center py-4">
-                      <div className="w-12 h-12 bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-900/30 dark:to-pink-900/30 rounded-full flex items-center justify-center mx-auto mb-2">
-                        <span className="text-xl">🏃‍♂️</span>
-                      </div>
-                      <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-1">
-                        Ready to get moving?
-                      </h3>
-                      <p className="text-gray-600 dark:text-gray-300 mb-3 text-sm">
-                        No exercises logged for today. Start your fitness journey now!
-                      </p>
-                      <div className="flex flex-col sm:flex-row gap-2 justify-center">
-                        <Button
-                          onClick={() => setShowExerciseLibrary(true)}
-                          className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white px-4 py-2 text-sm"
-                        >
-                          <span className="mr-1">🔍</span>
-                          Browse Exercises
-                        </Button>
-                        <Button
-                          variant="outline"
-                          onClick={() => setShowLogForm(true)}
-                          className="px-4 py-2 text-sm"
-                        >
-                          <span className="mr-1">📝</span>
-                          Quick Log
-                        </Button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                        <div className="text-center p-3 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl border border-blue-100 dark:border-blue-800">
-                          <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                            {exerciseLogs.length}
-                          </p>
-                          <p className="text-xs font-medium text-gray-600 dark:text-gray-300">
-                            Exercises Completed
-                          </p>
-                        </div>
-                        <div className="text-center p-3 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-xl border border-green-100 dark:border-green-800">
-                          <p className="text-2xl font-bold text-green-600 dark:text-green-400">
-                            {exerciseLogs.reduce((sum, log) => sum + log.duration, 0)}
-                          </p>
-                          <p className="text-xs font-medium text-gray-600 dark:text-gray-300">
-                            Total Minutes
-                          </p>
-                        </div>
-                        <div className="text-center p-3 bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-900/20 dark:to-red-900/20 rounded-xl border border-orange-100 dark:border-orange-800">
-                          <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">
-                            {exerciseLogs.reduce((sum, log) => sum + (log.calories || 0), 0)}
-                          </p>
-                          <p className="text-xs font-medium text-gray-600 dark:text-gray-300">
-                            Calories Burned
-                          </p>
-                        </div>
-                      </div>
-                      {/* Recent Exercise Logs - show only 1 by default */}
-                      <div className="mt-3">
-                        <h4 className="text-base font-semibold text-gray-900 dark:text-white mb-2">
-                          Recent Exercise
-                        </h4>
-                        {exerciseLogs.slice(0, 1).map((log, index) => (
-                          <div key={index} className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                            <div>
-                              <p className="font-medium text-gray-900 dark:text-white text-sm">
-                                Exercise #{index + 1}
-                              </p>
-                              <p className="text-xs text-gray-600 dark:text-gray-300">
-                                {log.duration} min • {log.calories || 0} cal
-                              </p>
-                            </div>
-                            <div className="text-right">
-                              <p className="text-xs font-medium text-gray-700 dark:text-gray-300">
-                                {log.intensity || 'Moderate'}
-                              </p>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Daily Activity Log Section */}
-            <div className="mb-6">
-              <DailyLogList
-                logs={selectedDateLogs}
-                categories={categories}
-                onEdit={handleEditLog}
-                onDelete={handleDeleteLog}
-                onAdd={() => setShowLogForm(true)}
-                selectedDate={selectedDate}
-              />
-            </div>
-
-            {/* Dialogs */}
-            <Dialog open={showCategoryForm} onOpenChange={setShowCategoryForm}>
-              <DialogContent className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md border-gray-200/50 dark:border-gray-600/50 max-w-md rounded-2xl shadow-2xl sm:max-w-md">
-                <CategoryForm
-                  onSave={handleSaveCategory}
-                  category={editingCategory || undefined}
-                  existingCategories={categories}
-                  onCancel={() => {
-                    console.log('Category form cancelled');
-                    handleCancelCategoryForm();
-                  }}
-                />
-              </DialogContent>
-            </Dialog>
-
-            <Dialog open={showLogForm} onOpenChange={setShowLogForm}>
-              <DialogContent className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md border-gray-200/50 dark:border-gray-600/50 max-w-2xl rounded-2xl shadow-2xl">
-                <LogEntryForm
-                  categories={categories}
-                  onSave={handleSaveLog}
-                  log={editingLog || undefined}
-                  onCancel={handleCancelLogForm}
-                  selectedDate={selectedDateString}
-                />
-              </DialogContent>
-            </Dialog>
-          </>
-        )}
-
-        {/* Category Manager */}
-        {showCategoryManager && (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <Button
-                onClick={() => setShowCategoryManager(false)}
-                variant="outline"
-                className="flex items-center gap-2"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                Back to Dashboard
-              </Button>
-            </div>
-            <CategoryManager 
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* Left Column - Summary Cards and Quick Actions */}
+          <div className="lg:col-span-1 space-y-6">
+            <SummaryCards
+              selectedDate={selectedDate}
+              logs={selectedDateLogs}
               categories={categories}
-              onCategoryUpdate={handleCategoryUpdate} // Use the explicitly defined function
+            />
+
+            {/* Quick Actions */}
+            <Card className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm border-0 shadow-lg">
+              <CardHeader className="px-6 py-4">
+                <CardTitle className="text-gray-900 dark:text-white text-lg font-bold">
+                  Quick Actions
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="px-6 py-4 space-y-3">
+                <Button
+                  onClick={() => setShowLogForm(true)}
+                  className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white shadow-lg"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Log Entry
+                </Button>
+                <Button
+                  onClick={() => setShowCategoryForm(true)}
+                  variant="outline"
+                  className="w-full border-indigo-200 text-indigo-700 hover:bg-indigo-50 dark:border-indigo-800 dark:text-indigo-300 dark:hover:bg-indigo-900/50"
+                >
+                  <FolderPlus className="w-4 h-4 mr-2" />
+                  Add Category
+                </Button>
+                <Button
+                  onClick={() => setActiveTab("social")}
+                  variant="outline"
+                  className="w-full border-purple-200 text-purple-700 hover:bg-purple-50 dark:border-purple-800 dark:text-purple-300 dark:hover:bg-purple-900/50"
+                >
+                  <Users className="w-4 h-4 mr-2" />
+                  Social Hub
+                </Button>
+                <Button
+                  onClick={() => setActiveTab("ai")}
+                  variant="outline"
+                  className="w-full border-yellow-200 text-yellow-700 hover:bg-yellow-50 dark:border-yellow-800 dark:text-yellow-300 dark:hover:bg-yellow-900/50"
+                >
+                  <Sparkles className="w-4 h-4 mr-2 text-yellow-500" />
+                  AI Assistant
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Center Column - Main Content */}
+          <div className="lg:col-span-2 space-y-6">
+            <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as TabValue)} className="w-full">
+              <TabsList className="grid w-full grid-cols-4">
+                <TabsTrigger value="overview">Overview</TabsTrigger>
+                <TabsTrigger value="categories">Categories</TabsTrigger>
+                <TabsTrigger value="social">Social</TabsTrigger>
+                <TabsTrigger value="ai">AI Assistant</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="overview" className="space-y-6 mt-6">
+                <DailyLogList
+                  logs={selectedDateLogs}
+                  categories={categories}
+                  onEdit={handleEditLog}
+                  onDelete={handleDeleteLog}
+                  onAdd={() => setShowLogForm(true)}
+                  selectedDate={selectedDate}
+                />
+              </TabsContent>
+
+              <TabsContent value="categories" className="space-y-6 mt-6">
+                <CategoryManager
+                  categories={categories}
+                  onEdit={handleEditCategory}
+                  onDelete={handleDeleteCategory}
+                />
+              </TabsContent>
+
+              <TabsContent value="social" className="space-y-6 mt-6">
+                <SocialHub />
+              </TabsContent>
+
+              <TabsContent value="ai" className="space-y-6 mt-6">
+                <AIChat
+                  userProfile={profile}
+                  recentLogs={logs.slice(-50)} // Last 50 logs for context
+                  categories={categories}
+                  className="h-[600px]"
+                />
+              </TabsContent>
+            </Tabs>
+          </div>
+
+          {/* Right Column - Progress Chart */}
+          <div className="lg:col-span-1">
+            <ProgressChart
+              logs={logs}
+              categories={categories}
             />
           </div>
-        )}
+        </div>
       </main>
 
-      <Footer />
+      {/* Dialogs */}
+      <Dialog open={showCategoryForm} onOpenChange={setShowCategoryForm}>
+        <DialogContent className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md border-gray-200/50 dark:border-gray-600/50 max-w-md rounded-2xl shadow-2xl sm:max-w-md">
+          <CategoryForm
+            onSave={handleSaveCategory}
+            category={editingCategory || undefined}
+            existingCategories={categories}
+            onCancel={() => {
+              console.log('Category form cancelled');
+              handleCancelCategoryForm();
+            }}
+          />
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showLogForm} onOpenChange={setShowLogForm}>
+        <DialogContent className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md border-gray-200/50 dark:border-gray-600/50 max-w-2xl rounded-2xl shadow-2xl">
+          <LogEntryForm
+            categories={categories}
+            onSave={handleSaveLog}
+            log={editingLog || undefined}
+            onCancel={handleCancelLogForm}
+            selectedDate={selectedDateString}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

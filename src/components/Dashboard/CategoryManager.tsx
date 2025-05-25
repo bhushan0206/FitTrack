@@ -8,15 +8,14 @@ import CategoryForm from "./CategoryForm";
 
 interface CategoryManagerProps {
   categories: TrackingCategory[];
-  onCategoryUpdate: (category: TrackingCategory) => Promise<boolean>;
-  onEdit?: (category: TrackingCategory) => void;
-  onDelete?: (categoryId: string) => Promise<void>;
-  onAdd?: (e?: any) => void;
+  onEdit: (category: TrackingCategory) => void;
+  onDelete: (categoryId: string) => Promise<boolean>; // Change return type to Promise<boolean>
 }
 
 const CategoryManager = ({ 
   categories, 
-  onCategoryUpdate, 
+  onEdit,
+  onDelete,
 }: CategoryManagerProps) => {
   const [showForm, setShowForm] = useState(false);
   const [editingCategory, setEditingCategory] = useState<TrackingCategory | null>(null);
@@ -35,12 +34,12 @@ const CategoryManager = ({
     // You should implement the actual delete logic here, e.g. call a prop or context
     if (window.confirm("Are you sure you want to delete this category?")) {
       // Fake category object for update callback
-      await onCategoryUpdate({ id: categoryId } as TrackingCategory);
+      await onDelete(categoryId);
     }
   };
 
   const handleFormSave = async (category: TrackingCategory) => {
-    await onCategoryUpdate(category);
+    await onEdit(category);
     setShowForm(false);
     setEditingCategory(null);
   };

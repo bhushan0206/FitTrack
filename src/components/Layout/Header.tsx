@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { format } from "date-fns";
-import { Calendar, User, LogOut, Moon, Sun, Bell } from "lucide-react";
+import { Calendar, User, LogOut, Moon, Sun, Bell, MessageCircle, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { UserProfile } from "@/types/fitness";
 import { useAuth } from "@/contexts/AuthContext";
@@ -22,6 +22,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import clsx from "clsx";
+import { useNavigate } from "react-router-dom";
 
 interface HeaderProps {
   selectedDate: Date;
@@ -32,6 +33,7 @@ interface HeaderProps {
   onProfileUpdate: (profileData: Partial<UserProfile>) => Promise<boolean>;
   isLoading: boolean;
   children?: React.ReactNode;
+  onAIChatClick?: () => void; // Add this prop for quick AI access
 }
 
 const Header = ({
@@ -43,12 +45,14 @@ const Header = ({
   onProfileUpdate,
   isLoading,
   children,
+  onAIChatClick,
 }: HeaderProps) => {
   const { user, signOut } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const { totalUnread, refreshCounts } = useNotifications();
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
+  const navigate = useNavigate();
 
   // Add real-time subscription to refresh notification counts
   useEffect(() => {
@@ -105,8 +109,11 @@ const Header = ({
     <header className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-200/50 dark:border-gray-700/50 sticky top-0 z-50 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          {/* Logo */}
-          <div className="flex items-center gap-3">
+          {/* Logo - Make it clickable */}
+          <div 
+            className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
+            onClick={() => navigate('/dashboard')}
+          >
             <div className="w-8 h-8 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-sm">FT</span>
             </div>
@@ -143,6 +150,18 @@ const Header = ({
 
           {/* Right Section - User Menu */}
           <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+            {/* AI Chat Quick Access Button */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onAIChatClick}
+              className="flex items-center gap-2 border-indigo-200 text-indigo-700 hover:bg-indigo-50 dark:border-indigo-800 dark:text-indigo-300 dark:hover:bg-indigo-900/50 font-semibold"
+              title="Open AI Assistant"
+            >
+              <Sparkles className="w-5 h-5 text-yellow-500 animate-pulse" />
+              <span className="hidden sm:inline">AI Assistant</span>
+            </Button>
+
             {/* Theme Toggle */}
             <Button
               variant="ghost"

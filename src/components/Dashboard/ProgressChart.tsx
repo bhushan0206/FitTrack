@@ -163,87 +163,43 @@ const ProgressChart = ({
   }
 
   return (
-    <Card className="bg-gradient-to-br from-white to-indigo-50/50 dark:from-gray-800 dark:to-indigo-900/20 border-0 shadow-lg hover:shadow-xl transition-all duration-300 backdrop-blur-sm">
-      <CardHeader className="flex flex-col gap-4 px-6 py-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <CardTitle className="text-gray-900 dark:text-white text-xl font-bold flex items-center gap-2">
-            <span className="text-2xl">📊</span>
-            Weekly Progress
-          </CardTitle>
-
-          {/* Chart Mode Toggle */}
-          <div className="flex gap-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+    <Card className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm border-0 shadow-lg">
+      <CardHeader className="px-4 sm:px-6 py-4">
+        <CardTitle className="text-gray-900 dark:text-white text-lg font-bold mb-3">
+          Weekly Progress
+        </CardTitle>
+        {/* Fixed responsive button layout */}
+        <div className="w-full">
+          <div className="grid grid-cols-3 gap-1 sm:gap-2">
             <Button
-              variant="ghost"
+              variant={chartMode === 'combined' ? 'default' : 'outline'}
               size="sm"
-              onClick={() => setChartMode("combined")}
-              className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${
-                chartMode === "combined"
-                  ? "bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm"
-                  : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
-              }`}
+              onClick={() => setChartMode('combined')}
+              className="text-xs px-1 py-1.5 h-auto min-w-0 flex-shrink whitespace-nowrap"
             >
               Combined
             </Button>
             <Button
-              variant="ghost"
+              variant={chartMode === 'categories' ? 'default' : 'outline'}
               size="sm"
-              onClick={() => setChartMode("categories")}
+              onClick={() => setChartMode('categories')}
               disabled={categories.length === 0}
-              className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${
-                chartMode === "categories"
-                  ? "bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm"
-                  : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
-              }`}
+              className="text-xs px-1 py-1.5 h-auto min-w-0 flex-shrink whitespace-nowrap"
             >
               Categories
             </Button>
             <Button
-              variant="ghost"
+              variant={chartMode === 'exercises' ? 'default' : 'outline'}
               size="sm"
-              onClick={() => setChartMode("exercises")}
+              onClick={() => setChartMode('exercises')}
               disabled={exerciseLogs.length === 0}
-              className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${
-                chartMode === "exercises"
-                  ? "bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm"
-                  : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
-              }`}
+              className="text-xs px-1 py-1.5 h-auto min-w-0 flex-shrink whitespace-nowrap"
             >
               Exercises
             </Button>
           </div>
         </div>
-
-        {/* Category Selector (only show for categories mode) */}
-        {chartMode === "categories" && categories.length > 0 && (
-          <Select
-            value={selectedCategoryId}
-            onValueChange={setSelectedCategoryId}
-          >
-            <SelectTrigger className="w-full sm:w-[220px] bg-white/90 dark:bg-gray-700/90 border-gray-200/50 dark:border-gray-600/50 rounded-xl font-medium text-gray-900 dark:text-white">
-              <SelectValue placeholder="Select category" />
-            </SelectTrigger>
-            <SelectContent className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md border-gray-200/50 dark:border-gray-600/50 rounded-xl">
-              {categories.map((category) => (
-                <SelectItem
-                  key={category.id}
-                  value={category.id}
-                  className="hover:bg-gray-50/80 dark:hover:bg-gray-700/80 rounded-lg mx-1 font-medium text-gray-800 dark:text-gray-200"
-                >
-                  <div className="flex items-center gap-3">
-                    <div
-                      className="w-4 h-4 rounded-full shadow-sm"
-                      style={{ backgroundColor: category.color }}
-                    />
-                    <span className="text-gray-800 dark:text-gray-200 font-medium">{category.name}</span>
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        )}
       </CardHeader>
-
       <CardContent className="px-6 pb-6">
         <div className="bg-gradient-to-b from-gray-50/50 to-white dark:from-gray-700/50 dark:to-gray-800 rounded-xl p-4 border border-gray-100/50 dark:border-gray-600/50">
           <div className="h-[180px] sm:h-[220px] flex items-end justify-between gap-2 sm:gap-3">
