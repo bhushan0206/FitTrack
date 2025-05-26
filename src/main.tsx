@@ -12,7 +12,7 @@ const updateViewportMeta = () => {
   // Create it if it doesn't exist
   if (!viewport) {
     viewport = document.createElement('meta');
-    viewport.name = 'viewport';
+    viewport.setAttribute('name', 'viewport'); // Use setAttribute instead of direct property access
     document.head.appendChild(viewport);
   }
 
