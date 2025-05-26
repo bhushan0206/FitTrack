@@ -28,6 +28,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import AIChat from "../AI/AIChat";
 import WorkoutRecommendations from "../AI/WorkoutRecommendations";
 import NutritionRecommendations from "../AI/NutritionRecommendations";
+import GoalTrackingAssistant from '../AI/GoalTrackingAssistant';
 
 // Define the valid tab values as a union type
 type TabValue = 'overview' | 'progress' | 'categories' | 'logs' | 'exercises' | 'social' | 'ai-assistant';
@@ -504,6 +505,16 @@ const StatisticsPanel = () => {
                             recentLogs={recentLogs}
                             categories={profile?.categories}
                           />
+                        </TabsContent>
+
+                        <TabsContent value="goals" className="h-full mt-0">
+                          <div className="h-full overflow-y-auto">
+                            <GoalTrackingAssistant 
+                              userProfile={profile}
+                              recentLogs={recentLogs}
+                              categories={profile?.categories}
+                            />
+                          </div>
                         </TabsContent>
                       </div>
                     </Tabs>
