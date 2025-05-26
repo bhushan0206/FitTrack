@@ -21,7 +21,9 @@ const SocialPage = () => {
         const friendsList = await socialStorage.getFriends();
         setFriends(friendsList);
       } catch (error) {
-        console.error('Error fetching friends:', error);
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Error fetching friends:', error);
+        }
       }
     };
 
@@ -29,7 +31,9 @@ const SocialPage = () => {
   }, [user]);
 
   const handleStartConversation = (friend: Friend) => {
-    console.log('Starting conversation with:', friend);
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Starting conversation with:', friend);
+    }
     
     const conversation = {
       id: `conversation-${friend.friend_id}`,
@@ -40,7 +44,9 @@ const SocialPage = () => {
       unread_count: 0
     };
     
-    console.log('Created conversation object:', conversation);
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Created conversation object:', conversation);
+    }
     setSelectedConversation(conversation);
     setCurrentView('messages');
   };
@@ -64,7 +70,7 @@ const SocialPage = () => {
             <div className="flex items-center gap-2 bg-blue-50 dark:bg-blue-900/30 px-3 py-1 rounded-full">
               <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
               <span className="text-sm text-blue-600 dark:text-blue-400 font-medium">
-                {totalUnread} new message{totalUnread !== 1 ? 's' : ''} // Fix: use totalUnread
+                {totalUnread} new message{totalUnread !== 1 ? 's' : ''}
               </span>
             </div>
           )}

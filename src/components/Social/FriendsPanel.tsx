@@ -68,7 +68,9 @@ const FriendsPanel = ({ onOpenChat }: FriendsPanelProps) => {
         setError(result.error || 'Failed to send friend request.');
       }
     } catch (error) {
-      console.error('Error in handleSendFriendRequest:', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Error in handleSendFriendRequest:', error);
+      }
       setError('An unexpected error occurred. Please try again.');
     }
     
@@ -88,7 +90,9 @@ const FriendsPanel = ({ onOpenChat }: FriendsPanelProps) => {
         setTimeout(() => setError(''), 3000);
       }
     } catch (error) {
-      console.error('Error in handleAcceptRequest:', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Error in handleAcceptRequest:', error);
+      }
       setError('An unexpected error occurred. Please try again.');
       setTimeout(() => setError(''), 3000);
     }
@@ -103,7 +107,9 @@ const FriendsPanel = ({ onOpenChat }: FriendsPanelProps) => {
       // Open the chat immediately - don't wait
       onOpenChat(friendId, friendName);
     } catch (error) {
-      console.error('Error marking messages as read:', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Error marking messages as read:', error);
+      }
       // Still open chat even if marking as read fails
       onOpenChat(friendId, friendName);
     }

@@ -155,7 +155,9 @@ class AIService {
     conversationId?: string
   ): Promise<AIMessage> {
     try {
-      console.log('AI Service: Generating response for:', message);
+      if (process.env.NODE_ENV === 'development') {
+        console.log('AI Service: Generating response for:', message);
+      }
       
       // Use the aiEngine instead of undefined reference
       const { aiEngine } = await import('./aiEngine');

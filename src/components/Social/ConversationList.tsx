@@ -19,7 +19,9 @@ const ConversationList = ({ onSelectConversation }: ConversationListProps) => {
       const loadedConversations = await socialStorage.getConversations();
       setConversations(loadedConversations);
     } catch (error) {
-      console.error("Error loading conversations:", error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error("Error loading conversations:", error);
+      }
     } finally {
       setLoading(false);
     }

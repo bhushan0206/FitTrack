@@ -1,5 +1,6 @@
 import { supabase } from './supabase';
 import { UserProfile, TrackingCategory, DailyLog } from '@/types/fitness';
+import { isDevelopment, devLog, devError } from '@/utils/env';
 
 // Generate a unique ID
 export const generateId = (): string => {
@@ -16,38 +17,32 @@ const getCurrentUserId = async (): Promise<string> => {
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
     
     if (sessionError) {
-      console.error('Session error in getCurrentUserId');
+      devError('Session error in getCurrentUserId');
     }
     
     if (session?.user?.id) {
-      if (process.env.NODE_ENV === 'development') {
-        console.log('getCurrentUserId: Got user ID from session');
-      }
+      devLog('getCurrentUserId: Got user ID from session');
       return session.user.id;
     }
     
     // Fallback to getUser()
-    if (process.env.NODE_ENV === 'development') {
-      console.log('getCurrentUserId: No session, trying getUser()...');
-    }
+    devLog('getCurrentUserId: No session, trying getUser()...');
     const { data: { user }, error } = await supabase.auth.getUser();
     
     if (error) {
-      console.error('Auth error in getCurrentUserId');
+      devError('Auth error in getCurrentUserId');
       throw new Error(`Authentication error: ${error.message}`);
     }
     
     if (!user) {
-      console.error('No user found in getCurrentUserId');
+      devError('No user found in getCurrentUserId');
       throw new Error("User not authenticated");
     }
     
-    if (process.env.NODE_ENV === 'development') {
-      console.log('getCurrentUserId successful');
-    }
+    devLog('getCurrentUserId successful');
     return user.id;
   } catch (error) {
-    console.error('Error in getCurrentUserId');
+    devError('Error in getCurrentUserId');
     throw error;
   }
 };
@@ -79,7 +74,9 @@ export const addCategory = async (
     const updatedProfile = await getUserProfile(userId);
     return updatedProfile;
   } catch (error) {
-    console.error("Error adding category:", error);
+    if (import.meta.env.DEV) {
+      console.error("Error adding category:", error);
+    }
     return null;
   }
 };
@@ -106,7 +103,9 @@ export const updateCategory = async (
     if (error) throw error;
     return await getUserProfile(userId);
   } catch (error) {
-    console.error("Error updating category:", error);
+    if (import.meta.env.DEV) {
+      console.error("Error updating category:", error);
+    }
     return null;
   }
 };
@@ -127,7 +126,9 @@ export const deleteCategory = async (
     if (error) throw error;
     return await getUserProfile(userId);
   } catch (error) {
-    console.error("Error deleting category:", error);
+    if (import.meta.env.DEV) {
+      console.error("Error deleting category:", error);
+    }
     return null;
   }
 };
@@ -155,7 +156,9 @@ export const addLogEntry = async (
     if (error) throw error;
     return await getUserProfile(userId);
   } catch (error) {
-    console.error("Error adding log entry:", error);
+    if (import.meta.env.DEV) {
+      console.error("Error adding log entry:", error);
+    }
     return null;
   }
 };
@@ -183,7 +186,9 @@ export const updateLogEntry = async (
     if (error) throw error;
     return await getUserProfile(userId);
   } catch (error) {
-    console.error("Error updating log entry:", error);
+    if (import.meta.env.DEV) {
+      console.error("Error updating log entry:", error);
+    }
     return null;
   }
 };
@@ -204,7 +209,9 @@ export const deleteLogEntry = async (
     if (error) throw error;
     return await getUserProfile(userId);
   } catch (error) {
-    console.error("Error deleting log entry:", error);
+    if (import.meta.env.DEV) {
+      console.error("Error deleting log entry:", error);
+    }
     return null;
   }
 };
@@ -222,7 +229,9 @@ export const initializeUserProfile = async (userName?: string): Promise<UserProf
       .maybeSingle();
 
     if (fetchError && fetchError.code !== 'PGRST116') {
-      console.error('Error fetching profile:', fetchError);
+      if (import.meta.env.DEV) {
+        console.error('Error fetching profile:', fetchError);
+      }
     }
 
     if (existingProfile) {
@@ -289,7 +298,9 @@ export const initializeUserProfile = async (userName?: string): Promise<UserProf
       .single();
 
     if (error) {
-      console.error('Error creating profile:', error);
+      if (import.meta.env.DEV) {
+        console.error('Error creating profile:', error);
+      }
       throw error;
     }
 
@@ -309,7 +320,9 @@ export const initializeUserProfile = async (userName?: string): Promise<UserProf
       updatedAt: data.updated_at,
     };
   } catch (error) {
-    console.error('Error in initializeUserProfile:', error);
+    if (import.meta.env.DEV) {
+      console.error('Error in initializeUserProfile:', error);
+    }
     return null;
   }
 };
@@ -329,7 +342,9 @@ export const updateUserProfile = async (
       .maybeSingle();
 
     if (fetchError && fetchError.code !== 'PGRST116') {
-      console.error('Error fetching existing profile:', fetchError);
+      if (import.meta.env.DEV) {
+        console.error('Error fetching existing profile:', fetchError);
+      }
       throw fetchError;
     }
 
@@ -355,7 +370,9 @@ export const updateUserProfile = async (
         .single();
 
       if (error) {
-        console.error('Error updating profile:', error);
+        if (import.meta.env.DEV) {
+          console.error('Error updating profile:', error);
+        }
         throw error;
       }
 
@@ -382,14 +399,18 @@ export const updateUserProfile = async (
         .single();
 
       if (error) {
-        console.error('Error creating profile:', error);
+        if (import.meta.env.DEV) {
+          console.error('Error creating profile:', error);
+        }
         throw error;
       }
 
       return await getUserProfile(userId);
     }
   } catch (error) {
-    console.error('Error in updateUserProfile:', error);
+    if (import.meta.env.DEV) {
+      console.error('Error in updateUserProfile:', error);
+    }
     return null;
   }
 };
@@ -421,11 +442,15 @@ export const getUserProfile = async (userId?: string): Promise<UserProfile | nul
             }
           }
         } catch (storageError) {
-          console.error('Error reading from localStorage:', storageError);
+          if (import.meta.env.DEV) {
+            console.error('Error reading from localStorage:', storageError);
+          }
         }
         
         if (!currentUserId) {
-          console.error('Could not get user ID from any source');
+          if (import.meta.env.DEV) {
+            console.error('Could not get user ID from any source');
+          }
           return null;
         }
       }
@@ -461,17 +486,23 @@ export const getUserProfile = async (userId?: string): Promise<UserProfile | nul
     ] = await Promise.race([allDataPromise, timeoutPromise]);
 
     if (profileError && profileError.code !== 'PGRST116') {
-      console.error('Error fetching profile:', profileError);
+      if (import.meta.env.DEV) {
+        console.error('Error fetching profile:', profileError);
+      }
       throw profileError;
     }
 
     if (categoriesError) {
-      console.error('Error fetching categories:', categoriesError);
+      if (import.meta.env.DEV) {
+        console.error('Error fetching categories:', categoriesError);
+      }
       throw categoriesError;
     }
 
     if (logsError) {
-      console.error('Error fetching logs:', logsError);
+      if (import.meta.env.DEV) {
+        console.error('Error fetching logs:', logsError);
+      }
       throw logsError;
     }
 
@@ -511,7 +542,9 @@ export const getUserProfile = async (userId?: string): Promise<UserProfile | nul
 
     return result;
   } catch (error) {
-    console.error("Error getting user profile:", error);
+    if (import.meta.env.DEV) {
+      console.error("Error getting user profile:", error);
+    }
     return null;
   }
 };
@@ -527,13 +560,17 @@ export const updateTheme = async (theme: string, accentColor: string) => {
       .eq("id", userId);
 
     if (error) {
-      console.error("Error updating theme:", error);
+      if (import.meta.env.DEV) {
+        console.error("Error updating theme:", error);
+      }
       throw error;
     }
 
     return data;
   } catch (error) {
-    console.error("Error updating theme:", error);
+    if (import.meta.env.DEV) {
+      console.error("Error updating theme:", error);
+    }
     throw error;
   }
 };
@@ -562,7 +599,7 @@ function mapLogFromDB(dbLog: any): DailyLog {
 
 // Helper function to convert database profile to frontend profile
 const mapDatabaseToProfile = (dbProfile: any): UserProfile => {
-  if (process.env.NODE_ENV === 'development') {
+  if (import.meta.env.DEV) {
     console.log("Mapping database profile to frontend");
   }
   return {
@@ -582,7 +619,7 @@ const mapDatabaseToProfile = (dbProfile: any): UserProfile => {
 
 // Helper function to convert frontend profile to database format
 const mapProfileToDatabase = (profile: Partial<UserProfile>) => {
-  if (process.env.NODE_ENV === 'development') {
+  if (import.meta.env.DEV) {
     console.log("Mapping frontend profile to database");
   }
   const mapped = {
@@ -593,7 +630,7 @@ const mapProfileToDatabase = (profile: Partial<UserProfile>) => {
     height: profile.height,
     fitness_goal: profile.fitnessGoal,
   };
-  if (process.env.NODE_ENV === 'development') {
+  if (import.meta.env.DEV) {
     console.log("Mapped result:", mapped);
   }
   return mapped;
@@ -602,7 +639,7 @@ const mapProfileToDatabase = (profile: Partial<UserProfile>) => {
 export const profileStorage = {
   async getProfile(userId: string): Promise<UserProfile | null> {
     try {
-      if (process.env.NODE_ENV === 'development') {
+      if (import.meta.env.DEV) {
         console.log("Getting profile for user");
       }
       
@@ -614,39 +651,49 @@ export const profileStorage = {
         .single();
 
       if (error) {
-        console.error("Error fetching profile:", error);
+        if (import.meta.env.DEV) {
+          console.error("Error fetching profile:", error);
+        }
         if (error.code === 'PGRST116') {
           // No rows found
-          console.log("No profile found for user:", userId);
+          if (import.meta.env.DEV) {
+            console.log("No profile found for user:", userId);
+          }
           return null;
         }
         if (error.message.includes('relation "profiles" does not exist')) {
-          console.error("Profiles table does not exist!");
+          if (import.meta.env.DEV) {
+            console.error("Profiles table does not exist!");
+          }
           return null;
         }
         throw error;
       }
 
-      if (process.env.NODE_ENV === 'development') {
+      if (import.meta.env.DEV) {
         console.log("Profile data from database:", data);
       }
       return mapDatabaseToProfile(data);
     } catch (error) {
-      console.error('Error fetching profile');
+      if (import.meta.env.DEV) {
+        console.error('Error fetching profile');
+      }
       return null;
     }
   },
 
   async createProfile(userId: string, profileData: Partial<UserProfile>): Promise<UserProfile> {
     try {
-      if (process.env.NODE_ENV === 'development') {
+      if (import.meta.env.DEV) {
         console.log("Creating profile for user");
       }
       
       // Check if profile already exists first
       const existingProfile = await this.getProfile(userId);
       if (existingProfile) {
-        console.log("Profile already exists, updating instead");
+        if (import.meta.env.DEV) {
+          console.log("Profile already exists, updating instead");
+        }
         return await this.updateProfile(userId, profileData);
       }
 
@@ -655,7 +702,7 @@ export const profileStorage = {
         ...mapProfileToDatabase(profileData),
       };
 
-      if (process.env.NODE_ENV === 'development') {
+      if (import.meta.env.DEV) {
         console.log("Database data to insert:", dbData);
       }
 
@@ -666,28 +713,32 @@ export const profileStorage = {
         .single();
 
       if (error) {
-        console.error("Error creating profile:", error);
+        if (import.meta.env.DEV) {
+          console.error("Error creating profile:", error);
+        }
         throw error;
       }
 
-      if (process.env.NODE_ENV === 'development') {
+      if (import.meta.env.DEV) {
         console.log("Profile created successfully");
       }
       return mapDatabaseToProfile(data);
     } catch (error) {
-      console.error('Error creating profile');
+      if (import.meta.env.DEV) {
+        console.error('Error creating profile');
+      }
       throw error;
     }
   },
 
   async updateProfile(userId: string, profileData: Partial<UserProfile>): Promise<UserProfile> {
     try {
-      if (process.env.NODE_ENV === 'development') {
+      if (import.meta.env.DEV) {
         console.log("Updating profile for user");
       }
 
       const dbData = mapProfileToDatabase(profileData);
-      if (process.env.NODE_ENV === 'development') {
+      if (import.meta.env.DEV) {
         console.log("Mapped database data:", dbData);
       }
 
@@ -699,21 +750,27 @@ export const profileStorage = {
         .single();
 
       if (error) {
-        console.error("Error updating profile:", error);
+        if (import.meta.env.DEV) {
+          console.error("Error updating profile:", error);
+        }
         // If profile doesn't exist, create it
         if (error.code === 'PGRST116') {
-          console.log("Profile doesn't exist, creating new one");
+          if (import.meta.env.DEV) {
+            console.log("Profile doesn't exist, creating new one");
+          }
           return await this.createProfile(userId, profileData);
         }
         throw error;
       }
 
-      if (process.env.NODE_ENV === 'development') {
+      if (import.meta.env.DEV) {
         console.log("Profile updated successfully");
       }
       return mapDatabaseToProfile(data);
     } catch (error) {
-      console.error('Error updating profile');
+      if (import.meta.env.DEV) {
+        console.error('Error updating profile');
+      }
       throw error;
     }
   },
@@ -729,20 +786,28 @@ export const profileStorage = {
   },
 
   async getCategories(): Promise<TrackingCategory[]> {
-    console.log('SupabaseStorage.getCategories called');
+    if (import.meta.env.DEV) {
+      console.log('SupabaseStorage.getCategories called');
+    }
     try {
       const { data: { user }, error: authError } = await supabase.auth.getUser();
       if (authError) {
-        console.error('Auth error in getCategories:', authError);
+        if (import.meta.env.DEV) {
+          console.error('Auth error in getCategories:', authError);
+        }
         throw authError;
       }
       
       if (!user) {
-        console.log('No user found in getCategories, returning empty array');
+        if (import.meta.env.DEV) {
+          console.log('No user found in getCategories, returning empty array');
+        }
         return [];
       }
 
-      console.log('Getting categories for user:', user.id);
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Getting categories for user:', user.id);
+      }
       
       const { data, error } = await supabase
         .from('categories')
@@ -751,33 +816,47 @@ export const profileStorage = {
         .order('created_at', { ascending: true });
 
       if (error) {
-        console.error('Supabase error in getCategories:', error);
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Supabase error in getCategories:', error);
+        }
         throw error;
       }
 
-      console.log('Categories retrieved:', data);
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Categories retrieved:', data);
+      }
       return data || [];
     } catch (error) {
-      console.error('Error in getCategories:', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Error in getCategories:', error);
+      }
       return []; // Return empty array instead of throwing
     }
   },
 
   async getLogs(): Promise<DailyLog[]> {
-    console.log('SupabaseStorage.getLogs called');
+    if (process.env.NODE_ENV === 'development') {
+      console.log('SupabaseStorage.getLogs called');
+    }
     try {
       const { data: { user }, error: authError } = await supabase.auth.getUser();
       if (authError) {
-        console.error('Auth error in getLogs:', authError);
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Auth error in getLogs:', authError);
+        }
         throw authError;
       }
       
       if (!user) {
-        console.log('No user found in getLogs, returning empty array');
+        if (process.env.NODE_ENV === 'development') {
+          console.log('No user found in getLogs, returning empty array');
+        }
         return [];
       }
 
-      console.log('Getting logs for user:', user.id);
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Getting logs for user:', user.id);
+      }
       
       const { data, error } = await supabase
         .from('daily_logs')
@@ -786,14 +865,20 @@ export const profileStorage = {
         .order('date', { ascending: false });
 
       if (error) {
-        console.error('Supabase error in getLogs:', error);
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Supabase error in getLogs:', error);
+        }
         throw error;
       }
 
-      console.log('Logs retrieved:', data);
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Logs retrieved:', data);
+      }
       return data || [];
     } catch (error) {
-      console.error('Error in getLogs:', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Error in getLogs:', error);
+      }
       return []; // Return empty array instead of throwing
     }
   },

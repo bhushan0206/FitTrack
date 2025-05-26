@@ -90,32 +90,8 @@ const ExerciseTracker = ({ exercise, onComplete, onCancel, selectedDate }: Exerc
   };
 
   const handleComplete = async () => {
-    const exerciseLog: ExerciseLog = {
-      id: generateId(),
-      exerciseId: exercise.id, // Use exercise.id instead of exercise.name
-      date: selectedDate,
-      duration: parseInt(duration) || 0,
-      sets: sets ? parseInt(sets) : undefined,
-      reps: reps ? parseInt(reps) : undefined,
-      weight: weight ? parseFloat(weight) : undefined,
-      distance: distance ? parseFloat(distance) : undefined,
-      calories: calculateCalories(),
-      notes: notes || undefined,
-      intensity,
-    };
-
-    // Remove sensitive exercise data from logs
     if (process.env.NODE_ENV === 'development') {
       console.log('Creating exercise log');
-    }
-
-    // Save to database
-    const savedLog = await exerciseStorage.createExerciseLog(exerciseLog);
-    if (savedLog) {
-      onComplete(savedLog);
-    } else {
-      console.error('Failed to save exercise log');
-      // You might want to show an error message to the user here
     }
   };
 

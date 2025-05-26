@@ -26,68 +26,9 @@ export const useFitnessData = () => {
   // Load user data when user changes
   useEffect(() => {
     const loadUserData = async () => {
-      if (!user || authLoading) {
-        setIsLoading(authLoading);
-        return;
-      }
-
       try {
-        setIsLoading(true);
-        // Remove sensitive user ID from logs
         if (process.env.NODE_ENV === 'development') {
           console.log('useFitnessData: Starting data load for user');
-        }
-        
-        // For Google users, try with user ID first to avoid timeout
-        let userProfile: UserProfile | null = null;
-        
-        try {
-          // Try to get profile with user ID to bypass auth issues
-          userProfile = await getUserProfile(user.id);
-        } catch (error) {
-          console.warn('Direct profile fetch failed, trying fallback:', error);
-          
-          // Fallback: try without user ID
-          try {
-            userProfile = await getUserProfile();
-          } catch (fallbackError) {
-            console.warn('Fallback profile fetch also failed:', fallbackError);
-            // Create empty profile for new users
-            userProfile = {
-              id: user.id,
-              name: user.name || user.email?.split('@')[0] || 'User',
-              categories: [],
-              logs: [],
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString()
-            };
-          }
-        }
-        
-        // If still no profile, try to initialize one
-        if (!userProfile) {
-          console.log('No profile found, attempting to initialize...');
-          try {
-            userProfile = await initializeUserProfile(user.name);
-          } catch (initError) {
-            console.warn('Profile initialization failed:', initError);
-            // Create minimal profile
-            userProfile = {
-              id: user.id,
-              name: user.name || user.email?.split('@')[0] || 'User',
-              categories: [],
-              logs: [],
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString()
-            };
-          }
-        }
-
-        if (userProfile) {
-          setProfile(userProfile);
-          setCategories(userProfile.categories || []);
-          setLogs(userProfile.logs || []);
-          console.log('useFitnessData: Profile loaded successfully');
         }
       } catch (error) {
         console.error("Error loading user data:", error);

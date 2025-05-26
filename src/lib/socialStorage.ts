@@ -20,7 +20,9 @@ export const socialStorage = {
 
       if (error && error.code === 'PGRST116') {
         // Profile doesn't exist, create it manually
-        console.log('Creating profile manually for user:', user.id);
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Creating profile manually for user:', user.id);
+        }
         
         const profileData = {
           id: user.id,
@@ -41,7 +43,9 @@ export const socialStorage = {
           .single();
 
         if (createError) {
-          console.error('Error creating profile manually:', createError);
+          if (process.env.NODE_ENV === 'development') {
+            console.error('Error creating profile manually:', createError);
+          }
           throw createError;
         }
         
@@ -50,14 +54,20 @@ export const socialStorage = {
         }
         return newProfile;
       } else if (error) {
-        console.error('Error checking profile:', error);
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Error checking profile:', error);
+        }
         throw error;
       }
 
-      console.log('Profile already exists:', existingProfile);
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Profile already exists:', existingProfile);
+      }
       return existingProfile;
     } catch (error) {
-      console.error('Error in ensureProfile');
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Error in ensureProfile');
+      }
       throw error;
     }
   },
@@ -68,7 +78,9 @@ export const socialStorage = {
       const { data: { user }, error: authError } = await supabase.auth.getUser();
       
       if (authError) {
-        console.error('Auth error:', authError);
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Auth error:', authError);
+        }
         return { success: false, error: 'Authentication failed. Please sign in again.' };
       }
       
@@ -92,11 +104,15 @@ export const socialStorage = {
           .limit(1);
 
         if (testError) {
-          console.error('Database connectivity test failed:', testError);
+          if (process.env.NODE_ENV === 'development') {
+            console.error('Database connectivity test failed:', testError);
+          }
           return { success: false, error: `Database error: ${testError.message}. Please contact support.` };
         }
       } catch (error) {
-        console.error('Database connection error:', error);
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Database connection error:', error);
+        }
         return { success: false, error: 'Cannot connect to database. Please try again later.' };
       }
 
@@ -112,7 +128,9 @@ export const socialStorage = {
         .maybeSingle(); // Use maybeSingle() instead of single() to handle no results gracefully
 
       if (profileError) {
-        console.error('Error searching for friend profile:', profileError);
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Error searching for friend profile:', profileError);
+        }
         return { success: false, error: `Search error: ${profileError.message}. Please try again.` };
       }
 
@@ -124,10 +142,14 @@ export const socialStorage = {
         return { success: false, error: 'Cannot add yourself as friend.' };
       }
 
-      console.log('Found friend profile:', friendProfile);
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Found friend profile:', friendProfile);
+      }
       return await this.createFriendRequest(user.id, friendProfile.id);
     } catch (error) {
-      console.error('Error sending friend request');
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Error sending friend request');
+      }
       return { success: false, error: 'Network error. Please check your connection and try again.' };
     }
   },
@@ -152,12 +174,14 @@ export const socialStorage = {
       // ALWAYS enforce the constraint: smaller UUID first
       const [firstId, secondId] = [userId, friendId].sort();
 
-      console.log('Creating friendship with constraint', { 
-        user_id: firstId, 
-        friend_id: secondId, 
-        requested_by: userId,
-        constraint_check: firstId < secondId 
-      });
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Creating friendship with constraint', { 
+          user_id: firstId, 
+          friend_id: secondId, 
+          requested_by: userId,
+          constraint_check: firstId < secondId 
+        });
+      }
 
       const { data, error } = await supabase
         .from('friends')
@@ -171,7 +195,9 @@ export const socialStorage = {
         .single();
 
       if (error) {
-        console.error('Database error:', error);
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Database error:', error);
+        }
         
         // Handle constraint violation errors
         if (error.code === '23505') { // unique_violation
@@ -188,7 +214,9 @@ export const socialStorage = {
       }
       return { success: true };
     } catch (error) {
-      console.error('Error creating friend request');
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Error creating friend request');
+      }
       return { success: false, error: 'Failed to send friend request. Please try again.' };
     }
   },
@@ -197,7 +225,9 @@ export const socialStorage = {
     try {
       const { data: { user }, error: authError } = await supabase.auth.getUser();
       if (authError || !user) {
-        console.log('User not authenticated, returning empty friends list');
+        if (process.env.NODE_ENV === 'development') {
+          console.log('User not authenticated, returning empty friends list');
+        }
         return [];
       }
 
@@ -212,7 +242,9 @@ export const socialStorage = {
         .eq('status', 'accepted');
 
       if (error) {
-        console.error('Error fetching friendships:', error);
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Error fetching friendships:', error);
+        }
         return [];
       }
 
@@ -232,7 +264,9 @@ export const socialStorage = {
         .in('id', friendIds);
 
       if (profileError) {
-        console.error('Error fetching friend profiles:', profileError);
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Error fetching friend profiles:', profileError);
+        }
         return friendships.map(friendship => ({
           ...friendship,
           friend_id: friendship.user_id === user.id ? friendship.friend_id : friendship.user_id,
@@ -252,7 +286,9 @@ export const socialStorage = {
         };
       });
     } catch (error) {
-      console.error('Error fetching friends:', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Error fetching friends:', error);
+      }
       return [];
     }
   },
@@ -261,7 +297,9 @@ export const socialStorage = {
     try {
       const { data: { user }, error: authError } = await supabase.auth.getUser();
       if (authError || !user) {
-        console.log('User not authenticated, returning empty pending requests');
+        if (process.env.NODE_ENV === 'development') {
+          console.log('User not authenticated, returning empty pending requests');
+        }
         return [];
       }
 
@@ -278,7 +316,9 @@ export const socialStorage = {
         .neq('requested_by', user.id); // Only requests FROM others TO current user
 
       if (error) {
-        console.error('Error fetching pending requests:', error);
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Error fetching pending requests:', error);
+        }
         return [];
       }
 
@@ -296,7 +336,9 @@ export const socialStorage = {
         .in('id', requesterIds);
 
       if (profileError) {
-        console.error('Error fetching requester profiles:', profileError);
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Error fetching requester profiles:', profileError);
+        }
         return friendships.map(friendship => ({
           ...friendship,
           friend_profile: null
@@ -309,7 +351,9 @@ export const socialStorage = {
         friend_profile: profiles?.find(p => p.id === friendship.requested_by) || null
       }));
     } catch (error) {
-      console.error('Error fetching pending requests:', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Error fetching pending requests:', error);
+      }
       return [];
     }
   },
@@ -329,13 +373,17 @@ export const socialStorage = {
         .or(`user_id.eq.${user.id},friend_id.eq.${user.id}`); // Ensure user is part of this friendship
 
       if (updateError) {
-        console.error('Error accepting friend request:', updateError);
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Error accepting friend request:', updateError);
+        }
         return { success: false, error: 'Failed to accept friend request. Please try again.' };
       }
       
       return { success: true };
     } catch (error) {
-      console.error('Error accepting friend request:', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Error accepting friend request:', error);
+      }
       return { success: false, error: 'Network error. Please try again.' };
     }
   },
@@ -345,17 +393,21 @@ export const socialStorage = {
     try {
       const { data: { user }, error: authError } = await supabase.auth.getUser();
       if (authError || !user) {
-        console.error('Auth error in sendMessage:', authError);
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Auth error in sendMessage:', authError);
+        }
         return { success: false, error: 'Please sign in to send messages.' };
       }
 
-      console.log('Sending message:', { 
-        sender_id: user.id, 
-        receiver_id: receiverId, 
-        content, 
-        message_type: messageType,
-        shared_data: sharedData 
-      });
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Sending message:', { 
+          sender_id: user.id, 
+          receiver_id: receiverId, 
+          content, 
+          message_type: messageType,
+          shared_data: sharedData 
+        });
+      }
 
       // Verify friendship exists - check both directions since we only store one record
       const { data: friendships, error: friendshipError } = await supabase
@@ -365,17 +417,23 @@ export const socialStorage = {
         .eq('status', 'accepted');
 
       if (friendshipError) {
-        console.error('Friendship verification failed:', friendshipError);
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Friendship verification failed:', friendshipError);
+        }
         return { success: false, error: 'Unable to verify friendship status. Please try again.' };
       }
 
       // Check if friendship exists
       if (!friendships || friendships.length === 0) {
-        console.error('No friendship found between users');
+        if (process.env.NODE_ENV === 'development') {
+          console.error('No friendship found between users');
+        }
         return { success: false, error: 'You can only send messages to friends.' };
       }
 
-      console.log('Friendship verified successfully');
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Friendship verified successfully');
+      }
 
       // Insert the message
       const messageData = {
@@ -395,14 +453,20 @@ export const socialStorage = {
         .single();
 
       if (error) {
-        console.error('Error inserting message:', error);
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Error inserting message:', error);
+        }
         return { success: false, error: 'Failed to send message. Please try again.' };
       }
       
-      console.log('Message sent successfully:', messageResult);
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Message sent successfully:', messageResult);
+      }
       return { success: true };
     } catch (error) {
-      console.error('Error in sendMessage:', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Error in sendMessage:', error);
+      }
       return { success: false, error: 'Network error. Please try again.' };
     }
   },
@@ -411,7 +475,9 @@ export const socialStorage = {
     try {
       const { data: { user }, error: authError } = await supabase.auth.getUser();
       if (authError || !user) {
-        console.log('User not authenticated, returning empty conversations');
+        if (process.env.NODE_ENV === 'development') {
+          console.log('User not authenticated, returning empty conversations');
+        }
         return [];
       }
 
@@ -423,7 +489,9 @@ export const socialStorage = {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Error fetching conversations:', error);
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Error fetching conversations:', error);
+        }
         return [];
       }
 
@@ -445,7 +513,9 @@ export const socialStorage = {
         .in('id', Array.from(userIds));
 
       if (profileError) {
-        console.error('Error fetching profiles for conversations:', profileError);
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Error fetching profiles for conversations:', profileError);
+        }
         return [];
       }
 
@@ -497,7 +567,9 @@ export const socialStorage = {
         new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
       );
     } catch (error) {
-      console.error('Error fetching conversations:', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Error fetching conversations:', error);
+      }
       return [];
     }
   },
@@ -506,7 +578,9 @@ export const socialStorage = {
     try {
       const { data: { user }, error: authError } = await supabase.auth.getUser();
       if (authError || !user) {
-        console.log('User not authenticated, returning empty messages');
+        if (process.env.NODE_ENV === 'development') {
+          console.log('User not authenticated, returning empty messages');
+        }
         return [];
       }
 
@@ -521,13 +595,17 @@ export const socialStorage = {
         .order('created_at', { ascending: true });
 
       if (error) {
-        console.error('Error fetching messages:', error);
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Error fetching messages:', error);
+        }
         return [];
       }
 
       return messages || [];
     } catch (error) {
-      console.error('Error fetching messages:', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Error fetching messages:', error);
+      }
       return [];
     }
   },
@@ -604,13 +682,17 @@ export const socialStorage = {
         .eq('read', false);
 
       if (error) {
-        console.error('Error marking messages as read:', error);
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Error marking messages as read:', error);
+        }
         return { success: false, error: 'Failed to mark messages as read.' };
       }
 
       return { success: true };
     } catch (error) {
-      console.error('Error marking messages as read:', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Error marking messages as read:', error);
+      }
       return { success: false, error: 'Network error. Please try again.' };
     }
   },
@@ -634,7 +716,9 @@ export const socialStorage = {
 
       return await this.sendMessage(friendId, message, 'workout_share', workoutShare);
     } catch (error) {
-      console.error('Error sharing workout:', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Error sharing workout:', error);
+      }
       return { success: false, error: 'Failed to share workout. Please try again.' };
     }
   },
@@ -672,7 +756,9 @@ export const socialStorage = {
 
       return await this.sendMessage(friendId, message, 'progress_share', progressShare);
     } catch (error) {
-      console.error('Error sharing progress:', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Error sharing progress:', error);
+      }
       return { success: false, error: 'Failed to share progress. Please try again.' };
     }
   },
@@ -691,13 +777,17 @@ export const socialStorage = {
         .eq('read', false);
 
       if (error) {
-        console.error('Error getting unread count:', error);
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Error getting unread count:', error);
+        }
         return 0;
       }
 
       return count || 0;
     } catch (error) {
-      console.error('Error getting unread count:', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Error getting unread count:', error);
+      }
       return 0;
     }
   },

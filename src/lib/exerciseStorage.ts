@@ -84,7 +84,9 @@ export const exerciseStorage = {
 
   // Exercise Log CRUD operations
   async getExerciseLogs(): Promise<ExerciseLog[]> {
-    console.log('ExerciseStorage.getExerciseLogs called');
+    if (process.env.NODE_ENV === 'development') {
+      console.log('ExerciseStorage.getExerciseLogs called');
+    }
     
     try {
       const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -95,11 +97,15 @@ export const exerciseStorage = {
       }
       
       if (!user) {
-        console.log('No user found in getExerciseLogs, returning empty array');
+        if (process.env.NODE_ENV === 'development') {
+          console.log('No user found in getExerciseLogs, returning empty array');
+        }
         return [];
       }
 
-      console.log('Getting exercise logs for user:', user.id);
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Getting exercise logs for user:', user.id);
+      }
       
       const { data, error } = await supabase
         .from('exercise_logs')
@@ -112,7 +118,9 @@ export const exerciseStorage = {
         return []; // Return empty array instead of throwing
       }
 
-      console.log('Exercise logs retrieved:', data);
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Exercise logs retrieved:', data);
+      }
       return data || [];
     } catch (error) {
       console.error('Error in getExerciseLogs:', error);
@@ -129,7 +137,9 @@ export const exerciseStorage = {
       
       // If exerciseId is not a valid UUID, try to find the exercise by name
       if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(exerciseId)) {
-        console.log('Looking up exercise by name:', exerciseId);
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Looking up exercise by name:', exerciseId);
+        }
         
         const { data: exerciseData, error: exerciseError } = await supabase
           .from('exercises')
@@ -139,21 +149,25 @@ export const exerciseStorage = {
 
         if (exerciseError || !exerciseData) {
           console.error('Exercise lookup error:', exerciseError);
-          console.log('Available exercises for debugging...');
-          
-          // Debug: list available exercises
-          const { data: allExercises } = await supabase
-            .from('exercises')
-            .select('id, name')
-            .limit(10);
-          
-          console.log('Available exercises:', allExercises);
+          if (process.env.NODE_ENV === 'development') {
+            console.log('Available exercises for debugging...');
+            
+            // Debug: list available exercises
+            const { data: allExercises } = await supabase
+              .from('exercises')
+              .select('id, name')
+              .limit(10);
+            
+            console.log('Available exercises:', allExercises);
+          }
           
           throw new Error(`Exercise "${exerciseId}" not found`);
         }
         
         exerciseId = exerciseData.id;
-        console.log('Found exercise ID:', exerciseId);
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Found exercise ID:', exerciseId);
+        }
       }
 
       const { data, error } = await supabase

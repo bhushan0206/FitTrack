@@ -32,7 +32,9 @@ const ChatPanel = ({ friendId, friendName, onBack }: ChatPanelProps) => {
       try {
         await markMessagesAsRead(friendId);
       } catch (error) {
-        console.error('Error marking messages as read:', error);
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Error marking messages as read:', error);
+        }
       }
     };
     
@@ -112,7 +114,9 @@ const ChatPanel = ({ friendId, friendName, onBack }: ChatPanelProps) => {
       // Remove optimistic message and restore input on error
       setMessages(prev => prev.filter(m => m.id !== optimisticMessage.id));
       setNewMessage(messageContent);
-      console.error('Error sending message:', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Error sending message:', error);
+      }
     } finally {
       setLoading(false);
     }

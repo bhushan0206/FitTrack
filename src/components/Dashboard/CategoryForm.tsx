@@ -32,7 +32,6 @@ const CategoryForm = ({ onSave, category, onCancel, existingCategories = [] }: C
     e.preventDefault();
     e.stopPropagation();
 
-    // Remove sensitive form data from logs
     if (process.env.NODE_ENV === 'development') {
       console.log('Category form submitted');
     }

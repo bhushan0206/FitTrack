@@ -43,7 +43,9 @@ const SharePanel = () => {
       const todayExercises = allExercises.filter(log => log.date === today);
       setExerciseLogs(todayExercises);
     } catch (error) {
-      console.error('Error loading exercises:', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Error loading exercises:', error);
+      }
     }
   };
 
@@ -74,7 +76,9 @@ const SharePanel = () => {
         setError(result.error || 'Failed to share. Please try again.');
       }
     } catch (error) {
-      console.error('Error sharing:', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Error sharing:', error);
+      }
       setError('Network error. Please check your connection and try again.');
     }
     

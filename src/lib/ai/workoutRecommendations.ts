@@ -316,7 +316,6 @@ export class WorkoutRecommendationEngine {
 
   // Method to add user feedback to improve future recommendations
   addUserFeedback(workoutId: string, rating: number, feedback?: string): void {
-    // Remove sensitive user feedback from logs
     if (process.env.NODE_ENV === 'development') {
       console.log(`User feedback for workout ${workoutId}: ${rating}/5`, feedback);
     }

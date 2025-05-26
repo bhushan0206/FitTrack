@@ -26,7 +26,6 @@ const SignInPage = () => {
   // Redirect if already authenticated
   useEffect(() => {
     if (user && !loading) {
-      // Remove user details from logs
       if (process.env.NODE_ENV === 'development') {
         console.log('User authenticated, redirecting to dashboard from SignInPage');
       }

@@ -29,7 +29,9 @@ const MessageInterface = ({ conversation, onBack }: MessageInterfaceProps) => {
       const result = await socialStorage.getMessages(conversation.participant_id);
       setMessages(result);
     } catch (error) {
-      console.error('Error loading messages:', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Error loading messages:', error);
+      }
     } finally {
       setLoading(false);
     }
@@ -46,7 +48,9 @@ const MessageInterface = ({ conversation, onBack }: MessageInterfaceProps) => {
           // Reload unread count after marking as read
           refreshCounts(); // Fix: use refreshCounts instead of loadUnreadCount
         } catch (error) {
-          console.warn('Failed to mark messages as read:', error);
+          if (process.env.NODE_ENV === 'development') {
+            console.warn('Failed to mark messages as read:', error);
+          }
         }
       };
       
@@ -76,7 +80,9 @@ const MessageInterface = ({ conversation, onBack }: MessageInterfaceProps) => {
           }
         });
       } catch (error) {
-        console.error('Failed to set up real-time subscription:', error);
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Failed to set up real-time subscription:', error);
+        }
       }
 
       return () => {
@@ -127,14 +133,18 @@ const MessageInterface = ({ conversation, onBack }: MessageInterfaceProps) => {
         // Remove the optimistic message on error and restore input
         setMessages(prev => prev.filter(m => m.id !== immediateMessage.id));
         setNewMessage(messageContent);
-        console.error('Failed to send message:', result.error);
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Failed to send message:', result.error);
+        }
       }
       // If successful, keep the optimistic message (don't wait for real-time)
     } catch (error) {
       // Remove optimistic message on error and restore input
       setMessages(prev => prev.filter(m => m.id !== immediateMessage.id));
       setNewMessage(messageContent);
-      console.error('Error sending message:', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Error sending message:', error);
+      }
     } finally {
       setSending(false);
     }
