@@ -475,11 +475,11 @@ const StatisticsPanel = () => {
                         </TabsContent>
 
                         <TabsContent value="workouts" className="h-full mt-0">
-                          <WorkoutRecommendations
-                            userProfile={userProfile}
-                            recentLogs={recentLogs}
-                            categories={userProfile?.categories}
-                          />
+                          <WorkoutRecommendations 
+                              profile={userProfile}
+                              categories={categories}
+                              logs={recentLogs}
+                            />
                         </TabsContent>
 
                         <TabsContent value="nutrition" className="h-full mt-0">

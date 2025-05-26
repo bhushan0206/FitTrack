@@ -39,6 +39,16 @@ export default function DashboardTabs({
   onDeleteLog,
   onAddLog,
 }: DashboardTabsProps) {
+  const handleDeleteCategory = async (categoryId: string): Promise<boolean> => {
+    try {
+      await onDeleteCategory(categoryId);
+      return true;
+    } catch (error) {
+      console.error('Error deleting category:', error);
+      return false;
+    }
+  };
+
   return (
     <Tabs value={activeTab} onValueChange={onTabChange} className="w-full">
       <TabsList className="grid w-full grid-cols-4 mb-6 bg-background-secondary">
@@ -91,8 +101,7 @@ export default function DashboardTabs({
         <CategoryList
           categories={categories}
           onEdit={onEditCategory}
-          onDelete={onDeleteCategory}
-          onAdd={onAddCategory}
+          onDelete={handleDeleteCategory}
         />
       </TabsContent>
 
