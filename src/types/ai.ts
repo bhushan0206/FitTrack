@@ -2,7 +2,8 @@ export interface AIMessage {
   id: string;
   role: 'user' | 'assistant';
   content: string;
-  timestamp: string;
+  timestamp?: string; // Make optional since database uses created_at
+  created_at?: string; // Add this optional property for database compatibility
   conversation_id?: string; // Add this property
   message_type?: 'text' | 'system' | 'error'; // Add this property
   metadata?: {
@@ -17,12 +18,13 @@ export interface AIConversation {
   id: string;
   user_id: string;
   title: string;
-  created_at: string;
+  created_at?: string; // Made optional for database compatibility
   updated_at: string;
   is_active: boolean;
   metadata?: Record<string, any>;
   messages?: AIMessage[];
-  last_message?: AIMessage;
+  last_message_at?: string; // Optional property for database compatibility
+  last_message?: AIMessage | string; // Can be either AIMessage or string
 }
 
 export interface AISuggestion {

@@ -23,13 +23,12 @@ class AIService {
       // Get conversation history
       const messages = await aiStorage.getMessages(conversationId);
       
-      // Add user message to storage first
+      // Add user message to storage first - remove timestamp field
       const userMsg: Omit<AIMessage, 'id' | 'created_at'> = {
         conversation_id: conversationId,
         role: 'user',
         content: userMessage,
         message_type: 'text',
-        timestamp: new Date().toISOString(),
         metadata: context ? { context } : {}
       };
       
@@ -54,13 +53,12 @@ class AIService {
         max_tokens: 1000
       });
 
-      // Save AI response
+      // Save AI response - remove timestamp field
       const assistantMsg: Omit<AIMessage, 'id' | 'created_at'> = {
         conversation_id: conversationId,
         role: 'assistant',
         content: aiResponse,
         message_type: 'text',
-        timestamp: new Date().toISOString(),
         metadata: {}
       };
       
@@ -162,24 +160,13 @@ class AIService {
       const { aiEngine } = await import('./aiEngine');
       const response = await aiEngine.generateResponse(message, context || {});
       
-      // Create the AI message
-      const aiMessage: Omit<AIMessage, 'id'> = {
+      // Create the AI message - remove timestamp field
+      const messageToStore: Omit<AIMessage, 'id' | 'created_at'> = {
         role: 'assistant',
         content: response,
-        timestamp: new Date().toISOString(),
         conversation_id: conversationId,
         message_type: 'text',
         metadata: context ? { context } : {}
-      };
-
-      // Store the message - fix the type mismatch
-      const messageToStore: Omit<AIMessage, 'id' | 'created_at'> = {
-        role: aiMessage.role,
-        content: aiMessage.content,
-        timestamp: aiMessage.timestamp,
-        conversation_id: aiMessage.conversation_id,
-        message_type: aiMessage.message_type,
-        metadata: aiMessage.metadata
       };
 
       const storedMessage = await aiStorage.addMessage(messageToStore);
@@ -196,11 +183,10 @@ class AIService {
     conversationId?: string
   ): Promise<{ userMessage: AIMessage; aiResponse: AIMessage }> {
     try {
-      // Store user message
+      // Store user message - timestamp is now optional
       const userMessage: Omit<AIMessage, 'id' | 'created_at'> = {
         role: 'user',
         content,
-        timestamp: new Date().toISOString(),
         conversation_id: conversationId,
         message_type: 'text',
         metadata: {}

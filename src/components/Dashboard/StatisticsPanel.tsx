@@ -30,6 +30,7 @@ import WorkoutRecommendations from "../AI/WorkoutRecommendations";
 import NutritionRecommendations from "../AI/NutritionRecommendations";
 import GoalTrackingAssistant from '../AI/GoalTrackingAssistant';
 import TabNavigation, { TabValue } from "@/components/Layout/TabNavigation";
+import QuickActions from "./QuickActions";
 
 const StatisticsPanel = () => {
   const { user, signOut } = useAuth();
@@ -476,56 +477,12 @@ const StatisticsPanel = () => {
                 categories={categories}
               />
 
-              {/* Quick Actions - Mobile optimized */}
-              <Card className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm border-0 shadow-sm">
-                <CardHeader className="px-2 py-2 sm:px-4 sm:py-2.5">
-                  <CardTitle className="text-gray-900 dark:text-white text-sm font-bold">
-                    Quick Actions
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="px-2 py-2 sm:px-4 sm:py-2.5">
-                  <div className="grid grid-cols-2 gap-1 sm:gap-2">
-                    <Button
-                      onClick={() => setShowLogForm(true)}
-                      className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white shadow-sm text-xs"
-                      size="sm"
-                    >
-                      <Plus className="w-3 h-3 mr-1 flex-shrink-0" />
-                      <span className="truncate">Add Log</span>
-                    </Button>
-                    <Button
-                      onClick={() => setShowCategoryForm(true)}
-                      variant="outline"
-                      className="w-full border-indigo-200 text-indigo-700 hover:bg-indigo-50 dark:border-indigo-800 dark:text-indigo-300 dark:hover:bg-indigo-900/50 text-xs"
-                      size="sm"
-                    >
-                      <FolderPlus className="w-3 h-3 mr-1 flex-shrink-0" />
-                      <span className="truncate">Category</span>
-                    </Button>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-1 sm:gap-2 mt-1 sm:mt-2">
-                    <Button
-                      onClick={() => setActiveTab("social")}
-                      variant="outline"
-                      className="w-full border-purple-200 text-purple-700 hover:bg-purple-50 dark:border-purple-800 dark:text-purple-300 dark:hover:bg-purple-900/50 text-xs"
-                      size="sm"
-                    >
-                      <Users className="w-3 h-3 mr-1 flex-shrink-0" />
-                      <span className="truncate">Social</span>
-                    </Button>
-                    <Button
-                      onClick={() => setActiveTab("ai-assistant")}
-                      variant="outline"
-                      className="w-full border-yellow-200 text-yellow-700 hover:bg-yellow-50 dark:border-yellow-800 dark:text-yellow-300 dark:hover:bg-yellow-900/50 text-xs"
-                      size="sm"
-                    >
-                      <Sparkles className="w-3 h-3 mr-1 text-yellow-500 flex-shrink-0" />
-                      <span className="truncate">AI</span>
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
+              {/* Use the new QuickActions component */}
+              <QuickActions
+                onAddLog={() => setShowLogForm(true)}
+                onAddCategory={() => setShowCategoryForm(true)}
+                onTabChange={setActiveTab}
+              />
             </div>
           </div>
         </div>
