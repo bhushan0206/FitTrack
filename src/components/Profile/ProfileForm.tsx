@@ -24,7 +24,7 @@ interface ProfileFormProps {
   profile?: UserProfile | null;
   onSave?: (profileData: UserProfile) => void;
   onCancel?: () => void;
-  standalone?: boolean; // If true, handles its own save logic
+  standalone?: boolean;
 }
 
 const ProfileForm = ({ 
@@ -111,42 +111,40 @@ const ProfileForm = ({
   };
 
   return (
-    <div className="w-full max-w-none mx-auto">
-      <Card className="w-full border-0 shadow-none bg-transparent">
-        {standalone && (
-          <CardHeader className="pb-6 px-0 lg:px-0">
-            <CardTitle className="text-2xl lg:text-3xl font-bold flex items-center gap-3 text-gray-900 dark:text-white">
-              <User className="h-7 w-7 lg:h-8 lg:w-8" />
-              Profile Settings
-            </CardTitle>
-          </CardHeader>
-        )}
+    <div className="w-full max-w-4xl mx-auto">
+      <Card className="w-full bg-gradient-to-b from-background to-background-secondary dark:from-gray-800 dark:to-gray-900 border border-border dark:border-gray-600 rounded-lg shadow-lg">
+        <CardHeader className="pb-6 px-4 md:px-6 lg:px-8 bg-gradient-to-r from-primary to-secondary dark:from-gray-700 dark:to-gray-800 text-white rounded-t-lg">
+          <CardTitle className="text-xl md:text-2xl lg:text-3xl font-bold flex items-center gap-3">
+            <User className="h-6 w-6 md:h-7 md:w-7" />
+            Profile Settings
+          </CardTitle>
+        </CardHeader>
 
         <form onSubmit={handleSubmit}>
-          <CardContent className="space-y-8 lg:space-y-10 px-0 py-6">
+          <CardContent className="space-y-6 md:space-y-8 px-4 md:px-6 lg:px-8 py-6 max-h-[70vh] overflow-y-auto">
             {/* Error/Success Messages */}
             {error && (
-              <div className="p-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg">
+              <div className="p-3 md:p-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg">
                 <p className="text-red-600 dark:text-red-400 text-sm font-medium">{error}</p>
               </div>
             )}
             
             {success && (
-              <div className="p-4 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg flex items-center gap-2">
+              <div className="p-3 md:p-4 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg flex items-center gap-2">
                 <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />
                 <p className="text-green-600 dark:text-green-400 text-sm font-medium">Profile updated successfully!</p>
               </div>
             )}
 
             {/* Basic Information */}
-            <div className="space-y-6">
-              <h3 className="text-xl lg:text-2xl font-semibold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-3">
+            <div className="space-y-4 md:space-y-6">
+              <h3 className="text-lg md:text-xl font-semibold text-primary dark:text-blue-400 border-b border-gray-200 dark:border-gray-700 pb-2">
                 Basic Information
               </h3>
-              <div className="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-4 gap-6 lg:gap-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                 {/* Name - Takes 2 columns on larger screens */}
-                <div className="space-y-3 lg:col-span-2 xl:col-span-2">
-                  <Label htmlFor="name" className="text-base font-medium text-gray-700 dark:text-gray-300">
+                <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="name" className="text-sm md:text-base font-medium text-text dark:text-gray-300">
                     Full Name *
                   </Label>
                   <Input
@@ -154,14 +152,14 @@ const ProfileForm = ({
                     value={formData.name}
                     onChange={(e) => handleInputChange("name", e.target.value)}
                     placeholder="Enter your full name"
-                    className="h-12 lg:h-14 text-base lg:text-lg rounded-lg border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500"
+                    className="w-full h-10 md:h-12 rounded-lg bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-900 dark:text-white"
                     required
                   />
                 </div>
                 
                 {/* Age */}
-                <div className="space-y-3">
-                  <Label htmlFor="age" className="text-base font-medium text-gray-700 dark:text-gray-300">
+                <div className="space-y-2">
+                  <Label htmlFor="age" className="text-sm md:text-base font-medium text-text dark:text-gray-300">
                     Age
                   </Label>
                   <Input
@@ -172,23 +170,23 @@ const ProfileForm = ({
                     value={formData.age}
                     onChange={(e) => handleInputChange("age", e.target.value)}
                     placeholder="Age"
-                    className="h-12 lg:h-14 text-base lg:text-lg rounded-lg border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500"
+                    className="w-full h-10 md:h-12 rounded-lg bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-900 dark:text-white"
                   />
                 </div>
                 
                 {/* Gender */}
-                <div className="space-y-3">
-                  <Label htmlFor="gender" className="text-base font-medium text-gray-700 dark:text-gray-300">
+                <div className="space-y-2">
+                  <Label htmlFor="gender" className="text-sm md:text-base font-medium text-text dark:text-gray-300">
                     Gender
                   </Label>
                   <Select
                     value={formData.gender}
                     onValueChange={(value) => handleInputChange("gender", value)}
                   >
-                    <SelectTrigger className="h-12 lg:h-14 text-base lg:text-lg rounded-lg border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500">
+                    <SelectTrigger className="w-full h-10 md:h-12 rounded-lg bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-900 dark:text-white">
                       <SelectValue placeholder="Select gender" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-600">
                       <SelectItem value="male">Male</SelectItem>
                       <SelectItem value="female">Female</SelectItem>
                       <SelectItem value="other">Other</SelectItem>
@@ -200,15 +198,15 @@ const ProfileForm = ({
             </div>
 
             {/* Physical Measurements */}
-            <div className="space-y-6">
-              <h3 className="text-xl lg:text-2xl font-semibold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-3">
+            <div className="space-y-4 md:space-y-6">
+              <h3 className="text-lg md:text-xl font-semibold text-primary dark:text-blue-400 border-b border-gray-200 dark:border-gray-700 pb-2">
                 Physical Measurements
               </h3>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 max-w-2xl">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                 {/* Weight */}
-                <div className="space-y-3">
-                  <Label htmlFor="weight" className="text-base font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
-                    <Scale className="w-5 h-5" />
+                <div className="space-y-2">
+                  <Label htmlFor="weight" className="text-sm md:text-base font-medium text-text dark:text-gray-300 flex items-center gap-2">
+                    <Scale className="w-4 h-4 md:w-5 md:h-5" />
                     Weight (kg)
                   </Label>
                   <Input
@@ -220,14 +218,14 @@ const ProfileForm = ({
                     value={formData.weight}
                     onChange={(e) => handleInputChange("weight", e.target.value)}
                     placeholder="Weight in kg"
-                    className="h-12 lg:h-14 text-base lg:text-lg rounded-lg border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500"
+                    className="w-full h-10 md:h-12 rounded-lg bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-900 dark:text-white"
                   />
                 </div>
                 
                 {/* Height */}
-                <div className="space-y-3">
-                  <Label htmlFor="height" className="text-base font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
-                    <Ruler className="w-5 h-5" />
+                <div className="space-y-2">
+                  <Label htmlFor="height" className="text-sm md:text-base font-medium text-text dark:text-gray-300 flex items-center gap-2">
+                    <Ruler className="w-4 h-4 md:w-5 md:h-5" />
                     Height (cm)
                   </Label>
                   <Input
@@ -238,28 +236,28 @@ const ProfileForm = ({
                     value={formData.height}
                     onChange={(e) => handleInputChange("height", e.target.value)}
                     placeholder="Height in cm"
-                    className="h-12 lg:h-14 text-base lg:text-lg rounded-lg border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500"
+                    className="w-full h-10 md:h-12 rounded-lg bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-900 dark:text-white"
                   />
                 </div>
               </div>
             </div>
 
             {/* Fitness Goal */}
-            <div className="space-y-6">
-              <h3 className="text-xl lg:text-2xl font-semibold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-3">
+            <div className="space-y-4 md:space-y-6">
+              <h3 className="text-lg md:text-xl font-semibold text-primary dark:text-blue-400 border-b border-gray-200 dark:border-gray-700 pb-2">
                 Fitness Goal
               </h3>
               
-              <div className="space-y-3 max-w-lg">
-                <Label htmlFor="fitnessGoal" className="text-base font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
-                  <Target className="w-5 h-5" />
+              <div className="space-y-2">
+                <Label htmlFor="fitnessGoal" className="text-sm md:text-base font-medium text-text dark:text-gray-300 flex items-center gap-2">
+                  <Target className="w-4 h-4 md:w-5 md:h-5" />
                   Primary Fitness Goal
                 </Label>
                 <Select value={formData.fitnessGoal} onValueChange={(value) => handleInputChange('fitnessGoal', value)}>
-                  <SelectTrigger className="h-12 lg:h-14 text-base lg:text-lg rounded-lg border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500">
+                  <SelectTrigger className="w-full h-10 md:h-12 rounded-lg bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-900 dark:text-white">
                     <SelectValue placeholder="Select your primary fitness goal" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-600">
                     <SelectItem value="lose_weight">Lose Weight</SelectItem>
                     <SelectItem value="gain_weight">Gain Weight</SelectItem>
                     <SelectItem value="build_muscle">Build Muscle</SelectItem>
@@ -272,14 +270,14 @@ const ProfileForm = ({
             </div>
           </CardContent>
 
-          <CardFooter className="flex flex-col sm:flex-row justify-end gap-4 px-0 py-6 border-t border-gray-200 dark:border-gray-700">
+          <CardFooter className="flex flex-col sm:flex-row justify-end gap-3 md:gap-4 px-4 md:px-6 lg:px-8 py-4 md:py-6 bg-gray-50 dark:bg-gray-800/50 rounded-b-lg border-t border-gray-200 dark:border-gray-700">
             {onCancel && (
               <Button
                 type="button"
                 variant="outline"
                 onClick={onCancel}
                 disabled={isLoading}
-                className="w-full sm:w-auto min-w-[120px] h-12 lg:h-14 text-base lg:text-lg rounded-lg"
+                className="w-full sm:w-auto min-w-[100px] h-10 md:h-12 rounded-lg border-gray-200 dark:border-gray-600 text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700"
               >
                 Cancel
               </Button>
@@ -287,7 +285,7 @@ const ProfileForm = ({
             <Button
               type="submit"
               disabled={isLoading || !formData.name.trim()}
-              className="w-full sm:w-auto min-w-[140px] h-12 lg:h-14 text-base lg:text-lg rounded-lg bg-blue-600 hover:bg-blue-700 font-medium"
+              className="w-full sm:w-auto min-w-[120px] h-10 md:h-12 rounded-lg bg-primary dark:bg-blue-600 text-white hover:bg-primary/90 dark:hover:bg-blue-700 font-medium"
             >
               {isLoading ? "Saving..." : "Save Profile"}
             </Button>

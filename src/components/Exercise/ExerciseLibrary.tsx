@@ -132,12 +132,209 @@ const EXERCISE_DATABASE: Exercise[] = [
     ],
     caloriesBurnedPerMinute: 3,
     duration: '3 sets of 30-60 seconds'
+  },
+  {
+    id: 'freestyle-swimming',
+    name: 'Freestyle Swimming',
+    muscleGroups: ['cardio', 'shoulders', 'back', 'core'],
+    difficulty: 'intermediate',
+    equipment: 'pool',
+    instructions: [
+      'Start with your body horizontal in the water',
+      'Alternate arm strokes, reaching forward and pulling through the water',
+      'Keep your body rotating side to side with each stroke',
+      'Breathe every 2-3 strokes by turning your head to the side',
+      'Kick with straight legs from the hips'
+    ],
+    tips: [
+      'Keep your head in neutral position when not breathing',
+      'Reach forward fully before beginning the pull',
+      'Rotate your entire body, not just your arms',
+      'Exhale underwater, inhale quickly above water'
+    ],
+    variations: [
+      'Slow freestyle for endurance',
+      'Sprint freestyle intervals',
+      'One-arm freestyle drill',
+      'Catch-up freestyle drill'
+    ],
+    caloriesBurnedPerMinute: 11,
+    duration: '20-45 minutes continuous or intervals'
+  },
+  {
+    id: 'backstroke-swimming',
+    name: 'Backstroke Swimming',
+    muscleGroups: ['cardio', 'back', 'shoulders', 'core'],
+    difficulty: 'intermediate',
+    equipment: 'pool',
+    instructions: [
+      'Lie on your back with body horizontal in the water',
+      'Alternate arm strokes, reaching back and pulling through',
+      'Keep your head still and looking straight up',
+      'Kick with straight legs from the hips',
+      'Rotate your body slightly with each stroke'
+    ],
+    tips: [
+      'Keep your hips up near the surface',
+      'Don\'t lift your head - it will sink your hips',
+      'Pinky finger enters water first on each stroke',
+      'Keep a steady, continuous kick'
+    ],
+    variations: [
+      'Single-arm backstroke drill',
+      'Backstroke with flutter board',
+      'Sprint backstroke intervals',
+      'Long distance backstroke'
+    ],
+    caloriesBurnedPerMinute: 10,
+    duration: '15-40 minutes continuous or intervals'
+  },
+  {
+    id: 'breaststroke-swimming',
+    name: 'Breaststroke Swimming',
+    muscleGroups: ['cardio', 'chest', 'shoulders', 'legs'],
+    difficulty: 'beginner',
+    equipment: 'pool',
+    instructions: [
+      'Start with arms extended forward, body horizontal',
+      'Pull arms out and around in a heart shape',
+      'Breathe by lifting your head as arms complete the pull',
+      'Bring arms back to starting position',
+      'Kick with a frog-like motion, bringing heels to glutes then snapping out'
+    ],
+    tips: [
+      'Timing is key - pull, breathe, kick, glide',
+      'Keep your head down during the glide phase',
+      'Don\'t pull too wide with your arms',
+      'Get a good glide between each stroke'
+    ],
+    variations: [
+      'Breaststroke pull with flutter board',
+      'Breaststroke kick with kickboard',
+      'Two-stroke breathing pattern',
+      'Sprint breaststroke intervals'
+    ],
+    caloriesBurnedPerMinute: 9,
+    duration: '20-45 minutes continuous or intervals'
+  },
+  {
+    id: 'butterfly-swimming',
+    name: 'Butterfly Swimming',
+    muscleGroups: ['cardio', 'shoulders', 'core', 'back'],
+    difficulty: 'advanced',
+    equipment: 'pool',
+    instructions: [
+      'Start with both arms extended forward',
+      'Pull both arms simultaneously in a powerful stroke',
+      'Lift your head and shoulders to breathe',
+      'Perform a dolphin kick with both legs together',
+      'Keep your body undulating like a wave'
+    ],
+    tips: [
+      'Use your core to create the wave motion',
+      'Don\'t fight the water - flow with it',
+      'Breathe every 2-3 strokes to start',
+      'Keep your kicks small and fast'
+    ],
+    variations: [
+      'Single-arm butterfly drill',
+      'Butterfly with fins',
+      '25m butterfly sprints',
+      'Butterfly kick on back'
+    ],
+    caloriesBurnedPerMinute: 14,
+    duration: '10-25 minutes in short intervals'
+  },
+  {
+    id: 'water-treading',
+    name: 'Water Treading',
+    muscleGroups: ['cardio', 'legs', 'core', 'shoulders'],
+    difficulty: 'intermediate',
+    equipment: 'pool',
+    instructions: [
+      'Position yourself in deep water where you can\'t touch bottom',
+      'Keep your body vertical with head above water',
+      'Use a scissor kick or egg-beater kick to stay afloat',
+      'Move arms in a sculling motion for stability',
+      'Maintain relaxed breathing'
+    ],
+    tips: [
+      'Stay relaxed - tension wastes energy',
+      'Use minimal arm movement for efficiency',
+      'Practice different kicking techniques',
+      'Focus on staying vertical, not moving forward'
+    ],
+    variations: [
+      'Treading with arms out of water',
+      'Treading with weights',
+      'One-handed treading',
+      'Treading in different positions'
+    ],
+    caloriesBurnedPerMinute: 8,
+    duration: '5-15 minutes intervals'
+  },
+  {
+    id: 'pool-running',
+    name: 'Pool Running (Aqua Jogging)',
+    muscleGroups: ['cardio', 'legs', 'core'],
+    difficulty: 'beginner',
+    equipment: 'pool, flotation belt',
+    instructions: [
+      'Wear a flotation belt around your waist',
+      'Position yourself in deep water',
+      'Simulate running motion while staying in place',
+      'Pump your arms as you would when running on land',
+      'Maintain an upright posture'
+    ],
+    tips: [
+      'Keep your core engaged throughout',
+      'Land on the balls of your feet',
+      'Maintain a steady rhythm',
+      'Use the water\'s resistance for strength training'
+    ],
+    variations: [
+      'High-knee aqua jogging',
+      'Interval sprints in water',
+      'Backward aqua jogging',
+      'Cross-country skiing motion'
+    ],
+    caloriesBurnedPerMinute: 9,
+    duration: '20-45 minutes continuous'
+  },
+  {
+    id: 'swimming-laps-mixed',
+    name: 'Mixed Swimming Laps',
+    muscleGroups: ['cardio', 'full-body'],
+    difficulty: 'intermediate',
+    equipment: 'pool',
+    instructions: [
+      'Warm up with 5 minutes easy freestyle',
+      'Swim 4 laps freestyle at moderate pace',
+      'Swim 2 laps backstroke',
+      'Swim 2 laps breaststroke',
+      'Rest 1 minute between sets',
+      'Repeat cycle 3-5 times'
+    ],
+    tips: [
+      'Focus on technique over speed',
+      'Breathe bilaterally in freestyle',
+      'Use different strokes to work different muscles',
+      'Cool down with easy swimming'
+    ],
+    variations: [
+      'Add butterfly laps for advanced swimmers',
+      'Increase distance per stroke',
+      'Time each set for improvement tracking',
+      'Add kick-only or pull-only sets'
+    ],
+    caloriesBurnedPerMinute: 12,
+    duration: '30-60 minutes total workout'
   }
 ];
 
 const muscleGroups = [
   'all', 'chest', 'back', 'shoulders', 'biceps', 'triceps', 
-  'legs', 'glutes', 'core', 'cardio'
+  'legs', 'glutes', 'core', 'cardio', 'full-body'
 ];
 
 const difficulties = ['all', 'beginner', 'intermediate', 'advanced'];
@@ -285,10 +482,10 @@ const ExerciseLibrary: React.FC<ExerciseLibraryProps> = ({
           <select
             value={selectedMuscleGroup}
             onChange={(e) => setSelectedMuscleGroup(e.target.value)}
-            className="flex-1 p-2 border rounded-lg bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
+            className="flex-1 p-2 border rounded-lg bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
           >
             {muscleGroups.map(group => (
-              <option key={group} value={group}>
+              <option key={group} value={group} className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
                 {group === 'all' ? 'All Muscle Groups' : group.charAt(0).toUpperCase() + group.slice(1)}
               </option>
             ))}
@@ -297,10 +494,10 @@ const ExerciseLibrary: React.FC<ExerciseLibraryProps> = ({
           <select
             value={selectedDifficulty}
             onChange={(e) => setSelectedDifficulty(e.target.value)}
-            className="flex-1 p-2 border rounded-lg bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
+            className="flex-1 p-2 border rounded-lg bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
           >
             {difficulties.map(difficulty => (
-              <option key={difficulty} value={difficulty}>
+              <option key={difficulty} value={difficulty} className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
                 {difficulty === 'all' ? 'All Difficulties' : difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}
               </option>
             ))}

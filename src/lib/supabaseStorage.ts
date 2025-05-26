@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import { TrackingCategory, DailyLog, UserProfile } from "@/types/fitness";
+import { UserProfile, TrackingCategory, DailyLog } from '@/types/fitness';
 
 // Generate a unique ID
 export const generateId = (): string => {
@@ -329,27 +329,27 @@ export const updateUserProfile = async (
       .maybeSingle();
 
     if (fetchError && fetchError.code !== 'PGRST116') {
-      console.error('Error checking existing profile:', fetchError);
+      console.error('Error fetching existing profile:', fetchError);
       throw fetchError;
     }
 
     const now = new Date().toISOString();
 
     if (existingProfile) {
-      // Profile exists, update it - only update fields that exist in the database
+      // Update existing profile
+      const updateData = {
+        name: profileData.name,
+        age: profileData.age,
+        gender: profileData.gender,
+        weight: profileData.weight,
+        height: profileData.height,
+        fitness_goal: profileData.fitnessGoal,
+        updated_at: now,
+      };
+
       const { data, error } = await supabase
         .from('profiles')
-        .update({
-          name: profileData.name,
-          age: profileData.age,
-          gender: profileData.gender,
-          weight: profileData.weight,
-          height: profileData.height,
-          // Remove fitness_goal as it doesn't exist in the database
-          theme: profileData.theme,
-          accentColor: profileData.accentColor,
-          updated_at: now,
-        })
+        .update(updateData)
         .eq('id', userId)
         .select()
         .single();
@@ -359,54 +359,10 @@ export const updateUserProfile = async (
         throw error;
       }
 
-      // Get categories and logs separately
-      const { data: categories } = await supabase
-        .from("categories")
-        .select("*")
-        .eq("user_id", userId);
-
-      const { data: logs } = await supabase
-        .from("logs")
-        .select("*")
-        .eq("user_id", userId);
-
-      // Transform data to match frontend types
-      const transformedCategories = (categories || []).map((cat) => ({
-        id: cat.id,
-        name: cat.name,
-        unit: cat.unit,
-        dailyTarget: cat.daily_target,
-        color: cat.color,
-        exerciseType: cat.exerciseType,
-      }));
-
-      const transformedLogs = (logs || []).map((log) => ({
-        id: log.id,
-        categoryId: log.category_id,
-        date: log.date,
-        value: log.value,
-        notes: log.notes,
-      }));
-
-      const profile: UserProfile = {
-        id: data.id,
-        name: data.name,
-        age: data.age,
-        gender: data.gender,
-        weight: data.weight,
-        height: data.height,
-        fitnessGoal: profileData.fitnessGoal, // Keep in frontend state but don't persist
-        theme: data.theme,
-        accentColor: data.accentColor,
-        categories: transformedCategories,
-        logs: transformedLogs,
-        createdAt: data.created_at,
-        updatedAt: data.updated_at,
-      };
-
-      return profile;
+      // Return the updated profile with additional data
+      return await getUserProfile(userId);
     } else {
-      // Profile doesn't exist, create it with the provided data
+      // Create new profile
       const newProfileData = {
         id: userId,
         name: profileData.name || 'User',
@@ -414,9 +370,7 @@ export const updateUserProfile = async (
         gender: profileData.gender,
         weight: profileData.weight,
         height: profileData.height,
-        // Remove fitness_goal as it doesn't exist in the database
-        theme: profileData.theme,
-        accentColor: profileData.accentColor,
+        fitness_goal: profileData.fitnessGoal,
         created_at: now,
         updated_at: now,
       };
@@ -432,23 +386,7 @@ export const updateUserProfile = async (
         throw error;
       }
 
-      const profile: UserProfile = {
-        id: data.id,
-        name: data.name,
-        age: data.age,
-        gender: data.gender,
-        weight: data.weight,
-        height: data.height,
-        fitnessGoal: profileData.fitnessGoal, // Keep in frontend state but don't persist
-        theme: data.theme,
-        accentColor: data.accentColor,
-        categories: [],
-        logs: [],
-        createdAt: data.created_at,
-        updatedAt: data.updated_at,
-      };
-
-      return profile;
+      return await getUserProfile(userId);
     }
   } catch (error) {
     console.error('Error in updateUserProfile:', error);
@@ -608,6 +546,7 @@ function mapCategoryFromDB(dbCategory: any): TrackingCategory {
     unit: dbCategory.unit,
     dailyTarget: dbCategory.daily_target,
     color: dbCategory.color,
+    exerciseType: dbCategory.exerciseType,
   };
 }
 
@@ -633,7 +572,7 @@ const mapDatabaseToProfile = (dbProfile: any): UserProfile => {
     gender: dbProfile.gender,
     weight: dbProfile.weight,
     height: dbProfile.height,
-    fitnessGoal: undefined, // Don't map fitness_goal as it doesn't exist in DB
+    fitnessGoal: dbProfile.fitness_goal,
     categories: [],
     logs: [],
     createdAt: dbProfile.created_at,
@@ -652,7 +591,7 @@ const mapProfileToDatabase = (profile: Partial<UserProfile>) => {
     gender: profile.gender,
     weight: profile.weight,
     height: profile.height,
-    // Remove fitness_goal mapping as it doesn't exist in DB
+    fitness_goal: profile.fitnessGoal,
   };
   if (process.env.NODE_ENV === 'development') {
     console.log("Mapped result:", mapped);
@@ -746,7 +685,7 @@ export const profileStorage = {
       if (process.env.NODE_ENV === 'development') {
         console.log("Updating profile for user");
       }
-      
+
       const dbData = mapProfileToDatabase(profileData);
       if (process.env.NODE_ENV === 'development') {
         console.log("Mapped database data:", dbData);
@@ -781,24 +720,18 @@ export const profileStorage = {
   
   async updateTheme(userId: string, theme: string, accentColor: string) {
     const { data, error } = await supabase
-      .from("profiles")
+      .from('profiles')
       .update({ theme, accentColor })
-      .eq("id", userId);
+      .eq('id', userId);
 
-    if (error) {
-      console.error("Error updating theme:", error);
-      throw error;
-    }
-
+    if (error) throw error;
     return data;
   },
 
   async getCategories(): Promise<TrackingCategory[]> {
     console.log('SupabaseStorage.getCategories called');
-    
     try {
       const { data: { user }, error: authError } = await supabase.auth.getUser();
-      
       if (authError) {
         console.error('Auth error in getCategories:', authError);
         throw authError;
@@ -832,10 +765,8 @@ export const profileStorage = {
 
   async getLogs(): Promise<DailyLog[]> {
     console.log('SupabaseStorage.getLogs called');
-    
     try {
       const { data: { user }, error: authError } = await supabase.auth.getUser();
-      
       if (authError) {
         console.error('Auth error in getLogs:', authError);
         throw authError;
