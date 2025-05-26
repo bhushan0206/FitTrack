@@ -29,9 +29,7 @@ import AIChat from "../AI/AIChat";
 import WorkoutRecommendations from "../AI/WorkoutRecommendations";
 import NutritionRecommendations from "../AI/NutritionRecommendations";
 import GoalTrackingAssistant from '../AI/GoalTrackingAssistant';
-
-// Define the valid tab values as a union type
-type TabValue = 'overview' | 'progress' | 'categories' | 'logs' | 'exercises' | 'social' | 'ai-assistant';
+import TabNavigation, { TabValue } from "@/components/Layout/TabNavigation";
 
 const StatisticsPanel = () => {
   const { user, signOut } = useAuth();
@@ -335,7 +333,7 @@ const StatisticsPanel = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 overflow-x-hidden">
       <Header
         selectedDate={selectedDate}
         onDateChange={setSelectedDate}
@@ -345,99 +343,32 @@ const StatisticsPanel = () => {
         onProfileUpdate={handleUpdateProfile}
         isLoading={isLoading}
         onAIChatClick={() => setActiveTab("ai-assistant")}
+        onQuickDateSelect={(date) => {
+          setSelectedDate(date);
+          setDatePickerOpen(false);
+        }}
+        showDatePicker={true}
       >
         <ProfileForm />
       </Header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Left Column - Summary Cards and Quick Actions */}
-          <div className="lg:col-span-1 space-y-6">
-            <SummaryCards
-              selectedDate={selectedDate}
-              logs={selectedDateLogs}
-              categories={categories}
-            />
+      {/* Mobile-optimized main content */}
+      <main className="w-full max-w-full md:max-w-7xl mx-auto px-2 sm:px-4 py-2 sm:py-4 overflow-hidden">
+        {/* Mobile-first layout with reordered content */}
+        <div className="flex flex-col md:grid md:grid-cols-12 gap-2 sm:gap-3 md:gap-4">
+          {/* Main Content - First on mobile, second on desktop */}
+          <div className="w-full order-1 md:order-2 md:col-span-8 lg:col-span-9">
+            <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as TabValue)} className="w-full">
+              {/* Mobile-optimized tab navigation */}
+              <div className="w-full overflow-hidden mb-2">
+                <div className="tabs-list overflow-x-auto hide-scrollbar">
+                  <TabNavigation />
+                </div>
+              </div>
 
-            {/* Quick Actions */}
-            <Card className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm border-0 shadow-lg">
-              <CardHeader className="px-6 py-4">
-                <CardTitle className="text-gray-900 dark:text-white text-lg font-bold">
-                  Quick Actions
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="px-6 py-4 space-y-3">
-                <Button
-                  onClick={() => setShowLogForm(true)}
-                  className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white shadow-lg"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Log Entry
-                </Button>
-                <Button
-                  onClick={() => setShowCategoryForm(true)}
-                  variant="outline"
-                  className="w-full border-indigo-200 text-indigo-700 hover:bg-indigo-50 dark:border-indigo-800 dark:text-indigo-300 dark:hover:bg-indigo-900/50"
-                >
-                  <FolderPlus className="w-4 h-4 mr-2" />
-                  Add Category
-                </Button>
-                <Button
-                  onClick={() => setActiveTab("social")}
-                  variant="outline"
-                  className="w-full border-purple-200 text-purple-700 hover:bg-purple-50 dark:border-purple-800 dark:text-purple-300 dark:hover:bg-purple-900/50"
-                >
-                  <Users className="w-4 h-4 mr-2" />
-                  Social Hub
-                </Button>
-                <Button
-                  onClick={() => setActiveTab("ai-assistant")}
-                  variant="outline"
-                  className="w-full border-yellow-200 text-yellow-700 hover:bg-yellow-50 dark:border-yellow-800 dark:text-yellow-300 dark:hover:bg-yellow-900/50"
-                >
-                  <Sparkles className="w-4 h-4 mr-2 text-yellow-500" />
-                  AI Assistant
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Right Column - Main Content */}
-          <div className="lg:col-span-3">
-            <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as TabValue)} className="w-full h-full">
-              <TabsList className="grid w-full grid-cols-7 mb-6 bg-gray-100/50 dark:bg-gray-700/50 p-1 rounded-lg">
-                <TabsTrigger value="overview" className="flex items-center gap-2">
-                  <BarChart3 className="w-4 h-4" />
-                  Overview
-                </TabsTrigger>
-                <TabsTrigger value="progress" className="flex items-center gap-2">
-                  <TrendingUp className="w-4 h-4" />
-                  Progress
-                </TabsTrigger>
-                <TabsTrigger value="categories" className="flex items-center gap-2">
-                  <Settings className="w-4 h-4" />
-                  Categories
-                </TabsTrigger>
-                <TabsTrigger value="logs" className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4" />
-                  Daily Logs
-                </TabsTrigger>
-                <TabsTrigger value="exercises" className="flex items-center gap-2">
-                  <Dumbbell className="w-4 h-4" />
-                  Exercises
-                </TabsTrigger>
-                <TabsTrigger value="social" className="flex items-center gap-2">
-                  <Users className="w-4 h-4" />
-                  Social
-                </TabsTrigger>
-                <TabsTrigger value="ai-assistant" className="flex items-center gap-2">
-                  <Brain className="w-4 h-4" />
-                  AI Assistant
-                </TabsTrigger>
-              </TabsList>
-
-              <div className="h-[calc(100vh-200px)] overflow-y-auto">
-                <TabsContent value="overview" className="space-y-6 mt-6">
+              {/* Dynamic height container that works on mobile */}
+              <div className="mobile-height-fix overflow-y-auto overflow-x-hidden">
+                <TabsContent value="overview" className="space-y-3 mt-2 sm:mt-4 px-0.5">
                   <DailyLogList
                     logs={selectedDateLogs}
                     categories={categories}
@@ -448,7 +379,7 @@ const StatisticsPanel = () => {
                   />
                 </TabsContent>
 
-                <TabsContent value="categories" className="space-y-6 mt-6">
+                <TabsContent value="categories" className="space-y-3 mt-2 sm:mt-4 px-0.5">
                   <CategoryManager
                     categories={categories}
                     onEdit={handleEditCategory}
@@ -456,29 +387,30 @@ const StatisticsPanel = () => {
                   />
                 </TabsContent>
 
-                <TabsContent value="social" className="space-y-6 mt-6">
+                <TabsContent value="social" className="space-y-3 mt-2 sm:mt-4 px-0.5">
                   <SocialHub />
                 </TabsContent>
 
-                <TabsContent value="ai-assistant" className="h-full">
-                  <div className="h-full">
+                <TabsContent value="ai-assistant" className="h-full px-0.5">
+                  <div className="mobile-height-fix">
                     <Tabs defaultValue="chat" className="h-full flex flex-col">
-                      <TabsList className="grid w-full grid-cols-4 mb-4">
-                        <TabsTrigger value="chat" className="flex items-center gap-2">
-                          <MessageCircle className="w-4 h-4" />
-                          AI Chat
+                      {/* Mobile-optimized AI tabs */}
+                      <TabsList className="grid grid-cols-2 xs:grid-cols-4 mb-2 p-1 w-full overflow-x-auto hide-scrollbar">
+                        <TabsTrigger value="chat" className="flex items-center justify-center gap-1 text-xs whitespace-nowrap">
+                          <MessageCircle className="w-3 h-3 sm:w-4 sm:h-4" />
+                          <span className="truncate">Chat</span>
                         </TabsTrigger>
-                        <TabsTrigger value="workouts" className="flex items-center gap-2">
-                          <Dumbbell className="w-4 h-4" />
-                          Workouts
+                        <TabsTrigger value="workouts" className="flex items-center justify-center gap-1 text-xs whitespace-nowrap">
+                          <Dumbbell className="w-3 h-3 sm:w-4 sm:h-4" />
+                          <span className="truncate">Workouts</span>
                         </TabsTrigger>
-                        <TabsTrigger value="nutrition" className="flex items-center gap-2">
-                          <Salad className="w-4 h-4" />
-                          Nutrition
+                        <TabsTrigger value="nutrition" className="flex items-center justify-center gap-1 text-xs whitespace-nowrap">
+                          <Salad className="w-3 h-3 sm:w-4 sm:h-4" />
+                          <span className="truncate">Nutrition</span>
                         </TabsTrigger>
-                        <TabsTrigger value="goals" className="flex items-center gap-2">
-                          <Target className="w-4 h-4" />
-                          Goals & Motivation
+                        <TabsTrigger value="goals" className="flex items-center justify-center gap-1 text-xs whitespace-nowrap">
+                          <Target className="w-3 h-3 sm:w-4 sm:h-4" />
+                          <span className="truncate">Goals</span>
                         </TabsTrigger>
                       </TabsList>
                       
@@ -521,14 +453,12 @@ const StatisticsPanel = () => {
                   </div>
                 </TabsContent>
 
-                <TabsContent value="exercises" className="h-full">
+                <TabsContent value="exercises" className="h-full px-0.5">
                   <ExerciseLibrary 
                     onStartExercise={(exercise) => {
-                      // Handle starting an exercise - you can implement this based on your needs
                       console.log('Starting exercise:', exercise);
                     }}
                     onViewExerciseDetails={(exercise) => {
-                      // Handle viewing exercise details - you can implement this based on your needs
                       console.log('Viewing exercise details:', exercise);
                     }}
                   />
@@ -536,26 +466,85 @@ const StatisticsPanel = () => {
               </div>
             </Tabs>
           </div>
+
+          {/* Summary Cards - Second on mobile, first on desktop */}
+          <div className="w-full order-2 md:order-1 md:col-span-4 lg:col-span-3 mt-2 md:mt-0">
+            <div className="md:sticky md:top-2 space-y-2 sm:space-y-3">
+              <SummaryCards
+                selectedDate={selectedDate}
+                logs={selectedDateLogs}
+                categories={categories}
+              />
+
+              {/* Quick Actions - Mobile optimized */}
+              <Card className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm border-0 shadow-sm">
+                <CardHeader className="px-2 py-2 sm:px-4 sm:py-2.5">
+                  <CardTitle className="text-gray-900 dark:text-white text-sm font-bold">
+                    Quick Actions
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="px-2 py-2 sm:px-4 sm:py-2.5">
+                  <div className="grid grid-cols-2 gap-1 sm:gap-2">
+                    <Button
+                      onClick={() => setShowLogForm(true)}
+                      className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white shadow-sm text-xs"
+                      size="sm"
+                    >
+                      <Plus className="w-3 h-3 mr-1 flex-shrink-0" />
+                      <span className="truncate">Add Log</span>
+                    </Button>
+                    <Button
+                      onClick={() => setShowCategoryForm(true)}
+                      variant="outline"
+                      className="w-full border-indigo-200 text-indigo-700 hover:bg-indigo-50 dark:border-indigo-800 dark:text-indigo-300 dark:hover:bg-indigo-900/50 text-xs"
+                      size="sm"
+                    >
+                      <FolderPlus className="w-3 h-3 mr-1 flex-shrink-0" />
+                      <span className="truncate">Category</span>
+                    </Button>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-1 sm:gap-2 mt-1 sm:mt-2">
+                    <Button
+                      onClick={() => setActiveTab("social")}
+                      variant="outline"
+                      className="w-full border-purple-200 text-purple-700 hover:bg-purple-50 dark:border-purple-800 dark:text-purple-300 dark:hover:bg-purple-900/50 text-xs"
+                      size="sm"
+                    >
+                      <Users className="w-3 h-3 mr-1 flex-shrink-0" />
+                      <span className="truncate">Social</span>
+                    </Button>
+                    <Button
+                      onClick={() => setActiveTab("ai-assistant")}
+                      variant="outline"
+                      className="w-full border-yellow-200 text-yellow-700 hover:bg-yellow-50 dark:border-yellow-800 dark:text-yellow-300 dark:hover:bg-yellow-900/50 text-xs"
+                      size="sm"
+                    >
+                      <Sparkles className="w-3 h-3 mr-1 text-yellow-500 flex-shrink-0" />
+                      <span className="truncate">AI</span>
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
         </div>
       </main>
 
-      {/* Dialogs */}
+      {/* Mobile-optimized dialogs */}
       <Dialog open={showCategoryForm} onOpenChange={setShowCategoryForm}>
-        <DialogContent className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md border-gray-200/50 dark:border-gray-600/50 max-w-md rounded-2xl shadow-2xl sm:max-w-md">
+        <DialogContent className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md border-gray-200/50 dark:border-gray-600/50 max-w-[calc(100vw-16px)] sm:max-w-md rounded-lg shadow-xl p-3 sm:p-4 overflow-y-auto max-h-[90vh]">
           <CategoryForm
             onSave={handleSaveCategory}
             category={editingCategory || undefined}
             existingCategories={categories}
-            onCancel={() => {
-              console.log('Category form cancelled');
-              handleCancelCategoryForm();
-            }}
+            onCancel={handleCancelCategoryForm}
           />
         </DialogContent>
       </Dialog>
 
       <Dialog open={showLogForm} onOpenChange={setShowLogForm}>
-        <DialogContent className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md border-gray-200/50 dark:border-gray-600/50 max-w-2xl rounded-2xl shadow-2xl">
+        <DialogContent className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md border-gray-200/50 dark:border-gray-600/50 max-w-[calc(100vw-16px)] sm:max-w-2xl rounded-lg shadow-xl p-3 sm:p-4 overflow-y-auto max-h-[90vh]">
           <LogEntryForm
             categories={categories}
             onSave={handleSaveLog}

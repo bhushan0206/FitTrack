@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { format } from "date-fns";
-import { Calendar, User, LogOut, Moon, Sun, Bell, MessageCircle, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Calendar, ChevronLeft, ChevronRight, User, LogOut } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { DatePicker } from "@/components/ui/date-picker";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { UserProfile } from "@/types/fitness";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/AuthContext"; // Import useAuth
 import { useTheme } from "@/contexts/ThemeContext";
-import { useNotifications } from '@/hooks/useNotifications';
-import { socialStorage } from '@/lib/socialStorage';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,19 +17,18 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import ProfileForm from "@/components/Profile/ProfileForm";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import clsx from "clsx";
 import { useNavigate } from "react-router-dom";
+import { useNotifications } from '@/hooks/useNotifications';
+import { socialStorage } from '@/lib/socialStorage';
 
 interface HeaderProps {
   selectedDate: Date;
   onDateChange: (date: Date) => void;
   datePickerOpen: boolean;
   onDatePickerToggle: (open: boolean) => void;
+  onQuickDateSelect: (date: Date) => void; // New prop for quick date selection
+  showDatePicker: boolean; // New prop to control date picker visibility
   profile: UserProfile | null;
   onProfileUpdate: (profileData: Partial<UserProfile>) => Promise<boolean>;
   isLoading: boolean;
@@ -36,23 +36,25 @@ interface HeaderProps {
   onAIChatClick?: () => void; // Add this prop for quick AI access
 }
 
-const Header = ({
+const Header = ({ 
   selectedDate,
   onDateChange,
   datePickerOpen,
   onDatePickerToggle,
+  onQuickDateSelect,
+  showDatePicker = true,
   profile,
   onProfileUpdate,
-  isLoading,
-  children,
+  isLoading = false,
   onAIChatClick,
+  children
 }: HeaderProps) => {
-  const { user, signOut } = useAuth();
-  const { theme, toggleTheme } = useTheme();
+  const { theme } = useTheme();
+  const { signOut } = useAuth(); // Add this line to access signOut function
+  const navigate = useNavigate();
   const { totalUnread, refreshCounts } = useNotifications();
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
-  const navigate = useNavigate();
 
   // Add real-time subscription to refresh notification counts
   useEffect(() => {
@@ -105,119 +107,138 @@ const Header = ({
     onDateChange(newDate);
   };
 
+  const userInitials = profile?.name
+    ? profile.name.charAt(0).toUpperCase()
+    : "U";
+
+  const handleDateSelection = (date: Date) => {
+    onDateChange(date);
+    if (onQuickDateSelect) {
+      onQuickDateSelect(date);
+    } else {
+      onDatePickerToggle(false);
+    }
+  };
+
+  // Move to the previous day
+  const handlePreviousDay = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    changeDate(-1);
+  };
+  
+  // Move to the next day
+  const handleNextDay = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    changeDate(1);
+  };
+
   return (
-    <header className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-200/50 dark:border-gray-700/50 sticky top-0 z-50 shadow-sm">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          {/* Logo - Make it clickable */}
-          <div 
-            className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
-            onClick={() => navigate('/dashboard')}
-          >
-            <div className="w-8 h-8 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">FT</span>
-            </div>
-            <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+    <header className="sticky top-0 z-50 bg-white/70 dark:bg-gray-900/80 backdrop-blur-lg shadow-sm overflow-hidden">
+      <div className="w-full max-w-7xl mx-auto px-1 xs:px-2 sm:px-4">
+        <div className="flex items-center justify-between h-12 sm:h-14">
+          {/* Mobile Optimized Logo */}
+          <div className="flex-shrink-0 flex items-center">
+            <img 
+              src="/logo.svg" 
+              alt="FitTrack Logo" 
+              className="h-7 w-auto hidden sm:block" 
+            />
+            <img 
+              src="/logo-icon.svg" 
+              alt="FitTrack" 
+              className="h-6 w-auto sm:hidden" 
+            />
+            <span className="ml-2 text-sm sm:text-lg font-bold text-indigo-600 dark:text-indigo-400 hidden xs:block">
               FitTrack
-            </h1>
+            </span>
           </div>
-
-          {/* Center Section - Date Picker */}
-          <div className="flex items-center gap-2 bg-white/50 dark:bg-gray-800/50 rounded-lg px-4 py-2 border border-gray-200 dark:border-gray-700">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => changeDate(-1)}
-              className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
-            >
-              ←
-            </Button>
-            <div className="flex items-center gap-2 min-w-0">
-              <Calendar className="w-4 h-4 text-indigo-600 dark:text-indigo-400 flex-shrink-0" />
-              <span className="text-sm font-medium text-gray-900 dark:text-white whitespace-nowrap">
-                {formatDate(selectedDate)}
-              </span>
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => changeDate(1)}
-              className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
-            >
-              →
-            </Button>
-          </div>
-
-          {/* Right Section - User Menu */}
-          <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
-            {/* AI Chat Quick Access Button */}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onAIChatClick}
-              className="flex items-center gap-2 border-indigo-200 text-indigo-700 hover:bg-indigo-50 dark:border-indigo-800 dark:text-indigo-300 dark:hover:bg-indigo-900/50 font-semibold"
-              title="Open AI Assistant"
-            >
-              <Sparkles className="w-5 h-5 text-yellow-500 animate-pulse" />
-              <span className="hidden sm:inline">AI Assistant</span>
-            </Button>
-
-            {/* Theme Toggle */}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={toggleTheme}
-              className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
-            >
-              {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-            </Button>
-
-            {/* Notification Bell */}
-            <div className="relative">
-              <Button variant="ghost" size="sm" className="relative">
-                <Bell className="w-4 h-4 text-gray-600 dark:text-gray-300" />
-                {totalUnread > 0 && (
-                  <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-white dark:border-gray-900 animate-pulse"></span>
-                )}
+          
+          {/* Mobile Optimized Date Picker */}
+          {showDatePicker && (
+            <div className="flex items-center">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handlePreviousDay}
+                className="h-7 w-7 rounded-full p-0 flex-shrink-0"
+              >
+                <ChevronLeft className="h-3 w-3 sm:h-4 sm:w-4" />
               </Button>
+              
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onDatePickerToggle(!datePickerOpen)}
+                className="px-1 sm:px-3 h-7 text-[10px] sm:text-xs border-gray-200 dark:border-gray-700 mx-0.5 sm:mx-1"
+              >
+                <Calendar className="mr-1 h-3 w-3" />
+                <span className="hidden xs:inline">{format(selectedDate, 'MMM d')}</span>
+                <span className="xs:hidden">{format(selectedDate, 'MM/dd')}</span>
+              </Button>
+              
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleNextDay}
+                className="h-7 w-7 rounded-full p-0 flex-shrink-0"
+              >
+                <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4" />
+              </Button>
+              
+              {datePickerOpen && (
+                <div className="absolute top-12 sm:top-14 left-0 right-0 mx-auto w-[calc(100%-8px)] xs:w-[calc(100%-16px)] sm:w-auto sm:left-1/2 sm:-translate-x-1/2 z-50">
+                  <Card className="shadow-xl bg-white dark:bg-gray-800 border-0">
+                    <CardContent className="p-0">
+                      <div className="p-2">
+                        {/* Simplified mobile date picker */}
+                        <div className="calendar-wrapper max-w-full">
+                          <DatePicker
+                            date={selectedDate}
+                            onDateChange={handleDateSelection}
+                          />
+                        </div>
+                      </div>
+                      <div className="flex border-t border-gray-200 dark:border-gray-700">
+                        <Button
+                          onClick={() => handleDateSelection(new Date())}
+                          className="flex-1 rounded-none rounded-bl-lg text-xs h-8"
+                          variant="ghost"
+                        >
+                          Today
+                        </Button>
+                        <Button
+                          onClick={() => onDatePickerToggle(false)}
+                          className="flex-1 rounded-none rounded-br-lg text-xs h-8" 
+                          variant="ghost"
+                        >
+                          Close
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
             </div>
-
-            {/* User Dropdown */}
+          )}
+          
+          {/* Right Side Actions - Minimalist on Mobile */}
+          <div className="flex items-center gap-1 sm:gap-2">
+            <ThemeToggle />
+            
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button 
                   variant="ghost" 
-                  size="sm" 
-                  className="flex items-center gap-2 text-gray-900 dark:text-gray-100 hover:text-gray-700 dark:hover:text-white"
-                  style={{
-                    color: theme === 'dark' ? '#f3f4f6' : '#111827',
-                    backgroundColor: 'transparent'
-                  }}
+                  size="sm"
+                  className="h-7 w-7 sm:h-8 sm:w-8 rounded-full p-0"
                 >
-                  <div className="w-6 h-6 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full flex items-center justify-center">
-                    <User className="w-3 h-3 text-white" />
+                  <div className="w-6 h-6 sm:w-7 sm:h-7 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-medium">
+                    {userInitials}
                   </div>
-                  <span
-                    className="text-sm font-medium hidden sm:block"
-                    style={{
-                      color: theme === 'dark' ? '#f3f4f6' : '#111827'
-                    }}
-                  >
-                    {user?.name || user?.email?.split('@')[0] || 'User'}
-                  </span>
+                  <span className="sr-only">User menu</span>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent 
-                align="end" 
-                className="w-56 border-0 shadow-xl"
-                style={{
-                  backgroundColor: theme === 'dark' ? '#1f2937' : '#ffffff',
-                  color: theme === 'dark' ? '#f9fafb' : '#111827',
-                  border: `1px solid ${theme === 'dark' ? '#374151' : '#e5e7eb'}`,
-                  borderRadius: '12px',
-                  padding: '8px'
-                }}
-              >
+              <DropdownMenuContent align="end" className="w-56 mt-1">
                 <DropdownMenuItem 
                   onClick={() => setProfileDialogOpen(true)}
                   className="rounded-lg cursor-pointer focus:outline-none"

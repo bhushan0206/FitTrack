@@ -526,7 +526,260 @@ button[data-radix-dropdown-menu-trigger] span {
   height: 0;
 }
 
-/* Ensure proper touch scrolling on iOS */
-.scrollbar-hide {
+/* Enhanced scrollbar hiding for mobile scrolling */
+.hide-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+  -webkit-overflow-scrolling: touch; /* iOS smooth scrolling */
+}
+
+.hide-scrollbar::-webkit-scrollbar { 
+  display: none;  /* Chrome, Safari and Opera */
+  width: 0;
+  height: 0;
+}
+
+/* Core Mobile Fixes */
+html, body {
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
+  min-height: 100%;
+  height: auto;
+}
+
+/* Mobile-First Container Sizing */
+.container {
+  width: 100%;
+  max-width: 100%;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+}
+
+@media (min-width: 640px) {
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}
+
+/* Responsive cards */
+.card {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+/* Enhanced Scrollbar Fixes */
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+/* Prevent iOS zoom on input */
+input, select, textarea, button {
+  font-size: 16px;
+}
+
+/* Mobile Grid Fixes */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 0.5rem;
+}
+
+@media (max-width: 640px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Mobile text sizing */
+@media (max-width: 640px) {
+  h1 {
+    font-size: 1.5rem;
+  }
+  
+  h2 {
+    font-size: 1.25rem;
+  }
+  
+  h3 {
+    font-size: 1.125rem;
+  }
+  
+  p, span, div, li {
+    font-size: 0.875rem;
+  }
+  
+  .card-title {
+    font-size: 1rem;
+  }
+  
+  .text-xs {
+    font-size: 0.7rem;
+  }
+}
+
+/* Mobile Button/Input Sizing */
+@media (max-width: 640px) {
+  button, .button, [role="button"] {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+    height: auto;
+    min-height: 2rem;
+  }
+  
+  input, select, textarea {
+    padding: 0.5rem;
+    height: auto;
+    min-height: 2rem;
+  }
+}
+
+/* Prevent button content overflow */
+button, .button {
+  white-space: nowrap;
+}
+
+/* Mobile Tabs */
+@media (max-width: 640px) {
+  .tabs-list {
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    white-space: nowrap;
+    padding-bottom: 5px;
+  }
+  
+  .tab-trigger {
+    flex-shrink: 0;
+  }
+}
+
+/* Fix mobile height issues */
+.mobile-height-fix {
+  height: auto !important;
+  min-height: 30vh;
+  max-height: 80vh;
+}
+
+/* IMPROVED BUTTON STYLING - with better contrast for disabled states */
+/* Default button state */
+button, 
+.button, 
+[role="button"] {
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+/* Disabled buttons - Light Mode */
+button:disabled,
+.button:disabled,
+[role="button"]:disabled,
+.btn:disabled {
+  opacity: 1 !important; /* Increase from 0.65 for better visibility */
+  background-color: #e2e8f0 !important; /* Light gray background */
+  color: #4b5563 !important; /* Darker text for better contrast */
+  cursor: not-allowed;
+  box-shadow: none !important;
+  pointer-events: none;
+  border-color: #e2e8f0 !important;
+}
+
+/* Disabled buttons - Dark Mode */
+.dark button:disabled,
+.dark .button:disabled,
+.dark [role="button"]:disabled,
+.dark .btn:disabled {
+  background-color: #374151 !important; /* Darker background */
+  color: #9ca3af !important; /* Lighter text for better contrast */
+  border-color: #374151 !important;
+}
+
+/* Disabled gradient buttons in light mode */
+button:disabled.bg-gradient-to-r,
+.button:disabled.bg-gradient-to-r,
+[role="button"]:disabled.bg-gradient-to-r {
+  background-image: none !important;
+  background-color: #e2e8f0 !important;
+  color: #4b5563 !important;
+}
+
+/* Disabled gradient buttons in dark mode */
+.dark button:disabled.bg-gradient-to-r,
+.dark .button:disabled.bg-gradient-to-r,
+.dark [role="button"]:disabled.bg-gradient-to-r {
+  background-image: none !important;
+  background-color: #374151 !important;
+  color: #9ca3af !important;
+}
+
+/* Disabled outline buttons - Light Mode */
+button[variant="outline"]:disabled,
+.button[variant="outline"]:disabled,
+[role="button"][variant="outline"]:disabled,
+button[data-variant="outline"]:disabled,
+.button[data-variant="outline"]:disabled,
+[role="button"][data-variant="outline"]:disabled {
+  background-color: transparent !important;
+  color: #64748b !important;
+  border-color: #cbd5e1 !important;
+}
+
+/* Disabled outline buttons - Dark Mode */
+.dark button[variant="outline"]:disabled,
+.dark .button[variant="outline"]:disabled,
+.dark [role="button"][variant="outline"]:disabled,
+.dark button[data-variant="outline"]:disabled,
+.dark .button[data-variant="outline"]:disabled,
+.dark [role="button"][data-variant="outline"]:disabled {
+  background-color: transparent !important;
+  color: #94a3b8 !important;
+  border-color: #475569 !important;
+}
+
+/* Special handling for Radix UI disabled elements */
+[data-state="inactive"] {
+  color: #64748b !important;
+}
+
+.dark [data-state="inactive"] {
+  color: #94a3b8 !important;
+}
+
+/* Override shadcn disabled styles */
+.disabled\:pointer-events-none:disabled,
+.disabled\:opacity-50:disabled {
+  opacity: 1 !important;
+  pointer-events: none;
+}
+
+/* TabTrigger styling fix for better contrast */
+[role="tab"][data-state="inactive"] {
+  color: #64748b !important;
+  background-color: transparent;
+}
+
+.dark [role="tab"][data-state="inactive"] {
+  color: #94a3b8 !important;
+  background-color: transparent;
+}
+
+/* Fix active tab styling */
+[role="tab"][data-state="active"] {
+  color: #3b82f6 !important;
+  font-weight: 500;
+}
+
+.dark [role="tab"][data-state="active"] {
+  color: #60a5fa !important;
+  font-weight: 500;
 }
