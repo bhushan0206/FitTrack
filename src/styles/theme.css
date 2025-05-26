@@ -512,3 +512,21 @@ button[data-radix-dropdown-menu-trigger] span {
 .dark .overflow-y-auto::-webkit-scrollbar-thumb:hover {
   background: rgba(75, 85, 99, 0.7);
 }
+
+/* Hide scrollbar for mobile tab navigation */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* Internet Explorer 10+ */
+  scrollbar-width: none;  /* Firefox */
+  -webkit-overflow-scrolling: touch; /* iOS smooth scrolling */
+}
+
+.scrollbar-hide::-webkit-scrollbar { 
+  display: none;  /* Safari and Chrome */
+  width: 0;
+  height: 0;
+}
+
+/* Ensure proper touch scrolling on iOS */
+.scrollbar-hide {
+  -webkit-overflow-scrolling: touch;
+}
