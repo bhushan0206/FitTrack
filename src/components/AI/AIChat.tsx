@@ -3,11 +3,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Bot, User, Send, Sparkles, Loader2, Dumbbell, MessageCircle } from 'lucide-react';
+import { Bot, User, Send, Sparkles, Loader2, Dumbbell, MessageCircle, Salad } from 'lucide-react';
 import { aiService } from '@/lib/ai/aiService';
 import { AIMessage, AIConversation } from '@/types/ai';
 import { format } from 'date-fns';
 import WorkoutRecommendations from './WorkoutRecommendations';
+import NutritionRecommendations from './NutritionRecommendations';
+import { cn } from '@/lib/utils';
 
 interface AIChatProps {
   userProfile?: any;
@@ -23,6 +25,7 @@ const AIChat = ({ userProfile, recentLogs, categories, className }: AIChatProps)
   const [conversation, setConversation] = useState<AIConversation | null>(null);
   const [isAvailable, setIsAvailable] = useState(false);
   const [showWorkoutRecommendations, setShowWorkoutRecommendations] = useState(false);
+  const [showNutrition, setShowNutrition] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -49,11 +52,9 @@ const AIChat = ({ userProfile, recentLogs, categories, className }: AIChatProps)
         // Add welcome message
         const welcomeMessage: AIMessage = {
           id: 'welcome',
-          conversation_id: newConversation.id,
           role: 'assistant',
           content: `Hi there! 👋 I'm your AI fitness assistant. I can help you with workout advice, nutrition tips, progress analysis, and motivation. What would you like to know about your fitness journey?`,
-          message_type: 'text',
-          created_at: new Date().toISOString()
+          timestamp: Date.now().toString()
         };
         
         setMessages([welcomeMessage]);
@@ -63,24 +64,20 @@ const AIChat = ({ userProfile, recentLogs, categories, className }: AIChatProps)
     }
   };
 
-  const handleSendMessage = async () => {
-    if (!input.trim() || !conversation || loading) return;
+  const handleSendMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!input.trim() || loading) return;
 
-    const userMessage = input.trim();
-    setInput('');
-    setLoading(true);
-
-    // Add user message to UI immediately
-    const userMsg: AIMessage = {
+    const userMessage: AIMessage = {
       id: `user-${Date.now()}`,
-      conversation_id: conversation.id,
       role: 'user',
-      content: userMessage,
-      message_type: 'text',
-      created_at: new Date().toISOString()
+      content: input.trim(),
+      timestamp: new Date().toISOString()
     };
 
-    setMessages(prev => [...prev, userMsg]);
+    setMessages(prev => [...prev, userMessage]);
+    setInput('');
+    setLoading(true);
 
     try {
       // Prepare context
@@ -92,30 +89,26 @@ const AIChat = ({ userProfile, recentLogs, categories, className }: AIChatProps)
       };
 
       // Get AI response
-      const response = await aiService.chat(conversation.id, userMessage, context);
+      const response = await aiService.chat(conversation.id, input.trim(), context);
 
       // Add AI response to UI
       const aiMsg: AIMessage = {
         id: `ai-${Date.now()}`,
-        conversation_id: conversation.id,
         role: 'assistant',
         content: response,
-        message_type: 'text',
-        created_at: new Date().toISOString()
+        timestamp: new Date().toISOString()
       };
 
       setMessages(prev => [...prev, aiMsg]);
     } catch (error) {
-      console.error('Failed to get AI response:', error);
+      console.error('AI chat error:', error);
       
       // Add error message
       const errorMsg: AIMessage = {
         id: `error-${Date.now()}`,
-        conversation_id: conversation.id,
         role: 'assistant',
         content: 'I apologize, but I encountered an error. Please check your internet connection and try again. If you need a Groq API key, you can get one free at https://console.groq.com',
-        message_type: 'text',
-        created_at: new Date().toISOString()
+        timestamp: new Date().toISOString()
       };
 
       setMessages(prev => [...prev, errorMsg]);
@@ -125,23 +118,29 @@ const AIChat = ({ userProfile, recentLogs, categories, className }: AIChatProps)
   };
 
   const quickQuestions = [
-    "Analyze my recent progress and give me insights",
     "Suggest a workout plan based on my goals",
     "Give me nutrition advice for my fitness goals",
     "How am I doing with my daily targets?",
     "What should I focus on to improve my fitness?",
-    "Get personalized workout recommendations"
+    "Get personalized workout recommendations",
+    "Show me a meal plan for my goals"
   ];
 
   const handleQuickQuestion = async (question: string) => {
     if (question === "Get personalized workout recommendations") {
       setShowWorkoutRecommendations(true);
+      setShowNutrition(false);
       return;
     }
-    
+    if (question === "Show me a meal plan for my goals" || question.includes("nutrition")) {
+      setShowNutrition(true);
+      setShowWorkoutRecommendations(false);
+      return;
+    }
+    setShowWorkoutRecommendations(false);
+    setShowNutrition(false);
     setInput(question);
-    // Small delay to show the input, then send
-    setTimeout(() => handleSendMessage(), 100);
+    setTimeout(() => handleSendMessage(new Event('submit') as unknown as React.FormEvent), 100);
   };
 
   const handleStartWorkout = (workout: any) => {
@@ -151,177 +150,134 @@ const AIChat = ({ userProfile, recentLogs, categories, className }: AIChatProps)
     // Add message using setMessages instead of addMessage
     const workoutMessage: AIMessage = {
       id: `workout-${Date.now()}`,
-      conversation_id: conversation?.id || 'default',
       role: 'assistant',
       content: `Started workout: ${workout.title}`,
-      message_type: 'text',
-      created_at: new Date().toISOString()
+      timestamp: new Date().toISOString()
     };
     
     setMessages(prev => [...prev, workoutMessage]);
-    setShowWorkoutRecommendations(false);
   };
 
   if (!isAvailable) {
     return (
-      <Card className={className}>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Bot className="w-5 h-5" />
+      <Card className={cn("h-full flex flex-col max-h-[600px]", className)}>
+        <CardHeader className="flex-shrink-0 pb-3">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <MessageCircle className="w-5 h-5" />
             AI Fitness Assistant
           </CardTitle>
         </CardHeader>
         <CardContent className="text-center py-8">
           <Bot className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-600 dark:text-gray-300 mb-2">AI Assistant Unavailable</p>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            Please add your Groq API key to environment variables.
-            <br />
-            Get a free key at <a href="https://console.groq.com" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">console.groq.com</a>
-          </p>
+  <p className="text-gray-600 dark:text-gray-300 mb-2">AI Assistant Unavailable</p>
+  <p className="text-sm text-gray-500 dark:text-gray-400">
+    Get a free key at <a href="https://console.groq.com" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">console.groq.com</a>
+  </p>
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <Card className={className}>
-      <CardHeader className="flex-shrink-0">
-        <CardTitle className="flex items-center gap-2">
-          <Sparkles className="w-5 h-5 text-yellow-500" />
+    <Card className="h-full flex flex-col max-h-[600px]">
+      <CardHeader className="flex-shrink-0 pb-3">
+        <CardTitle className="flex items-center gap-2 text-lg">
+          <MessageCircle className="w-5 h-5" />
           AI Fitness Assistant
         </CardTitle>
-        <div className="flex gap-1">
-          <Button
-            variant={showWorkoutRecommendations ? "default" : "outline"}
-            size="sm"
-            onClick={() => setShowWorkoutRecommendations(!showWorkoutRecommendations)}
-            className="text-xs"
-          >
-            <Dumbbell className="w-3 h-3 mr-1" />
-            Workout Recommendations
-          </Button>
-          <Button
-            variant={!showWorkoutRecommendations ? "default" : "outline"}
-            size="sm"
-            onClick={() => setShowWorkoutRecommendations(false)}
-            className="text-xs"
-          >
-            <MessageCircle className="w-3 h-3 mr-1" />
-            Chat
-          </Button>
-        </div>
+        <p className="text-sm text-gray-600 dark:text-gray-300">
+          Ask questions about fitness, nutrition, and your workout plans
+        </p>
       </CardHeader>
-
-      <CardContent className="flex-1 flex flex-col min-h-0">
-        {showWorkoutRecommendations ? (
-          <div className="flex-1 overflow-y-auto">
-            <WorkoutRecommendations
-              userProfile={userProfile}
-              recentLogs={recentLogs}
-              categories={categories}
-              onStartWorkout={handleStartWorkout}
-            />
-          </div>
-        ) : (
-          <>
-            {/* Messages */}
-            <ScrollArea className="h-80 p-4">
-              <div className="space-y-4">
-                {messages.map((message) => (
-                  <div
-                    key={message.id}
-                    className={`flex gap-3 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                  >
-                    {message.role === 'assistant' && (
-                      <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
-                        <Bot className="w-4 h-4 text-white" />
-                      </div>
-                    )}
-                    
-                    <div
-                      className={`max-w-[80%] rounded-lg px-4 py-2 ${
-                        message.role === 'user'
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white'
-                      }`}
-                    >
-                      <p className="text-sm whitespace-pre-wrap">{message.content}</p>
-                      <p className={`text-xs mt-1 ${
-                        message.role === 'user' ? 'text-blue-100' : 'text-gray-500 dark:text-gray-400'
-                      }`}>
-                        {format(new Date(message.created_at), 'HH:mm')}
-                      </p>
-                    </div>
-                    
-                    {message.role === 'user' && (
-                      <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
-                        <User className="w-4 h-4 text-white" />
-                      </div>
-                    )}
-                  </div>
-                ))}
-                
-                {loading && (
-                  <div className="flex gap-3 justify-start">
-                    <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full flex items-center justify-center">
-                      <Loader2 className="w-4 h-4 text-white animate-spin" />
-                    </div>
-                    <div className="bg-gray-100 dark:bg-gray-700 rounded-lg px-4 py-2">
-                      <p className="text-sm text-gray-600 dark:text-gray-300">Thinking...</p>
-                    </div>
-                  </div>
-                )}
-                
-                <div ref={messagesEndRef} />
-              </div>
-            </ScrollArea>
-
-            {/* Quick Questions */}
-            {messages.length === 1 && (
-              <div className="p-4 border-t border-gray-200 dark:border-gray-700">
-                <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">Quick questions:</p>
-                <div className="grid grid-cols-1 gap-2">
-                  {quickQuestions.map((question) => (
-                    <Button
-                      key={question}
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleQuickQuestion(question)}
-                      className="justify-start text-left h-auto py-2"
-                    >
-                      {question.startsWith('Analyze') && '📊'}
-                      {question.startsWith('Suggest') && '🏋️'}
-                      {question.startsWith('Give') && '🥗'}
-                      {question}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Input */}
-            <div className="p-4 border-t border-gray-200 dark:border-gray-700">
-              <div className="flex gap-2">
-                <Input
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  placeholder="Ask me anything about fitness..."
-                  onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-                  disabled={loading}
-                  className="flex-1"
-                />
-                <Button
-                  onClick={handleSendMessage}
-                  disabled={loading || !input.trim()}
-                  size="sm"
-                >
-                  <Send className="w-4 h-4" />
-                </Button>
+      
+      <CardContent className="flex-1 flex flex-col min-h-0 px-4 pb-4">
+        {/* Messages Area */}
+        <div className="flex-1 overflow-y-auto mb-3 space-y-3 pr-2">
+          {messages.length === 0 ? (
+            <div className="flex-1 flex items-center justify-center">
+              <div className="text-center">
+                <MessageCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-600 dark:text-gray-300 mb-2">Start a conversation!</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Ask me about workouts, nutrition, or fitness goals
+                </p>
               </div>
             </div>
-          </>
-        )}
+          ) : (
+            messages.map((message) => (
+              <div
+                key={message.id}
+                className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+              >
+                <div
+                  className={`max-w-[85%] rounded-lg px-3 py-2 ${
+                    message.role === 'user'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white'
+                  }`}
+                >
+                  <p className="text-sm whitespace-pre-wrap break-words">{message.content}</p>
+                  <p className={`text-xs mt-1 ${
+                    message.role === 'user' ? 'text-blue-100' : 'text-gray-500 dark:text-gray-400'
+                  }`}>
+                  {message.timestamp && !isNaN(new Date(message.timestamp).getTime()) 
+                    ? format(new Date(message.timestamp), 'HH:mm') 
+                    : 'Now'}
+                  </p>
+                </div>
+              </div>
+            ))
+          )}
+          {loading && (
+            <div className="flex justify-start">
+              <div className="bg-gray-100 dark:bg-gray-700 rounded-lg px-3 py-2 max-w-[85%]">
+                <div className="flex items-center space-x-1">
+                  <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce"></div>
+                  <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                  <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                </div>
+              </div>
+            </div>
+          )}
+          <div ref={messagesEndRef} />
+        </div>
+
+        {/* Message Input */}
+        <form onSubmit={handleSendMessage} className="flex-shrink-0 space-y-2">
+          <div className="flex gap-2">
+            <Input
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Ask about fitness, nutrition, or workouts..."
+              disabled={loading}
+              className="flex-1 text-sm"
+            />
+            <Button 
+              type="submit" 
+              disabled={loading || !input.trim()} 
+              size="sm"
+              className="px-3"
+            >
+              <Send className="w-4 h-4" />
+            </Button>
+          </div>
+          
+          {/* Quick Actions */}
+          <div className="flex flex-wrap gap-1">
+            {quickQuestions.map((action, index) => (
+              <Button
+                key={index}
+                variant="outline"
+                size="sm"
+                onClick={() => handleQuickQuestion(action)}
+                disabled={loading}
+                className="text-xs px-2 py-1 h-auto"
+              >
+                {action}
+              </Button>
+            ))}
+          </div>
+        </form>
       </CardContent>
     </Card>
   );

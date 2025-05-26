@@ -79,21 +79,27 @@ export const aiStorage = {
     return data || [];
   },
 
-  async addMessage(message: Omit<AIMessage, 'id' | 'created_at'>): Promise<AIMessage> {
-    const { data, error } = await supabase
-      .from('ai_messages')
-      .insert(message)
-      .select()
-      .single();
+  async addMessage(message: Omit<AIMessage, 'id'>): Promise<AIMessage> {
+    const id = this.generateId();
+    const fullMessage: AIMessage = {
+      id,
+      ...message,
+    };
 
-    if (error) throw error;
+    // Add to storage
+    const messages = await this.getMessages();
+    messages.push(fullMessage);
+    localStorage.setItem(this.MESSAGES_KEY, JSON.stringify(messages));
 
-    // Update conversation timestamp
-    await this.updateConversation(message.conversation_id, {
-      updated_at: new Date().toISOString()
-    });
+    // Update conversation if conversation_id is provided
+    if (message.conversation_id) {
+      await this.updateConversation(message.conversation_id, {
+        updated_at: message.timestamp,
+        message_count: messages.filter(m => m.conversation_id === message.conversation_id).length
+      });
+    }
 
-    return data;
+    return fullMessage;
   },
 
   // Model Configurations

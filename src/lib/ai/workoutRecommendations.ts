@@ -6,186 +6,79 @@ export class WorkoutRecommendationEngine {
   // Predefined workout templates categorized by goals and difficulty
   private workoutTemplates: WorkoutRecommendation[] = [
     {
+      id: 'beginner-bodyweight',
+      type: 'workout_plan',
+      title: 'Beginner Bodyweight Routine',
+      description: 'Perfect for beginners starting their fitness journey',
+      confidence_score: 0.9,
+      reasoning: 'Bodyweight exercises are safe and effective for beginners',
+      priority: 'high',
+      created_at: new Date().toISOString(),
+      difficulty: 'beginner',
+      fitness_goals: ['general_health', 'weight_loss'],
+      duration: 20,
+      equipment_needed: [],
+      workout_type: 'strength'
+    },
+    {
       id: 'hiit_fat_loss_beginner',
+      type: 'workout_plan',
       title: 'HIIT Fat Burner - Beginner',
       description: 'High-intensity interval training designed for beginners to maximize fat burn',
-      difficulty: 'beginner',
-      duration: 20,
-      calories_estimate: 180,
-      equipment_needed: [],
-      fitness_goals: ['weight_loss', 'endurance'],
-      body_parts: ['full_body'],
-      workout_type: 'hiit',
       confidence_score: 0.9,
       reasoning: 'Perfect for beginners looking to lose weight with minimal equipment',
-      exercises: [
-        {
-          name: 'Jumping Jacks',
-          duration: 30,
-          rest_time: 15,
-          instructions: 'Jump while spreading legs and raising arms overhead',
-          modifications: 'Step side to side instead of jumping if needed'
-        },
-        {
-          name: 'Push-ups',
-          reps: 8,
-          rest_time: 15,
-          instructions: 'Lower body to ground and push back up',
-          modifications: 'Knee push-ups or wall push-ups for easier variation'
-        },
-        {
-          name: 'Mountain Climbers',
-          duration: 30,
-          rest_time: 15,
-          instructions: 'Alternate bringing knees to chest in plank position',
-          modifications: 'Slow down the pace or step instead of jumping'
-        },
-        {
-          name: 'Squats',
-          reps: 12,
-          rest_time: 30,
-          instructions: 'Lower body as if sitting in a chair, then stand back up',
-          modifications: 'Use a chair for support if needed'
-        }
-      ]
+      priority: 'high',
+      created_at: new Date().toISOString(),
+      difficulty: 'beginner',
+      duration: 20,
+      equipment_needed: [],
+      fitness_goals: ['weight_loss', 'endurance'],
+      workout_type: 'hiit'
     },
     {
       id: 'strength_muscle_gain_intermediate',
+      type: 'workout_plan',
       title: 'Upper Body Strength Builder',
       description: 'Intermediate strength training focused on building upper body muscle',
-      difficulty: 'intermediate',
-      duration: 45,
-      calories_estimate: 220,
-      equipment_needed: ['dumbbells', 'resistance_bands'],
-      fitness_goals: ['muscle_gain', 'strength'],
-      body_parts: ['chest', 'arms', 'shoulders'],
-      workout_type: 'strength',
       confidence_score: 0.85,
       reasoning: 'Based on your strength goals and intermediate fitness level',
-      exercises: [
-        {
-          name: 'Dumbbell Chest Press',
-          sets: 3,
-          reps: 10,
-          rest_time: 60,
-          instructions: 'Lie on back, press dumbbells up from chest level',
-          modifications: 'Use lighter weights or resistance bands'
-        },
-        {
-          name: 'Bent-over Rows',
-          sets: 3,
-          reps: 12,
-          rest_time: 60,
-          instructions: 'Bend forward, pull weights to chest level',
-          modifications: 'Use resistance bands or lighter weights'
-        },
-        {
-          name: 'Shoulder Press',
-          sets: 3,
-          reps: 10,
-          rest_time: 60,
-          instructions: 'Press weights overhead from shoulder level',
-          modifications: 'Seated variation or lighter weights'
-        },
-        {
-          name: 'Bicep Curls',
-          sets: 2,
-          reps: 15,
-          rest_time: 45,
-          instructions: 'Curl weights from extended arms to shoulders',
-          modifications: 'Use resistance bands for variable resistance'
-        }
-      ]
+      priority: 'medium',
+      created_at: new Date().toISOString(),
+      difficulty: 'intermediate',
+      duration: 45,
+      equipment_needed: ['dumbbells', 'resistance_bands'],
+      fitness_goals: ['muscle_gain', 'strength'],
+      workout_type: 'strength'
     },
     {
       id: 'cardio_endurance_advanced',
+      type: 'workout_plan',
       title: 'Advanced Cardio Circuit',
       description: 'High-intensity cardio workout for advanced fitness enthusiasts',
-      difficulty: 'advanced',
-      duration: 35,
-      calories_estimate: 350,
-      equipment_needed: [],
-      fitness_goals: ['endurance', 'weight_loss'],
-      body_parts: ['full_body'],
-      workout_type: 'cardio',
       confidence_score: 0.8,
       reasoning: 'Your advanced fitness level and endurance goals make this ideal',
-      exercises: [
-        {
-          name: 'Burpees',
-          sets: 4,
-          reps: 15,
-          rest_time: 30,
-          instructions: 'Full body movement: squat, jump back, push-up, jump forward, jump up',
-          modifications: 'Remove push-up or jump for easier variation'
-        },
-        {
-          name: 'High Knees',
-          duration: 45,
-          rest_time: 15,
-          instructions: 'Run in place bringing knees up to waist level',
-          modifications: 'March in place with high knees'
-        },
-        {
-          name: 'Jump Squats',
-          sets: 3,
-          reps: 20,
-          rest_time: 45,
-          instructions: 'Squat down and explode up into a jump',
-          modifications: 'Regular squats without the jump'
-        },
-        {
-          name: 'Plank Jacks',
-          duration: 30,
-          rest_time: 30,
-          instructions: 'In plank position, jump feet apart and together',
-          modifications: 'Step feet apart instead of jumping'
-        }
-      ]
+      priority: 'medium',
+      created_at: new Date().toISOString(),
+      difficulty: 'advanced',
+      duration: 35,
+      equipment_needed: [],
+      fitness_goals: ['endurance', 'weight_loss'],
+      workout_type: 'cardio'
     },
     {
       id: 'flexibility_recovery_all',
+      type: 'workout_plan',
       title: 'Full Body Flexibility & Recovery',
       description: 'Gentle stretching and mobility work for recovery and flexibility',
-      difficulty: 'beginner',
-      duration: 25,
-      calories_estimate: 60,
-      equipment_needed: ['yoga_mat'],
-      fitness_goals: ['flexibility', 'recovery'],
-      body_parts: ['full_body'],
-      workout_type: 'flexibility',
       confidence_score: 0.95,
       reasoning: 'Perfect for recovery days or improving overall flexibility',
-      exercises: [
-        {
-          name: 'Cat-Cow Stretch',
-          duration: 60,
-          rest_time: 10,
-          instructions: 'On hands and knees, alternate arching and rounding your back',
-          modifications: 'Can be done seated in a chair'
-        },
-        {
-          name: 'Child\'s Pose',
-          duration: 45,
-          rest_time: 15,
-          instructions: 'Kneel and sit back on heels, reach arms forward on ground',
-          modifications: 'Place pillow under knees for comfort'
-        },
-        {
-          name: 'Hip Flexor Stretch',
-          duration: 30,
-          rest_time: 10,
-          instructions: 'Lunge position, push hips forward to stretch hip flexors',
-          modifications: 'Use wall or chair for balance support'
-        },
-        {
-          name: 'Seated Spinal Twist',
-          duration: 30,
-          rest_time: 15,
-          instructions: 'Seated, rotate torso to one side, hold, then other side',
-          modifications: 'Can be done in any chair'
-        }
-      ]
+      priority: 'low',
+      created_at: new Date().toISOString(),
+      difficulty: 'beginner',
+      duration: 25,
+      equipment_needed: ['yoga_mat'],
+      fitness_goals: ['flexibility', 'recovery'],
+      workout_type: 'flexibility'
     }
   ];
 
@@ -335,35 +228,39 @@ export class WorkoutRecommendationEngine {
   ): number {
     let score = 0;
 
-    // Fitness level match (30% weight)
+    // Difficulty match (30% weight)
     if (workout.difficulty === factors.fitnessLevel) {
       score += 0.3;
     } else if (
       (workout.difficulty === 'intermediate' && factors.fitnessLevel === 'beginner') ||
       (workout.difficulty === 'beginner' && factors.fitnessLevel === 'intermediate')
     ) {
-      score += 0.15; // Partial match for adjacent levels
+      score += 0.15; // Partial match for adjacent difficulty levels
     }
 
     // Goal alignment (40% weight)
-    const goalMatches = workout.fitness_goals.filter(goal => 
-      factors.primaryGoals.includes(goal)
-    ).length;
-    score += (goalMatches / Math.max(workout.fitness_goals.length, 1)) * 0.4;
-
-    // Time availability (20% weight)
-    const timeDiff = Math.abs(workout.duration - factors.availableTime);
-    const timeScore = Math.max(0, 1 - (timeDiff / factors.availableTime));
-    score += timeScore * 0.2;
-
-    // Activity frequency compatibility (10% weight)
-    if (factors.activityPatterns.frequency >= 4 && workout.workout_type === 'flexibility') {
-      score += 0.1; // Recommend recovery for active users
-    } else if (factors.activityPatterns.frequency < 3 && workout.difficulty === 'beginner') {
-      score += 0.1; // Recommend beginner workouts for less active users
+    if (workout.fitness_goals) {
+      const goalMatches = workout.fitness_goals.filter(goal =>
+        factors.primaryGoals.includes(goal)
+      ).length;
+      score += (goalMatches / Math.max(workout.fitness_goals.length, 1)) * 0.4;
     }
 
-    return Math.min(score, 1.0);
+    // Time availability (20% weight)
+    if (workout.duration) {
+      const timeDiff = Math.abs(workout.duration - factors.availableTime);
+      const timeScore = Math.max(0, 1 - (timeDiff / factors.availableTime));
+      score += timeScore * 0.2;
+    }
+
+    // Activity pattern bonus (10% weight)
+    if (factors.activityPatterns.frequency >= 4 && workout.workout_type === 'flexibility') {
+      score += 0.1; // Bonus for flexibility for frequent exercisers
+    } else if (factors.activityPatterns.frequency < 3 && workout.difficulty === 'beginner') {
+      score += 0.1; // Bonus for beginner workouts for infrequent exercisers
+    }
+
+    return Math.min(score, 1); // Cap at 1.0
   }
 
   private generatePersonalizedReasoning(
@@ -377,37 +274,39 @@ export class WorkoutRecommendationEngine {
   ): string {
     const reasons: string[] = [];
 
-    // Fitness level reasoning
+    // Difficulty reasoning
     if (workout.difficulty === factors.fitnessLevel) {
-      reasons.push(`Perfect match for your ${factors.fitnessLevel} fitness level`);
+      reasons.push(`Perfect for your ${factors.fitnessLevel} fitness level`);
     }
 
     // Goal alignment
-    const matchingGoals = workout.fitness_goals.filter(goal => 
-      factors.primaryGoals.includes(goal)
-    );
-    if (matchingGoals.length > 0) {
-      reasons.push(`Aligns with your ${matchingGoals.join(' and ')} goals`);
+    if (workout.fitness_goals) {
+      const matchingGoals = workout.fitness_goals.filter(goal =>
+        factors.primaryGoals.includes(goal)
+      );
+      if (matchingGoals.length > 0) {
+        reasons.push(`Aligns with your ${matchingGoals.join(' and ')} goals`);
+      }
     }
 
-    // Duration consideration
-    if (Math.abs(workout.duration - factors.activityPatterns.avgDuration) <= 5) {
+    // Time considerations
+    if (workout.duration && Math.abs(workout.duration - factors.activityPatterns.avgDuration) <= 5) {
       reasons.push(`${workout.duration} minutes fits your typical workout duration`);
     }
 
-    // Equipment consideration
-    if (workout.equipment_needed.length === 0) {
-      reasons.push('No equipment needed - can be done anywhere');
+    // Equipment considerations
+    if (workout.equipment_needed && workout.equipment_needed.length === 0) {
+      reasons.push('No equipment needed - perfect for home workouts');
     }
 
-    // Frequency consideration
+    // Activity pattern considerations
     if (factors.activityPatterns.frequency < 3 && workout.difficulty === 'beginner') {
-      reasons.push('Great for building consistency with your current activity level');
+      reasons.push('Great for building a consistent exercise habit');
     }
 
     return reasons.length > 0 
       ? reasons.join('. ') + '.' 
-      : 'Recommended based on your fitness profile and activity history.';
+      : 'This workout matches your fitness profile and goals.';
   }
 
   // Method to get workout by ID (for when user selects a recommendation)

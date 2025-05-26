@@ -29,6 +29,7 @@ class AIService {
         role: 'user',
         content: userMessage,
         message_type: 'text',
+        timestamp: new Date().toISOString(),
         metadata: context ? { context } : {}
       };
       
@@ -59,6 +60,7 @@ class AIService {
         role: 'assistant',
         content: aiResponse,
         message_type: 'text',
+        timestamp: new Date().toISOString(),
         metadata: {}
       };
       
@@ -146,6 +148,77 @@ class AIService {
     4. Motivation and encouragement`;
 
     return await this.chat(conversation.id, insightPrompt, context);
+  }
+
+  async generateResponse(
+    message: string,
+    context?: AIContext,
+    conversationId?: string
+  ): Promise<AIMessage> {
+    try {
+      console.log('AI Service: Generating response for:', message);
+      
+      // Use the aiEngine instead of undefined reference
+      const { aiEngine } = await import('./aiEngine');
+      const response = await aiEngine.generateResponse(message, context || {});
+      
+      // Create the AI message
+      const aiMessage: Omit<AIMessage, 'id'> = {
+        role: 'assistant',
+        content: response,
+        timestamp: new Date().toISOString(),
+        conversation_id: conversationId,
+        message_type: 'text',
+        metadata: context ? { context } : {}
+      };
+
+      // Store the message - fix the type mismatch
+      const messageToStore: Omit<AIMessage, 'id' | 'created_at'> = {
+        role: aiMessage.role,
+        content: aiMessage.content,
+        timestamp: aiMessage.timestamp,
+        conversation_id: aiMessage.conversation_id,
+        message_type: aiMessage.message_type,
+        metadata: aiMessage.metadata
+      };
+
+      const storedMessage = await aiStorage.addMessage(messageToStore);
+      return storedMessage;
+    } catch (error) {
+      console.error('Error in AI service:', error);
+      throw error;
+    }
+  }
+
+  async sendMessage(
+    content: string,
+    context?: AIContext,
+    conversationId?: string
+  ): Promise<{ userMessage: AIMessage; aiResponse: AIMessage }> {
+    try {
+      // Store user message
+      const userMessage: Omit<AIMessage, 'id' | 'created_at'> = {
+        role: 'user',
+        content,
+        timestamp: new Date().toISOString(),
+        conversation_id: conversationId,
+        message_type: 'text',
+        metadata: {}
+      };
+
+      const storedUserMessage = await aiStorage.addMessage(userMessage);
+      
+      // Generate AI response
+      const aiResponse = await this.generateResponse(content, context, conversationId);
+      
+      return {
+        userMessage: storedUserMessage,
+        aiResponse
+      };
+    } catch (error) {
+      console.error('Error sending message:', error);
+      throw error;
+    }
   }
 }
 

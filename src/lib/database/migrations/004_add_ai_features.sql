@@ -179,8 +179,32 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE ai_suggestions TO authenticated;
 GRANT SELECT, INSERT ON TABLE ai_usage TO authenticated;
 GRANT SELECT ON TABLE ai_model_configs TO authenticated, anon;
 
--- Clear existing configs safely
-DELETE FROM ai_model_configs WHERE provider IN ('groq', 'replicate');
+-- Handle existing data safely by creating a backup configuration first
+DO $$
+DECLARE
+    backup_config_id UUID;
+BEGIN
+    -- Create a temporary backup configuration that won't conflict
+    INSERT INTO ai_model_configs (name, provider, model_name, endpoint_url, api_key_required, configuration) 
+    VALUES ('Backup Default Config', 'custom', 'backup-model', 'http://localhost', false, '{"description": "Temporary backup"}')
+    ON CONFLICT (name) DO NOTHING
+    RETURNING id INTO backup_config_id;
+    
+    -- If no ID was returned (config already exists), get the existing ID
+    IF backup_config_id IS NULL THEN
+        SELECT id INTO backup_config_id FROM ai_model_configs WHERE name = 'Backup Default Config';
+    END IF;
+    
+    -- Update any existing ai_usage records to point to the backup config
+    UPDATE ai_usage 
+    SET model_config_id = backup_config_id 
+    WHERE model_config_id IN (
+        SELECT id FROM ai_model_configs WHERE provider IN ('groq', 'replicate')
+    );
+    
+    -- Now we can safely delete the old configs
+    DELETE FROM ai_model_configs WHERE provider IN ('groq', 'replicate') AND name != 'Backup Default Config';
+END $$;
 
 -- Insert default AI model configurations for cloud deployment
 INSERT INTO ai_model_configs (name, provider, model_name, endpoint_url, api_key_required, configuration) VALUES

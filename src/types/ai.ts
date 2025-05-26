@@ -1,11 +1,16 @@
 export interface AIMessage {
   id: string;
-  conversation_id: string;
-  role: 'user' | 'assistant' | 'system';
+  role: 'user' | 'assistant';
   content: string;
-  message_type: 'text' | 'suggestion' | 'workout_plan' | 'nutrition_advice';
-  metadata?: Record<string, any>;
-  created_at: string;
+  timestamp: string;
+  conversation_id?: string; // Add this property
+  message_type?: 'text' | 'system' | 'error'; // Add this property
+  metadata?: {
+    confidence?: number;
+    source?: string;
+    references?: string[];
+    context?: any; // Add context to metadata
+  };
 }
 
 export interface AIConversation {
@@ -70,18 +75,35 @@ export interface AIResponse {
 
 export interface WorkoutRecommendation {
   id: string;
+  type: 'workout_plan' | 'exercise' | 'routine';
   title: string;
   description: string;
-  difficulty: 'beginner' | 'intermediate' | 'advanced';
-  duration: number; // minutes
-  calories_estimate: number;
-  equipment_needed: string[];
-  exercises: RecommendedExercise[];
-  fitness_goals: string[]; // e.g., ['weight_loss', 'muscle_gain', 'endurance']
-  body_parts: string[]; // e.g., ['chest', 'legs', 'core']
-  workout_type: 'strength' | 'cardio' | 'hiit' | 'flexibility' | 'mixed';
-  confidence_score: number; // 0-1, how confident the AI is about this recommendation
-  reasoning: string; // Why this workout was recommended
+  confidence_score: number;
+  workout_plan?: WorkoutPlan;
+  exercise?: Exercise;
+  reasoning: string;
+  priority: 'low' | 'medium' | 'high';
+  created_at: string;
+  // Add missing properties used in workoutRecommendations.ts
+  difficulty?: 'beginner' | 'intermediate' | 'advanced';
+  fitness_goals?: string[];
+  duration?: number;
+  equipment_needed?: string[];
+  workout_type?: string;
+}
+
+export interface NutritionRecommendation {
+  id: string;
+  type: 'meal_plan' | 'nutrition_tip' | 'recipe';
+  title: string;
+  description: string;
+  confidence_score: number;
+  meal_plan?: any; // You'll need to define MealPlan type in nutrition types
+  tip?: string;
+  recipe?: any; // You'll need to define Recipe type in nutrition types
+  reasoning: string;
+  priority: 'low' | 'medium' | 'high';
+  created_at: string;
 }
 
 export interface RecommendedExercise {
@@ -124,4 +146,30 @@ export interface ActivitySummary {
   exercises_completed: string[];
   difficulty_rating?: number; // 1-5, user feedback
   enjoyment_rating?: number; // 1-5, user feedback
+}
+
+export interface WorkoutPlan {
+  id: string;
+  name: string;
+  description: string;
+  exercises: Exercise[];
+  duration: number; // in seconds
+  difficulty: 'beginner' | 'intermediate' | 'advanced';
+  equipment_needed: string[];
+  estimated_calories: number;
+}
+
+export interface Exercise {
+  id: string;
+  name: string;
+  category: 'strength' | 'cardio' | 'flexibility' | 'core';
+  muscle_groups: string[];
+  equipment: string;
+  instructions: string[];
+  sets: number;
+  reps: number;
+  reps_unit: 'reps' | 'seconds' | 'minutes';
+  duration: number; // in seconds
+  calories: number;
+  difficulty: 'beginner' | 'intermediate' | 'advanced';
 }

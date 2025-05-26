@@ -17,7 +17,7 @@ import ProfileForm from "@/components/Profile/ProfileForm";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { Plus, FolderPlus, Users, Sparkles } from "lucide-react";
+import { Plus, FolderPlus, Users, Sparkles, Brain, MessageCircle, Dumbbell, Salad } from "lucide-react";
 import ExerciseLibrary from "@/components/Exercise/ExerciseLibrary";
 import ExerciseDetails from "@/components/Exercise/ExerciseDetails";
 import ExerciseTracker from "@/components/Exercise/ExerciseTracker";
@@ -25,9 +25,12 @@ import SocialHub from "@/components/Social/SocialHub";
 import { useNotifications } from '@/hooks/useNotifications';
 import { socialStorage } from '@/lib/socialStorage';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import AIChat from '../AI/AIChat';
+import AIChat from "../AI/AIChat";
+import WorkoutRecommendations from "../AI/WorkoutRecommendations";
+import NutritionRecommendations from "../AI/NutritionRecommendations";
 
-type TabValue = "overview" | "categories" | "social" | "ai";
+// Define the valid tab values as a union type
+type TabValue = 'overview' | 'progress' | 'categories' | 'logs' | 'social' | 'ai-assistant';
 
 const StatisticsPanel = () => {
   const { user, signOut } = useAuth();
@@ -63,7 +66,7 @@ const StatisticsPanel = () => {
   const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
   const [showSocialHub, setShowSocialHub] = useState(false);
   const [showCategoryManager, setShowCategoryManager] = useState(false);
-  const [activeTab, setActiveTab] = useState<TabValue>("overview");
+  const [activeTab, setActiveTab] = useState<TabValue>('overview');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -212,6 +215,9 @@ const StatisticsPanel = () => {
   const selectedDateString = format(selectedDate, "yyyy-MM-dd");
   const selectedDateLogs = logs.filter((log) => log.date === selectedDateString);
 
+  // Add recentLogs derived from logs
+  const recentLogs = logs.slice(-20); // Get last 20 logs
+
   // Event handlers
   const handleEditCategory = (category: TrackingCategory) => {
     setEditingCategory(category);
@@ -337,7 +343,7 @@ const StatisticsPanel = () => {
         profile={currentProfile}
         onProfileUpdate={handleUpdateProfile}
         isLoading={isLoading}
-        onAIChatClick={() => setActiveTab("ai")}
+        onAIChatClick={() => setActiveTab("ai-assistant")}
       >
         <ProfileForm />
       </Header>
@@ -384,7 +390,7 @@ const StatisticsPanel = () => {
                   Social Hub
                 </Button>
                 <Button
-                  onClick={() => setActiveTab("ai")}
+                  onClick={() => setActiveTab("ai-assistant")}
                   variant="outline"
                   className="w-full border-yellow-200 text-yellow-700 hover:bg-yellow-50 dark:border-yellow-800 dark:text-yellow-300 dark:hover:bg-yellow-900/50"
                 >
@@ -395,14 +401,21 @@ const StatisticsPanel = () => {
             </Card>
           </div>
 
-          {/* Center Column - Main Content */}
-          <div className="lg:col-span-2 space-y-6">
-            <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as TabValue)} className="w-full">
+          {/* Right Column - Main Content */}
+          <div className="lg:col-span-3">
+            <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as TabValue)} className="w-full h-full">
               <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="overview">Overview</TabsTrigger>
                 <TabsTrigger value="categories">Categories</TabsTrigger>
                 <TabsTrigger value="social">Social</TabsTrigger>
-                <TabsTrigger value="ai">AI Assistant</TabsTrigger>
+                <TabsTrigger 
+                  value="ai-assistant" 
+                  className="flex items-center gap-2"
+                  onClick={() => setActiveTab('ai-assistant')}
+                >
+                  <Brain className="w-4 h-4" />
+                  AI Assistant
+                </TabsTrigger>
               </TabsList>
 
               <TabsContent value="overview" className="space-y-6 mt-6">
@@ -428,23 +441,53 @@ const StatisticsPanel = () => {
                 <SocialHub />
               </TabsContent>
 
-              <TabsContent value="ai" className="space-y-6 mt-6">
-                <AIChat
-                  userProfile={profile}
-                  recentLogs={logs.slice(-50)} // Last 50 logs for context
-                  categories={categories}
-                  className="h-[600px]"
-                />
+              <TabsContent value="ai-assistant" className="h-full">
+                <div className="h-full">
+                  <Tabs defaultValue="chat" className="h-full flex flex-col">
+                    <TabsList className="grid w-full grid-cols-3 mb-4">
+                      <TabsTrigger value="chat" className="flex items-center gap-2">
+                        <MessageCircle className="w-4 h-4" />
+                        AI Chat
+                      </TabsTrigger>
+                      <TabsTrigger value="workouts" className="flex items-center gap-2">
+                        <Dumbbell className="w-4 h-4" />
+                        Workouts
+                      </TabsTrigger>
+                      <TabsTrigger value="nutrition" className="flex items-center gap-2">
+                        <Salad className="w-4 h-4" />
+                        Nutrition
+                      </TabsTrigger>
+                    </TabsList>
+                    
+                    <div className="flex-1 min-h-0">
+                      <TabsContent value="chat" className="h-full mt-0">
+                        <AIChat 
+                          userProfile={profile}
+                          recentLogs={recentLogs}
+                          categories={profile?.categories}
+                        />
+                      </TabsContent>
+                      
+                      <TabsContent value="workouts" className="h-full mt-0">
+                        <WorkoutRecommendations 
+                          userProfile={profile}
+                          recentLogs={recentLogs}
+                          categories={profile?.categories}
+                        />
+                      </TabsContent>
+                      
+                      <TabsContent value="nutrition" className="h-full mt-0">
+                        <NutritionRecommendations 
+                          userProfile={profile}
+                          recentLogs={recentLogs}
+                          categories={profile?.categories}
+                        />
+                      </TabsContent>
+                    </div>
+                  </Tabs>
+                </div>
               </TabsContent>
             </Tabs>
-          </div>
-
-          {/* Right Column - Progress Chart */}
-          <div className="lg:col-span-1">
-            <ProgressChart
-              logs={logs}
-              categories={categories}
-            />
           </div>
         </div>
       </main>
