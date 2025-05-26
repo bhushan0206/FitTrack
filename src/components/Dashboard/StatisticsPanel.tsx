@@ -17,8 +17,8 @@ import ProfileForm from "@/components/Profile/ProfileForm";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { Plus, FolderPlus, Users, Sparkles, Brain, MessageCircle, Dumbbell, Salad } from "lucide-react";
-import ExerciseLibrary from "@/components/Exercise/ExerciseLibrary";
+import { Plus, FolderPlus, Users, Sparkles, Brain, MessageCircle, Dumbbell, Salad, BarChart3, TrendingUp, Settings, Calendar, Target } from "lucide-react";
+import ExerciseLibrary from "../Exercise/ExerciseLibrary";
 import ExerciseDetails from "@/components/Exercise/ExerciseDetails";
 import ExerciseTracker from "@/components/Exercise/ExerciseTracker";
 import SocialHub from "@/components/Social/SocialHub";
@@ -30,7 +30,7 @@ import WorkoutRecommendations from "../AI/WorkoutRecommendations";
 import NutritionRecommendations from "../AI/NutritionRecommendations";
 
 // Define the valid tab values as a union type
-type TabValue = 'overview' | 'progress' | 'categories' | 'logs' | 'social' | 'ai-assistant';
+type TabValue = 'overview' | 'progress' | 'categories' | 'logs' | 'exercises' | 'social' | 'ai-assistant';
 
 const StatisticsPanel = () => {
   const { user, signOut } = useAuth();
@@ -404,89 +404,125 @@ const StatisticsPanel = () => {
           {/* Right Column - Main Content */}
           <div className="lg:col-span-3">
             <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as TabValue)} className="w-full h-full">
-              <TabsList className="grid w-full grid-cols-4">
-                <TabsTrigger value="overview">Overview</TabsTrigger>
-                <TabsTrigger value="categories">Categories</TabsTrigger>
-                <TabsTrigger value="social">Social</TabsTrigger>
-                <TabsTrigger 
-                  value="ai-assistant" 
-                  className="flex items-center gap-2"
-                  onClick={() => setActiveTab('ai-assistant')}
-                >
+              <TabsList className="grid w-full grid-cols-7 mb-6 bg-gray-100/50 dark:bg-gray-700/50 p-1 rounded-lg">
+                <TabsTrigger value="overview" className="flex items-center gap-2">
+                  <BarChart3 className="w-4 h-4" />
+                  Overview
+                </TabsTrigger>
+                <TabsTrigger value="progress" className="flex items-center gap-2">
+                  <TrendingUp className="w-4 h-4" />
+                  Progress
+                </TabsTrigger>
+                <TabsTrigger value="categories" className="flex items-center gap-2">
+                  <Settings className="w-4 h-4" />
+                  Categories
+                </TabsTrigger>
+                <TabsTrigger value="logs" className="flex items-center gap-2">
+                  <Calendar className="w-4 h-4" />
+                  Daily Logs
+                </TabsTrigger>
+                <TabsTrigger value="exercises" className="flex items-center gap-2">
+                  <Dumbbell className="w-4 h-4" />
+                  Exercises
+                </TabsTrigger>
+                <TabsTrigger value="social" className="flex items-center gap-2">
+                  <Users className="w-4 h-4" />
+                  Social
+                </TabsTrigger>
+                <TabsTrigger value="ai-assistant" className="flex items-center gap-2">
                   <Brain className="w-4 h-4" />
                   AI Assistant
                 </TabsTrigger>
               </TabsList>
 
-              <TabsContent value="overview" className="space-y-6 mt-6">
-                <DailyLogList
-                  logs={selectedDateLogs}
-                  categories={categories}
-                  onEdit={handleEditLog}
-                  onDelete={handleDeleteLog}
-                  onAdd={() => setShowLogForm(true)}
-                  selectedDate={selectedDate}
-                />
-              </TabsContent>
+              <div className="h-[calc(100vh-200px)] overflow-y-auto">
+                <TabsContent value="overview" className="space-y-6 mt-6">
+                  <DailyLogList
+                    logs={selectedDateLogs}
+                    categories={categories}
+                    onEdit={handleEditLog}
+                    onDelete={handleDeleteLog}
+                    onAdd={() => setShowLogForm(true)}
+                    selectedDate={selectedDate}
+                  />
+                </TabsContent>
 
-              <TabsContent value="categories" className="space-y-6 mt-6">
-                <CategoryManager
-                  categories={categories}
-                  onEdit={handleEditCategory}
-                  onDelete={handleDeleteCategory}
-                />
-              </TabsContent>
+                <TabsContent value="categories" className="space-y-6 mt-6">
+                  <CategoryManager
+                    categories={categories}
+                    onEdit={handleEditCategory}
+                    onDelete={handleDeleteCategory}
+                  />
+                </TabsContent>
 
-              <TabsContent value="social" className="space-y-6 mt-6">
-                <SocialHub />
-              </TabsContent>
+                <TabsContent value="social" className="space-y-6 mt-6">
+                  <SocialHub />
+                </TabsContent>
 
-              <TabsContent value="ai-assistant" className="h-full">
-                <div className="h-full">
-                  <Tabs defaultValue="chat" className="h-full flex flex-col">
-                    <TabsList className="grid w-full grid-cols-3 mb-4">
-                      <TabsTrigger value="chat" className="flex items-center gap-2">
-                        <MessageCircle className="w-4 h-4" />
-                        AI Chat
-                      </TabsTrigger>
-                      <TabsTrigger value="workouts" className="flex items-center gap-2">
-                        <Dumbbell className="w-4 h-4" />
-                        Workouts
-                      </TabsTrigger>
-                      <TabsTrigger value="nutrition" className="flex items-center gap-2">
-                        <Salad className="w-4 h-4" />
-                        Nutrition
-                      </TabsTrigger>
-                    </TabsList>
-                    
-                    <div className="flex-1 min-h-0">
-                      <TabsContent value="chat" className="h-full mt-0">
-                        <AIChat 
-                          userProfile={profile}
-                          recentLogs={recentLogs}
-                          categories={profile?.categories}
-                        />
-                      </TabsContent>
+                <TabsContent value="ai-assistant" className="h-full">
+                  <div className="h-full">
+                    <Tabs defaultValue="chat" className="h-full flex flex-col">
+                      <TabsList className="grid w-full grid-cols-4 mb-4">
+                        <TabsTrigger value="chat" className="flex items-center gap-2">
+                          <MessageCircle className="w-4 h-4" />
+                          AI Chat
+                        </TabsTrigger>
+                        <TabsTrigger value="workouts" className="flex items-center gap-2">
+                          <Dumbbell className="w-4 h-4" />
+                          Workouts
+                        </TabsTrigger>
+                        <TabsTrigger value="nutrition" className="flex items-center gap-2">
+                          <Salad className="w-4 h-4" />
+                          Nutrition
+                        </TabsTrigger>
+                        <TabsTrigger value="goals" className="flex items-center gap-2">
+                          <Target className="w-4 h-4" />
+                          Goals & Motivation
+                        </TabsTrigger>
+                      </TabsList>
                       
-                      <TabsContent value="workouts" className="h-full mt-0">
-                        <WorkoutRecommendations 
-                          userProfile={profile}
-                          recentLogs={recentLogs}
-                          categories={profile?.categories}
-                        />
-                      </TabsContent>
-                      
-                      <TabsContent value="nutrition" className="h-full mt-0">
-                        <NutritionRecommendations 
-                          userProfile={profile}
-                          recentLogs={recentLogs}
-                          categories={profile?.categories}
-                        />
-                      </TabsContent>
-                    </div>
-                  </Tabs>
-                </div>
-              </TabsContent>
+                      <div className="flex-1 min-h-0">
+                        <TabsContent value="chat" className="h-full mt-0">
+                          <AIChat 
+                            userProfile={profile}
+                            recentLogs={recentLogs}
+                            categories={profile?.categories}
+                          />
+                        </TabsContent>
+                        
+                        <TabsContent value="workouts" className="h-full mt-0">
+                          <WorkoutRecommendations 
+                            userProfile={profile}
+                            recentLogs={recentLogs}
+                            categories={profile?.categories}
+                          />
+                        </TabsContent>
+                        
+                        <TabsContent value="nutrition" className="h-full mt-0">
+                          <NutritionRecommendations 
+                            userProfile={profile}
+                            recentLogs={recentLogs}
+                            categories={profile?.categories}
+                          />
+                        </TabsContent>
+                      </div>
+                    </Tabs>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="exercises" className="h-full">
+                  <ExerciseLibrary 
+                    onStartExercise={(exercise) => {
+                      // Handle starting an exercise - you can implement this based on your needs
+                      console.log('Starting exercise:', exercise);
+                    }}
+                    onViewExerciseDetails={(exercise) => {
+                      // Handle viewing exercise details - you can implement this based on your needs
+                      console.log('Viewing exercise details:', exercise);
+                    }}
+                  />
+                </TabsContent>
+              </div>
             </Tabs>
           </div>
         </div>
