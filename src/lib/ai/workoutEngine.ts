@@ -9,7 +9,10 @@ interface WorkoutContext {
 
 class WorkoutEngine {
   generateRecommendations(context: WorkoutContext): WorkoutRecommendation[] {
-    console.log('WorkoutEngine: Starting recommendation generation');
+    // Only log in development
+    if (process.env.NODE_ENV === 'development') {
+      console.log('WorkoutEngine: Starting recommendation generation');
+    }
     
     const recommendations: WorkoutRecommendation[] = [];
     

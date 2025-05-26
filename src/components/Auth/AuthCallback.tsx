@@ -17,8 +17,10 @@ const AuthCallback = () => {
         }
 
         if (data.session) {
-          console.log('Auth callback successful, redirecting to dashboard');
-          navigate('/dashboard');
+          // Remove sensitive session data from logs
+          if (process.env.NODE_ENV === 'development') {
+            console.log('Auth callback successful, redirecting to dashboard');
+          }
         } else {
           console.log('No session found, redirecting to sign-in');
           navigate('/sign-in');

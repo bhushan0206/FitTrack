@@ -86,3 +86,33 @@ export interface NutritionAnalysis {
     [key: string]: number;
   };
 }
+
+export interface NutritionEntry {
+  id: string;
+  user_id: string;
+  date: string;
+  meal_type: 'breakfast' | 'lunch' | 'dinner' | 'snack';
+  food_items: FoodItem[];
+  total_calories: number;
+  macros: {
+    protein: number;
+    carbs: number;
+    fat: number;
+    fiber: number;
+  };
+}
+
+export interface Macros {
+  protein: number;
+  carbs: number;
+  fat: number;
+  fiber: number;
+}
+
+export interface FoodItem {
+  name: string;
+  quantity: number;
+  unit: string;
+  calories_per_unit: number;
+  macros: Macros;
+}

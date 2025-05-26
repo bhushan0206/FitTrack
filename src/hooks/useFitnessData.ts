@@ -33,7 +33,10 @@ export const useFitnessData = () => {
 
       try {
         setIsLoading(true);
-        console.log('useFitnessData: Starting data load for user:', user.id);
+        // Remove sensitive user ID from logs
+        if (process.env.NODE_ENV === 'development') {
+          console.log('useFitnessData: Starting data load for user');
+        }
         
         // For Google users, try with user ID first to avoid timeout
         let userProfile: UserProfile | null = null;

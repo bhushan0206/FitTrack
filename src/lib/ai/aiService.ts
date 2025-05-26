@@ -67,7 +67,8 @@ class AIService {
       
       return aiResponse;
     } catch (error) {
-      console.error('AI chat error:', error);
+      // Remove sensitive chat data from error logs
+      console.error('AI chat error');
       errorMessage = error instanceof Error ? error.message : 'Unknown error';
       throw error;
     } finally {

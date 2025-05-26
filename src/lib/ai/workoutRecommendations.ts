@@ -316,9 +316,10 @@ export class WorkoutRecommendationEngine {
 
   // Method to add user feedback to improve future recommendations
   addUserFeedback(workoutId: string, rating: number, feedback?: string): void {
-    // In a real implementation, this would store feedback in the database
-    // and be used to improve the recommendation algorithm
-    console.log(`User feedback for workout ${workoutId}: ${rating}/5`, feedback);
+    // Remove sensitive user feedback from logs
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`User feedback for workout ${workoutId}: ${rating}/5`, feedback);
+    }
   }
 }
 

@@ -9,7 +9,8 @@ export const storeSession = (session: StoredSession) => {
   try {
     localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(session));
   } catch (error) {
-    console.error('Failed to store session:', error);
+    // Remove sensitive session data
+    console.error('Failed to store session');
   }
 };
 

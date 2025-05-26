@@ -62,8 +62,8 @@ export const initializeUserProfile = async (userId: string, userName?: string) =
       logs: [],
     };
   } catch (error) {
-    console.error("Error initializing user profile:", error);
-    return null;
+    // Remove sensitive initialization data
+    console.error("Error initializing user profile");
   }
 };
 

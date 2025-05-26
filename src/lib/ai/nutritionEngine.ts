@@ -10,14 +10,17 @@ interface NutritionContext {
 
 class NutritionEngine {
   generateRecommendations(context: NutritionContext): NutritionRecommendation[] {
-    console.log('NutritionEngine: Starting recommendation generation');
-    console.log('NutritionEngine: Context received:', {
-      hasUserProfile: !!context.userProfile,
-      userGoal: context.userProfile?.fitnessGoal,
-      hasRecentLogs: !!(context.recentLogs && context.recentLogs.length > 0),
-      hasCategories: !!(context.categories && context.categories.length > 0),
-      hasDietaryPrefs: !!context.dietaryPreferences
-    });
+    // Only log in development - remove sensitive user data
+    if (process.env.NODE_ENV === 'development') {
+      console.log('NutritionEngine: Starting recommendation generation');
+      console.log('NutritionEngine: Context received:', {
+        hasUserProfile: !!context.userProfile,
+        userGoal: context.userProfile?.fitnessGoal,
+        hasRecentLogs: !!(context.recentLogs && context.recentLogs.length > 0),
+        hasCategories: !!(context.categories && context.categories.length > 0),
+        hasDietaryPrefs: !!context.dietaryPreferences
+      });
+    }
     
     const recommendations: NutritionRecommendation[] = [];
     

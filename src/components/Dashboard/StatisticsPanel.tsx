@@ -16,7 +16,7 @@ import CategoryManager from './CategoryManager';
 import ProfileForm from "@/components/Profile/ProfileForm";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Plus, FolderPlus, Users, Sparkles, Brain, MessageCircle, Dumbbell, Salad, BarChart3, TrendingUp, Settings, Calendar, Target } from "lucide-react";
 import ExerciseLibrary from "../Exercise/ExerciseLibrary";
 import ExerciseDetails from "@/components/Exercise/ExerciseDetails";
@@ -31,6 +31,7 @@ import NutritionRecommendations from "../AI/NutritionRecommendations";
 import GoalTrackingAssistant from '../AI/GoalTrackingAssistant';
 import TabNavigation, { TabValue } from "@/components/Layout/TabNavigation";
 import QuickActions from "./QuickActions";
+import { updateUserProfile } from '@/lib/supabaseStorage';
 
 const StatisticsPanel = () => {
   const { user, signOut } = useAuth();
@@ -38,10 +39,10 @@ const StatisticsPanel = () => {
 
   // State management hooks
   const {
+    profile: userProfile, 
     categories,
     logs,
-    profile,
-    isLoading,
+    isLoading: dataLoading,
     handleAddCategory,
     handleUpdateCategory,
     handleDeleteCategory,
@@ -69,6 +70,8 @@ const StatisticsPanel = () => {
   const [activeTab, setActiveTab] = useState<TabValue>('overview');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showProfileDialog, setShowProfileDialog] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Load exercises and exercise logs
   useEffect(() => {
@@ -321,7 +324,7 @@ const StatisticsPanel = () => {
   };
 
   // Create a profile object with fallback values
-  const currentProfile = profile || {
+  const currentProfile = userProfile || {
     id: user?.id || "temp-id",
     name: user?.name || user?.email || "",
     age: undefined,
@@ -331,6 +334,28 @@ const StatisticsPanel = () => {
     fitnessGoal: undefined,
     categories: [],
     logs: [],
+  };
+
+  // Simplified handleProfileSave - just close dialog and refresh data
+  const handleProfileSave = async (profileData: Partial<UserProfile>) => {
+    setIsLoading(true);
+    try {
+      const result = await updateUserProfile(profileData);
+      if (result) {
+        // The useFitnessData hook will automatically update with the new profile
+        setShowProfileDialog(false);
+        // Show success message
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Profile updated successfully');
+        }
+      } else {
+        console.error('Failed to update profile');
+      }
+    } catch (error) {
+      console.error('Error updating profile:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -359,7 +384,11 @@ const StatisticsPanel = () => {
         <div className="flex flex-col md:grid md:grid-cols-12 gap-2 sm:gap-3 md:gap-4">
           {/* Main Content - First on mobile, second on desktop */}
           <div className="w-full order-1 md:order-2 md:col-span-8 lg:col-span-9">
-            <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as TabValue)} className="w-full">
+            <Tabs
+              value={activeTab}
+              onValueChange={(value) => setActiveTab(value as TabValue)}
+              className="w-full"
+            >
               {/* Mobile-optimized tab navigation */}
               <div className="w-full overflow-hidden mb-2">
                 <div className="tabs-list overflow-x-auto hide-scrollbar">
@@ -369,7 +398,10 @@ const StatisticsPanel = () => {
 
               {/* Dynamic height container that works on mobile */}
               <div className="mobile-height-fix overflow-y-auto overflow-x-hidden">
-                <TabsContent value="overview" className="space-y-3 mt-2 sm:mt-4 px-0.5">
+                <TabsContent
+                  value="overview"
+                  className="space-y-3 mt-2 sm:mt-4 px-0.5"
+                >
                   <DailyLogList
                     logs={selectedDateLogs}
                     categories={categories}
@@ -380,7 +412,10 @@ const StatisticsPanel = () => {
                   />
                 </TabsContent>
 
-                <TabsContent value="categories" className="space-y-3 mt-2 sm:mt-4 px-0.5">
+                <TabsContent
+                  value="categories"
+                  className="space-y-3 mt-2 sm:mt-4 px-0.5"
+                >
                   <CategoryManager
                     categories={categories}
                     onEdit={handleEditCategory}
@@ -388,7 +423,10 @@ const StatisticsPanel = () => {
                   />
                 </TabsContent>
 
-                <TabsContent value="social" className="space-y-3 mt-2 sm:mt-4 px-0.5">
+                <TabsContent
+                  value="social"
+                  className="space-y-3 mt-2 sm:mt-4 px-0.5"
+                >
                   <SocialHub />
                 </TabsContent>
 
@@ -397,55 +435,67 @@ const StatisticsPanel = () => {
                     <Tabs defaultValue="chat" className="h-full flex flex-col">
                       {/* Mobile-optimized AI tabs */}
                       <TabsList className="grid grid-cols-2 xs:grid-cols-4 mb-2 p-1 w-full overflow-x-auto hide-scrollbar">
-                        <TabsTrigger value="chat" className="flex items-center justify-center gap-1 text-xs whitespace-nowrap">
+                        <TabsTrigger
+                          value="chat"
+                          className="flex items-center justify-center gap-1 text-xs whitespace-nowrap"
+                        >
                           <MessageCircle className="w-3 h-3 sm:w-4 sm:h-4" />
                           <span className="truncate">Chat</span>
                         </TabsTrigger>
-                        <TabsTrigger value="workouts" className="flex items-center justify-center gap-1 text-xs whitespace-nowrap">
+                        <TabsTrigger
+                          value="workouts"
+                          className="flex items-center justify-center gap-1 text-xs whitespace-nowrap"
+                        >
                           <Dumbbell className="w-3 h-3 sm:w-4 sm:h-4" />
                           <span className="truncate">Workouts</span>
                         </TabsTrigger>
-                        <TabsTrigger value="nutrition" className="flex items-center justify-center gap-1 text-xs whitespace-nowrap">
+                        <TabsTrigger
+                          value="nutrition"
+                          className="flex items-center justify-center gap-1 text-xs whitespace-nowrap"
+                        >
                           <Salad className="w-3 h-3 sm:w-4 sm:h-4" />
                           <span className="truncate">Nutrition</span>
                         </TabsTrigger>
-                        <TabsTrigger value="goals" className="flex items-center justify-center gap-1 text-xs whitespace-nowrap">
+                        <TabsTrigger
+                          value="goals"
+                          className="flex items-center justify-center gap-1 text-xs whitespace-nowrap"
+                        >
                           <Target className="w-3 h-3 sm:w-4 sm:h-4" />
                           <span className="truncate">Goals</span>
                         </TabsTrigger>
                       </TabsList>
-                      
+
                       <div className="flex-1 min-h-0">
                         <TabsContent value="chat" className="h-full mt-0">
-                          <AIChat 
-                            userProfile={profile}
+                          <AIChat
+                            userProfile={userProfile}
                             recentLogs={recentLogs}
-                            categories={profile?.categories}
+                            categories={userProfile?.categories}
                           />
                         </TabsContent>
-                        
+
                         <TabsContent value="workouts" className="h-full mt-0">
-                          <WorkoutRecommendations 
-                            userProfile={profile}
+                          <WorkoutRecommendations
+                            userProfile={userProfile}
                             recentLogs={recentLogs}
-                            categories={profile?.categories}
+                            categories={userProfile?.categories}
                           />
                         </TabsContent>
-                        
+
                         <TabsContent value="nutrition" className="h-full mt-0">
-                          <NutritionRecommendations 
-                            userProfile={profile}
+                          <NutritionRecommendations
+                            userProfile={userProfile}
                             recentLogs={recentLogs}
-                            categories={profile?.categories}
+                            categories={userProfile?.categories}
                           />
                         </TabsContent>
 
                         <TabsContent value="goals" className="h-full mt-0">
                           <div className="h-full overflow-y-auto">
-                            <GoalTrackingAssistant 
-                              userProfile={profile}
+                            <GoalTrackingAssistant
+                              userProfile={userProfile}
                               recentLogs={recentLogs}
-                              categories={profile?.categories}
+                              categories={userProfile?.categories}
                             />
                           </div>
                         </TabsContent>
@@ -455,12 +505,12 @@ const StatisticsPanel = () => {
                 </TabsContent>
 
                 <TabsContent value="exercises" className="h-full px-0.5">
-                  <ExerciseLibrary 
+                  <ExerciseLibrary
                     onStartExercise={(exercise) => {
-                      console.log('Starting exercise:', exercise);
+                      console.log("Starting exercise:", exercise);
                     }}
                     onViewExerciseDetails={(exercise) => {
-                      console.log('Viewing exercise details:', exercise);
+                      console.log("Viewing exercise details:", exercise);
                     }}
                   />
                 </TabsContent>
@@ -511,6 +561,24 @@ const StatisticsPanel = () => {
           />
         </DialogContent>
       </Dialog>
+
+      {/* Profile Dialog */}
+      <Dialog open={showProfileDialog} onOpenChange={setShowProfileDialog}>
+        <DialogContent className="max-w-4xl max-h-[95vh] overflow-y-auto p-6">
+          <DialogHeader className="pb-4 border-b">
+            <DialogTitle className="text-2xl font-semibold">Edit Profile</DialogTitle>
+          </DialogHeader>
+          <div className="mt-6">
+            <ProfileForm 
+              profile={userProfile} 
+              onSave={handleProfileSave}
+              onCancel={() => setShowProfileDialog(false)}
+              standalone={true}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 };

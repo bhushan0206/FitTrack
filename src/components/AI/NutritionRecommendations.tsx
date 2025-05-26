@@ -43,7 +43,10 @@ const NutritionRecommendations: React.FC<NutritionRecommendationsProps> = ({
   }, [userProfile, recentLogs, categories]);
 
   const generateRecommendations = () => {
-    console.log('NutritionRecommendations: Starting generation...');
+    // Only log in development
+    if (process.env.NODE_ENV === 'development') {
+      console.log('NutritionRecommendations: Starting generation...');
+    }
     setLoading(true);
     setRecommendations([]); // Clear existing recommendations
     

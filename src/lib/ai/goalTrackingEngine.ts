@@ -68,12 +68,15 @@ export class GoalTrackingEngine {
     const { userProfile, recentLogs, categories } = context;
     const messages: MotivationalMessage[] = [];
     
-    console.log('GoalTrackingEngine: Generating messages with context:', {
-      hasUserProfile: !!userProfile,
-      hasCategories: !!categories,
-      categoriesCount: categories?.length || 0,
-      logsCount: recentLogs?.length || 0
-    });
+    // Only log aggregated, non-sensitive data in development
+    if (process.env.NODE_ENV === 'development') {
+      console.log('GoalTrackingEngine: Generating messages with context:', {
+        hasUserProfile: !!userProfile,
+        hasCategories: !!categories,
+        categoriesCount: categories?.length || 0,
+        logsCount: recentLogs?.length || 0
+      });
+    }
 
     if (!userProfile || !categories || categories.length === 0) {
       // Return some default messages even if no categories

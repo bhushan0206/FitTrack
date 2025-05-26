@@ -34,7 +34,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const initializeAuth = async () => {
       try {
-        console.log('🔄 Initializing auth...');
+        if (process.env.NODE_ENV === 'development') {
+          console.log('🔄 Initializing auth...');
+        }
         
         // Check for OAuth callback in URL - only process once
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
@@ -42,7 +44,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const refreshToken = hashParams.get('refresh_token');
         
         if (accessToken && !oauthCallbackProcessed.current) {
-          console.log('🔗 OAuth callback detected, processing...');
+          if (process.env.NODE_ENV === 'development') {
+            console.log('🔗 OAuth callback detected, processing...');
+          }
           oauthCallbackProcessed.current = true;
           
           try {
@@ -60,7 +64,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }
             
             if (data.session && data.user && mounted) {
-              console.log('✅ OAuth session set successfully:', data.user.email);
+              if (process.env.NODE_ENV === 'development') {
+                console.log('✅ OAuth session set successfully');
+              }
               setSession(data.session);
               setUser(transformUser(data.user));
               
@@ -152,7 +158,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
         }
       } catch (error) {
-        console.error('❌ Error in initializeAuth:', error);
+        if (process.env.NODE_ENV === 'development') {
+          console.error('❌ Error in initializeAuth:', error);
+        }
         if (mounted) {
           localStorage.removeItem('supabase-auth-token');
           setSession(null);
@@ -162,7 +170,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (mounted) {
           setIsInitialized(true);
           setLoading(false);
-          console.log('Auth initialization completed');
+          if (process.env.NODE_ENV === 'development') {
+            console.log('Auth initialization completed');
+          }
         }
       }
     };
@@ -171,7 +181,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('🔄 Auth state changed:', event, session?.user?.email);
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🔄 Auth state changed:', event);
+      }
       
       if (mounted) {
         // Always update session and user state immediately
@@ -241,7 +253,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Helper function to ensure user profile exists
   const ensureUserProfile = async (user: any) => {
     try {
-      console.log('Checking profile for user:', user.id);
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Checking profile for user');
+      }
       
       // First check if profile exists
       const { data: existingProfile, error: fetchError } = await supabase
@@ -252,7 +266,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (fetchError && fetchError.code === 'PGRST116') {
         // Profile doesn't exist, create it
-        console.log('Creating profile for user:', user.id);
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Creating profile for user');
+        }
         
         const profileData = {
           id: user.id,
@@ -273,12 +289,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (createError) {
           console.error('Error creating profile:', createError);
         } else {
-          console.log('Profile created successfully for user:', user.id);
+          if (process.env.NODE_ENV === 'development') {
+            console.log('Profile created successfully');
+          }
         }
       } else if (fetchError) {
         console.error('Error fetching profile:', fetchError);
       } else {
-        console.log('Profile already exists for user:', user.id);
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Profile already exists');
+        }
         
         // Update profile name if it's from social auth and we have better metadata
         const newName = user.user_metadata?.name || 
@@ -299,7 +319,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       }
     } catch (error) {
-      console.error('Error in ensureUserProfile:', error);
+      console.error('Error in ensureUserProfile');
       // Don't throw error - we don't want to block auth completion
     }
   };
@@ -387,7 +407,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       // Get the current URL without any hash
       const baseUrl = `${window.location.protocol}//${window.location.host}${window.location.pathname}`;
-      console.log('AuthContext - Using redirect URL:', baseUrl);
+      if (process.env.NODE_ENV === 'development') {
+        console.log('AuthContext - Using redirect URL:', baseUrl);
+      }
 
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -405,10 +427,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw error;
       }
       
-      console.log('✅ Google OAuth initiated');
+      if (process.env.NODE_ENV === 'development') {
+        console.log('✅ Google OAuth initiated');
+      }
       return data;
     } catch (error) {
-      console.error('❌ Error in signInWithGoogle:', error);
+      console.error('❌ Error in signInWithGoogle');
       throw error;
     }
   };
@@ -443,7 +467,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signOut = async () => {
-    console.log('Starting sign out process...');
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Starting sign out process...');
+    }
     
     try {
       // Clear state immediately first

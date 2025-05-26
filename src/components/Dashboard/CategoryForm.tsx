@@ -32,7 +32,10 @@ const CategoryForm = ({ onSave, category, onCancel, existingCategories = [] }: C
     e.preventDefault();
     e.stopPropagation();
 
-    console.log('Category form submitted:', { name, unit, dailyTarget, color });
+    // Remove sensitive form data from logs
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Category form submitted');
+    }
 
     if (!name.trim() || !unit.trim() || !dailyTarget) {
       console.log('Validation failed');

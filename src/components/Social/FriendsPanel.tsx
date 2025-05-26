@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Users, UserPlus, Mail, Check, X, MessageCircle } from 'lucide-react';
 import { Friend } from '@/types/social';
@@ -237,6 +237,9 @@ const FriendsPanel = ({ onOpenChat }: FriendsPanelProps) => {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Add Friend</DialogTitle>
+            <DialogDescription>
+              Enter your friend's email address to send them a friend request. They must have a FitTrack account.
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div>

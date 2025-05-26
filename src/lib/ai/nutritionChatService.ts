@@ -19,7 +19,10 @@ class NutritionChatService {
     context: NutritionContext
   ): Promise<string> {
     try {
-      console.log('Nutrition Chat: Processing message:', message);
+      // Remove sensitive message content from logs
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Nutrition Chat: Processing message of length:', message.length);
+      }
       
       const lowerMessage = message.toLowerCase();
       

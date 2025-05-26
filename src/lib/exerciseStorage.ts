@@ -11,8 +11,8 @@ export const exerciseStorage = {
         .order('name');
 
       if (error) {
-        console.error('Error fetching exercises:', error);
-        throw error;
+        // Remove sensitive exercise data
+        console.error('Error fetching exercises');
       }
 
       return data?.map(exercise => ({

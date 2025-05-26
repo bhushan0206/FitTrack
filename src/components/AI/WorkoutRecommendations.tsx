@@ -22,17 +22,15 @@ import { UserProfile, DailyLog, TrackingCategory } from "@/types/fitness";
 import { WorkoutRecommendation } from "@/types/ai";
 
 interface WorkoutRecommendationsProps {
-  userProfile?: UserProfile;
-  recentLogs?: DailyLog[];
-  categories?: TrackingCategory[];
-  onStartWorkout?: (workout: WorkoutRecommendation) => void;
+  profile: UserProfile | null;
+  categories: TrackingCategory[];
+  logs: DailyLog[];
 }
 
 const WorkoutRecommendations: React.FC<WorkoutRecommendationsProps> = ({
-  userProfile,
-  recentLogs,
+  profile,
   categories,
-  onStartWorkout
+  logs
 }) => {
   const [recommendations, setRecommendations] = useState<WorkoutRecommendation[]>([]);
   const [selectedWorkout, setSelectedWorkout] = useState<WorkoutRecommendation | null>(null);
@@ -41,7 +39,7 @@ const WorkoutRecommendations: React.FC<WorkoutRecommendationsProps> = ({
 
   useEffect(() => {
     generateRecommendations();
-  }, [userProfile, recentLogs, categories]);
+  }, [profile, logs, categories]);
 
   const generateRecommendations = () => {
     console.log('WorkoutRecommendations: Starting generation...');
@@ -51,8 +49,8 @@ const WorkoutRecommendations: React.FC<WorkoutRecommendationsProps> = ({
     setTimeout(() => {
       try {
         const context = { 
-          userProfile, 
-          recentLogs: recentLogs || [], 
+          userProfile: profile, 
+          recentLogs: logs || [], 
           categories: categories || []
         };
         
@@ -118,7 +116,7 @@ const WorkoutRecommendations: React.FC<WorkoutRecommendationsProps> = ({
 
   const handleStartWorkout = (workout: WorkoutRecommendation) => {
     setShowDetails(false);
-    onStartWorkout?.(workout);
+    // onStartWorkout?.(workout);
   };
 
   if (loading) {

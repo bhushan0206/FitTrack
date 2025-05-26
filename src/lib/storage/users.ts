@@ -15,6 +15,7 @@ export const getUserProfile = async (userId: string): Promise<UserProfile | null
       .single();
 
     if (profileError) {
+      // Remove sensitive user data from logs
       console.warn("Profile not found, creating new one");
     }
 

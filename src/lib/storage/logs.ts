@@ -51,7 +51,8 @@ export const addLogEntry = async (
 
     return await getProfile(userId);
   } catch (error) {
-    console.error("Error adding log entry:", error);
+    // Remove sensitive log data from console
+    console.error("Error adding log entry");
     return null;
   }
 };

@@ -1,24 +1,22 @@
 import React, { useState } from "react";
-import { TrackingCategory, UserProfile } from "@/types/fitness";
+import { TrackingCategory } from "@/types/fitness";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Edit, Trash2, Plus } from "lucide-react";
+import { Edit, Plus, Trash2 } from "lucide-react";
 import { deleteCategory } from "@/lib/supabaseStorage";
 import { useToast } from "@/components/ui/use-toast";
 import CategoryForm from "./CategoryForm";
 
-export interface CategoryListProps {
+interface CategoryListProps {
   categories: TrackingCategory[];
   onEdit: (category: TrackingCategory) => void;
-  onDelete: (categoryId: string) => void;
-  onAdd: () => void;
+  onDelete: (categoryId: string) => Promise<boolean>;
 }
 
 const CategoryList: React.FC<CategoryListProps> = ({
   categories,
   onEdit,
   onDelete,
-  onAdd,
 }) => {
   const [isAddingCategory, setIsAddingCategory] = useState(false);
   const [editingCategory, setEditingCategory] =
@@ -29,7 +27,7 @@ const CategoryList: React.FC<CategoryListProps> = ({
   const handleDeleteCategory = async (categoryId: string) => {
     try {
       setIsDeleting(categoryId);
-      await deleteCategory(categoryId); // Remove userId parameter
+      const success = await deleteCategory(categoryId); // Remove userId parameter
       onDelete(categoryId); // Notify parent component about the deletion
       toast({
         title: "Success",

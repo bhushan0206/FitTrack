@@ -21,6 +21,7 @@ import clsx from "clsx";
 import { useNavigate } from "react-router-dom";
 import { useNotifications } from '@/hooks/useNotifications';
 import { socialStorage } from '@/lib/socialStorage';
+import { LogOut as LogOutIcon, Sun, Moon, Bell, Activity } from 'lucide-react';
 
 interface HeaderProps {
   selectedDate: Date;
@@ -84,6 +85,7 @@ const Header = ({
       console.log('Signing out user...');
       await signOut();
       console.log('Sign out successful');
+      navigate('/auth/signin'); // Navigate to sign-in page after sign out
     } catch (error) {
       console.error('Sign out error:', error);
     } finally {
@@ -132,27 +134,35 @@ const Header = ({
     changeDate(1);
   };
 
+  const handleLogoClick = () => {
+    navigate('/dashboard');
+  };
+
   return (
-    <header className="sticky top-0 z-50 bg-white/70 dark:bg-gray-900/80 backdrop-blur-lg shadow-sm overflow-hidden">
-      <div className="w-full max-w-7xl mx-auto px-1 xs:px-2 sm:px-4">
-        <div className="flex items-center justify-between h-12 sm:h-14">
-          {/* Mobile Optimized Logo */}
-          <div className="flex-shrink-0 flex items-center">
-            <img 
-              src="/logo.svg" 
-              alt="FitTrack Logo" 
-              className="h-7 w-auto hidden sm:block" 
-            />
-            <img 
-              src="/logo-icon.svg" 
-              alt="FitTrack" 
-              className="h-6 w-auto sm:hidden" 
-            />
-            <span className="ml-2 text-sm sm:text-lg font-bold text-indigo-600 dark:text-indigo-400 hidden xs:block">
-              FitTrack
-            </span>
+    <header className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-200/50 dark:border-gray-700/50 sticky top-0 z-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-16">
+          {/* Logo and Title - Make clickable */}
+          <div 
+            onClick={handleLogoClick}
+            className="flex items-center space-x-3 cursor-pointer hover:opacity-80 transition-opacity"
+          >
+            <div className="relative">
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 rounded-xl flex items-center justify-center shadow-lg">
+                <Activity className="w-6 h-6 text-white" />
+              </div>
+              <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-blue-600 dark:text-blue-400">
+                FitTrack
+              </h1>
+              <p className="text-xs text-gray-500 dark:text-gray-400 -mt-1">
+                Your Fitness Journey
+              </p>
+            </div>
           </div>
-          
+
           {/* Mobile Optimized Date Picker */}
           {showDatePicker && (
             <div className="flex items-center">

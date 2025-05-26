@@ -16,20 +16,24 @@ const getCurrentUserId = async (): Promise<string> => {
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
     
     if (sessionError) {
-      console.error('Session error in getCurrentUserId:', sessionError);
+      console.error('Session error in getCurrentUserId');
     }
     
     if (session?.user?.id) {
-      console.log('getCurrentUserId: Got user ID from session:', session.user.id);
+      if (process.env.NODE_ENV === 'development') {
+        console.log('getCurrentUserId: Got user ID from session');
+      }
       return session.user.id;
     }
     
     // Fallback to getUser()
-    console.log('getCurrentUserId: No session, trying getUser()...');
+    if (process.env.NODE_ENV === 'development') {
+      console.log('getCurrentUserId: No session, trying getUser()...');
+    }
     const { data: { user }, error } = await supabase.auth.getUser();
     
     if (error) {
-      console.error('Auth error in getCurrentUserId:', error);
+      console.error('Auth error in getCurrentUserId');
       throw new Error(`Authentication error: ${error.message}`);
     }
     
@@ -38,10 +42,12 @@ const getCurrentUserId = async (): Promise<string> => {
       throw new Error("User not authenticated");
     }
     
-    console.log('getCurrentUserId successful for user:', user.id);
+    if (process.env.NODE_ENV === 'development') {
+      console.log('getCurrentUserId successful');
+    }
     return user.id;
   } catch (error) {
-    console.error('Error in getCurrentUserId:', error);
+    console.error('Error in getCurrentUserId');
     throw error;
   }
 };
@@ -330,7 +336,7 @@ export const updateUserProfile = async (
     const now = new Date().toISOString();
 
     if (existingProfile) {
-      // Profile exists, update it
+      // Profile exists, update it - only update fields that exist in the database
       const { data, error } = await supabase
         .from('profiles')
         .update({
@@ -339,7 +345,7 @@ export const updateUserProfile = async (
           gender: profileData.gender,
           weight: profileData.weight,
           height: profileData.height,
-          fitness_goal: profileData.fitnessGoal,
+          // Remove fitness_goal as it doesn't exist in the database
           theme: profileData.theme,
           accentColor: profileData.accentColor,
           updated_at: now,
@@ -389,7 +395,7 @@ export const updateUserProfile = async (
         gender: data.gender,
         weight: data.weight,
         height: data.height,
-        fitnessGoal: data.fitness_goal,
+        fitnessGoal: profileData.fitnessGoal, // Keep in frontend state but don't persist
         theme: data.theme,
         accentColor: data.accentColor,
         categories: transformedCategories,
@@ -408,7 +414,7 @@ export const updateUserProfile = async (
         gender: profileData.gender,
         weight: profileData.weight,
         height: profileData.height,
-        fitness_goal: profileData.fitnessGoal,
+        // Remove fitness_goal as it doesn't exist in the database
         theme: profileData.theme,
         accentColor: profileData.accentColor,
         created_at: now,
@@ -433,7 +439,7 @@ export const updateUserProfile = async (
         gender: data.gender,
         weight: data.weight,
         height: data.height,
-        fitnessGoal: data.fitness_goal,
+        fitnessGoal: profileData.fitnessGoal, // Keep in frontend state but don't persist
         theme: data.theme,
         accentColor: data.accentColor,
         categories: [],
@@ -457,7 +463,6 @@ export const getUserProfile = async (userId?: string): Promise<UserProfile | nul
     
     if (userId) {
       currentUserId = userId;
-      console.log('getUserProfile: Using provided user ID:', currentUserId);
     } else {
       // Try to get user ID with shorter timeout for Google users
       try {
@@ -468,15 +473,12 @@ export const getUserProfile = async (userId?: string): Promise<UserProfile | nul
         const userIdPromise = getCurrentUserId();
         currentUserId = await Promise.race([userIdPromise, timeoutPromise]);
       } catch (timeoutError) {
-        console.error('getCurrentUserId timed out, checking localStorage...');
-        
         // Try to get user ID from stored session
         try {
           const storedSession = localStorage.getItem('supabase-auth-token');
           if (storedSession) {
             const session = JSON.parse(storedSession);
             if (session?.user?.id) {
-              console.log('getUserProfile: Using stored session user ID:', session.user.id);
               currentUserId = session.user.id;
             }
           }
@@ -490,8 +492,6 @@ export const getUserProfile = async (userId?: string): Promise<UserProfile | nul
         }
       }
     }
-
-    console.log('getUserProfile: Fetching for user:', currentUserId);
 
     // Get data with shorter timeout
     const profilePromise = supabase
@@ -571,7 +571,6 @@ export const getUserProfile = async (userId?: string): Promise<UserProfile | nul
       updatedAt: profile?.updated_at,
     };
 
-    console.log('getUserProfile: Successfully loaded profile for user:', currentUserId);
     return result;
   } catch (error) {
     console.error("Error getting user profile:", error);
@@ -624,7 +623,9 @@ function mapLogFromDB(dbLog: any): DailyLog {
 
 // Helper function to convert database profile to frontend profile
 const mapDatabaseToProfile = (dbProfile: any): UserProfile => {
-  console.log("Mapping database profile to frontend:", dbProfile);
+  if (process.env.NODE_ENV === 'development') {
+    console.log("Mapping database profile to frontend");
+  }
   return {
     id: dbProfile.id,
     name: dbProfile.name,
@@ -632,7 +633,7 @@ const mapDatabaseToProfile = (dbProfile: any): UserProfile => {
     gender: dbProfile.gender,
     weight: dbProfile.weight,
     height: dbProfile.height,
-    fitnessGoal: dbProfile.fitness_goal, // Map from snake_case to camelCase
+    fitnessGoal: undefined, // Don't map fitness_goal as it doesn't exist in DB
     categories: [],
     logs: [],
     createdAt: dbProfile.created_at,
@@ -642,23 +643,29 @@ const mapDatabaseToProfile = (dbProfile: any): UserProfile => {
 
 // Helper function to convert frontend profile to database format
 const mapProfileToDatabase = (profile: Partial<UserProfile>) => {
-  console.log("Mapping frontend profile to database:", profile);
+  if (process.env.NODE_ENV === 'development') {
+    console.log("Mapping frontend profile to database");
+  }
   const mapped = {
     name: profile.name,
     age: profile.age,
     gender: profile.gender,
     weight: profile.weight,
     height: profile.height,
-    fitness_goal: profile.fitnessGoal, // Map from camelCase to snake_case
+    // Remove fitness_goal mapping as it doesn't exist in DB
   };
-  console.log("Mapped result:", mapped);
+  if (process.env.NODE_ENV === 'development') {
+    console.log("Mapped result:", mapped);
+  }
   return mapped;
 };
 
 export const profileStorage = {
   async getProfile(userId: string): Promise<UserProfile | null> {
     try {
-      console.log("Getting profile for user:", userId);
+      if (process.env.NODE_ENV === 'development') {
+        console.log("Getting profile for user");
+      }
       
       // First check if the profiles table exists
       const { data, error } = await supabase
@@ -681,17 +688,21 @@ export const profileStorage = {
         throw error;
       }
 
-      console.log("Profile data from database:", data);
+      if (process.env.NODE_ENV === 'development') {
+        console.log("Profile data from database:", data);
+      }
       return mapDatabaseToProfile(data);
     } catch (error) {
-      console.error('Error fetching profile:', error);
-      return null; // Return null instead of throwing to allow fallback
+      console.error('Error fetching profile');
+      return null;
     }
   },
 
   async createProfile(userId: string, profileData: Partial<UserProfile>): Promise<UserProfile> {
     try {
-      console.log("Creating profile for user:", userId, "with data:", profileData);
+      if (process.env.NODE_ENV === 'development') {
+        console.log("Creating profile for user");
+      }
       
       // Check if profile already exists first
       const existingProfile = await this.getProfile(userId);
@@ -705,7 +716,9 @@ export const profileStorage = {
         ...mapProfileToDatabase(profileData),
       };
 
-      console.log("Database data to insert:", dbData);
+      if (process.env.NODE_ENV === 'development') {
+        console.log("Database data to insert:", dbData);
+      }
 
       const { data, error } = await supabase
         .from('profiles')
@@ -718,19 +731,26 @@ export const profileStorage = {
         throw error;
       }
 
-      console.log("Profile created successfully:", data);
+      if (process.env.NODE_ENV === 'development') {
+        console.log("Profile created successfully");
+      }
       return mapDatabaseToProfile(data);
     } catch (error) {
-      console.error('Error creating profile:', error);
+      console.error('Error creating profile');
       throw error;
     }
   },
 
   async updateProfile(userId: string, profileData: Partial<UserProfile>): Promise<UserProfile> {
     try {
-      console.log("Updating profile for user:", userId, "with data:", profileData);
+      if (process.env.NODE_ENV === 'development') {
+        console.log("Updating profile for user");
+      }
+      
       const dbData = mapProfileToDatabase(profileData);
-      console.log("Mapped database data:", dbData);
+      if (process.env.NODE_ENV === 'development') {
+        console.log("Mapped database data:", dbData);
+      }
 
       const { data, error } = await supabase
         .from('profiles')
@@ -749,10 +769,12 @@ export const profileStorage = {
         throw error;
       }
 
-      console.log("Profile updated successfully:", data);
+      if (process.env.NODE_ENV === 'development') {
+        console.log("Profile updated successfully");
+      }
       return mapDatabaseToProfile(data);
     } catch (error) {
-      console.error('Error updating profile:', error);
+      console.error('Error updating profile');
       throw error;
     }
   },

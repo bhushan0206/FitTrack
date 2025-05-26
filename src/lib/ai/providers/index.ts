@@ -32,7 +32,10 @@ export class AIProviderFactory {
     // Register cloud-compatible providers - focus on Groq for now
     this.registerProvider('groq', new GroqProvider());
     
-    console.log('AI Provider Factory initialized with cloud providers:', Array.from(this.providers.keys()));
+    // Only log provider info in development
+    if (process.env.NODE_ENV === 'development') {
+      console.log('AI Provider Factory initialized with cloud providers:', Array.from(this.providers.keys()));
+    }
   }
 }
 

@@ -4,7 +4,10 @@ import { goalTrackingEngine } from './goalTrackingEngine';
 class AIEngine {
   async generateResponse(message: string, context: AIContext): Promise<string> {
     try {
-      console.log('AIEngine: Generating response for:', message);
+      // Remove sensitive message content from logs
+      if (process.env.NODE_ENV === 'development') {
+        console.log('AIEngine: Generating response for message of length:', message.length);
+      }
       
       // Add a small delay to simulate AI processing
       await new Promise(resolve => setTimeout(resolve, 1000));

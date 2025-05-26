@@ -104,7 +104,10 @@ const ExerciseTracker = ({ exercise, onComplete, onCancel, selectedDate }: Exerc
       intensity,
     };
 
-    console.log('Creating exercise log with exercise ID:', exercise.id);
+    // Remove sensitive exercise data from logs
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Creating exercise log');
+    }
 
     // Save to database
     const savedLog = await exerciseStorage.createExerciseLog(exerciseLog);

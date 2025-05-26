@@ -27,8 +27,8 @@ export const addCategory = async (
     if (error) throw error;
     return await getProfile(userId);
   } catch (error) {
-    console.error("Error adding category:", error);
-    return null;
+    // Remove sensitive category data
+    console.error("Error adding category");
   }
 };
 

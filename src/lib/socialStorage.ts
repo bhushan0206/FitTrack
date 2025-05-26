@@ -7,7 +7,9 @@ export const socialStorage = {
   // Helper function to ensure user profile exists (with fallback)
   async ensureProfile(user: any) {
     try {
-      console.log('Ensuring profile exists for user:', user.id);
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Ensuring profile exists for user');
+      }
       
       // First check if profile exists
       const { data: existingProfile, error } = await supabase
@@ -43,7 +45,9 @@ export const socialStorage = {
           throw createError;
         }
         
-        console.log('Profile created successfully:', newProfile);
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Profile created successfully');
+        }
         return newProfile;
       } else if (error) {
         console.error('Error checking profile:', error);
@@ -53,7 +57,7 @@ export const socialStorage = {
       console.log('Profile already exists:', existingProfile);
       return existingProfile;
     } catch (error) {
-      console.error('Error in ensureProfile:', error);
+      console.error('Error in ensureProfile');
       throw error;
     }
   },
@@ -97,7 +101,9 @@ export const socialStorage = {
       }
 
       // Find user by email in profiles table with better error handling
-      console.log('Searching for user with email:', friendEmail.toLowerCase().trim());
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Searching for user with email');
+      }
       
       const { data: friendProfile, error: profileError } = await supabase
         .from('profiles')
@@ -121,7 +127,7 @@ export const socialStorage = {
       console.log('Found friend profile:', friendProfile);
       return await this.createFriendRequest(user.id, friendProfile.id);
     } catch (error) {
-      console.error('Error sending friend request:', error);
+      console.error('Error sending friend request');
       return { success: false, error: 'Network error. Please check your connection and try again.' };
     }
   },
@@ -146,7 +152,7 @@ export const socialStorage = {
       // ALWAYS enforce the constraint: smaller UUID first
       const [firstId, secondId] = [userId, friendId].sort();
 
-      console.log('Creating friendship with constraint:', { 
+      console.log('Creating friendship with constraint', { 
         user_id: firstId, 
         friend_id: secondId, 
         requested_by: userId,
@@ -177,10 +183,12 @@ export const socialStorage = {
         return { success: false, error: 'Failed to send friend request. Please try again.' };
       }
       
-      console.log('Friendship created successfully:', data);
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Friendship created successfully');
+      }
       return { success: true };
     } catch (error) {
-      console.error('Error creating friend request:', error);
+      console.error('Error creating friend request');
       return { success: false, error: 'Failed to send friend request. Please try again.' };
     }
   },
@@ -526,7 +534,9 @@ export const socialStorage = {
 
   // Real-time subscriptions
   subscribeToMessages(callback: (message: Message) => void) {
-    console.log('Setting up message subscription...');
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Setting up message subscription...');
+    }
     
     return supabase
       .channel('public:messages')
@@ -537,7 +547,9 @@ export const socialStorage = {
           table: 'messages'
         },
         async (payload) => {
-          console.log('Real-time message received:', payload);
+          if (process.env.NODE_ENV === 'development') {
+            console.log('Real-time message received');
+          }
           const message = payload.new as Message;
           
           // Fetch sender profile for the new message
@@ -554,12 +566,16 @@ export const socialStorage = {
             sender_profile: senderProfile
           };
           
-          console.log('Calling callback with message:', messageWithProfile);
+          if (process.env.NODE_ENV === 'development') {
+            console.log('Calling callback with message');
+          }
           callback(messageWithProfile);
         }
       )
       .subscribe((status) => {
-        console.log('Message subscription status:', status);
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Message subscription status:', status);
+        }
       });
   },
 

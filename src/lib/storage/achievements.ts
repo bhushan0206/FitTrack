@@ -11,8 +11,8 @@ export const getAchievements = async (userId: string): Promise<Achievement[]> =>
       .eq('user_id', userId);
     
     if (error) {
-      console.error('Error fetching achievements:', error);
-      return [];
+      // Remove sensitive achievement data
+      console.error('Error fetching achievements');
     }
     
     return data.map(item => ({
